@@ -1,0 +1,11 @@
+Model Information:
+* title:	Zelda Scientist
+* source:	https://sketchfab.com/3d-models/zelda-scientist-316695e9515d4f19b9657ede5c27c0ae
+* author:	Trevon896850541 (https://sketchfab.com/Trevon896850541)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Zelda Scientist" (https://sketchfab.com/3d-models/zelda-scientist-316695e9515d4f19b9657ede5c27c0ae) by Trevon896850541 (https://sketchfab.com/Trevon896850541) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
