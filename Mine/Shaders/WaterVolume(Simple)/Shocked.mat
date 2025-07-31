@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: WaterSurface
-  m_Shader: {fileID: 4800000, guid: 94de4ea48466d6e4aba157275a63b6d0, type: 3}
+  m_Name: Shocked
+  m_Shader: {fileID: 4800000, guid: 88fb0a4f86594644582f1ca250c4802c, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -38,9 +38,26 @@ Material:
     m_Ints: []
     m_Floats:
     - _AlphaCutoff: 0.5
-    - _Edge: 11.12
+    - _Float0: 1
+    - _Fluency: 0.5
+    - _LightSize: 0.1
+    - _LightSize2: 0.502
+    - _LightSpeed: 1
+    - _LightStrength: 0.67
+    - _LightStyle: 0.03
     - _QueueControl: 0
     - _QueueOffset: 0
+    - _Scale: 2
+    - _SparkInfluence: 100
+    - _Speed: 0.5
+    - _Speed1: 1
+    - _Speed2: 2
+    - _Strength: 0.6
+    - _Width: 0.01
     m_Colors:
+    - _Color0: {r: 0, g: 1.2392987, b: 3.9999995, a: 0}
+    - _Electricity: {r: 28.51895, g: 27.22651, b: 0.538093, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
+    - _Inside: {r: 0.9858491, g: 0.9747079, b: 0.77193844, a: 0.4862745}
+    - _Light: {r: 4.987651, g: 3.78348, b: 0.09410655, a: 0}
   m_BuildTextureStacks: []

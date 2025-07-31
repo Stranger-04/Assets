@@ -38,8 +38,25 @@ Material:
     m_Ints: []
     m_Floats:
     - _AlphaCutoff: 0.5
+    - _Depth: 0.2
+    - _DepthFadeDistance: 0.2
+    - _DepthScale: 2
+    - _DepthSpeed: 0.1
+    - _DepthStrength: 2
+    - _Edge: 0.75
+    - _Edge1: 0.5
+    - _EdgeScale: 2
+    - _EdgeScale1: 2
+    - _EdgeSpeed: 0.1
+    - _EdgeSpeed1: 0.1
+    - _EdgeStrength: 1
     - _QueueControl: 0
     - _QueueOffset: 0
+    - _RefScale: 3.06
+    - _RefSpeed: 0.1
+    - _Reflection: 1.14
+    - _SSSPower: 1
+    - _SSSScale: 1
     m_Colors:
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

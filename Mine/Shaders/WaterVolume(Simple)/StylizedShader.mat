@@ -38,14 +38,28 @@ Material:
     m_Ints: []
     m_Floats:
     - _AlphaCutoff: 0.5
+    - _FinalShadow: 1
+    - _Frequency: 35.92
+    - _InitialShadow: 0
+    - _MiddleShadow: 0.2
     - _QueueControl: 0
     - _QueueOffset: 0
+    - _Rotation: 45
+    - _SharpenFM: 20
+    - _SharpenIM: 20
+    - _SharpenMF: 20
     - _Shininess: 0.1
     - _Speed: 0
+    - _SubRotation: 90
+    - _Thickness: 4.27
     - __dirty: 1
     m_Colors:
+    - _Back: {r: 1, g: 1, b: 1, a: 0}
     - _Color1: {r: 1, g: 1, b: 1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
+    - _Front: {r: 0, g: 0, b: 0, a: 0}
     - _MainColor: {r: 0.39215687, g: 0.39215687, b: 0.39215687, a: 1}
+    - _Middle: {r: 0.49056596, g: 0.49056596, b: 0.49056596, a: 0}
+    - _ShadowPosition: {r: 1.6, g: 1.03, b: 0, a: 0}
     - _SpecularColor: {r: 0.39215687, g: 0.39215687, b: 0.39215687, a: 1}
   m_BuildTextureStacks: []

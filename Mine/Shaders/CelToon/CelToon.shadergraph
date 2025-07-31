@@ -3596,7 +3596,7 @@
     "m_Title": "Specular Lightt",
     "m_Position": {
         "x": -65.0,
-        "y": 286.0
+        "y": 286.5
     }
 }
 
@@ -4066,7 +4066,7 @@
     "m_Title": "Half Vector",
     "m_Position": {
         "x": -1376.0,
-        "y": 348.0
+        "y": 348.5
     }
 }
 
@@ -5534,7 +5534,7 @@
     "m_Title": "N dot L",
     "m_Position": {
         "x": -1376.0,
-        "y": -417.0
+        "y": -416.5
     }
 }
 
@@ -5568,7 +5568,7 @@
     "m_Title": "Light Intensity",
     "m_Position": {
         "x": -566.0,
-        "y": -463.0
+        "y": -462.5
     }
 }
 
@@ -5609,7 +5609,7 @@
     "m_Title": "N dot H",
     "m_Position": {
         "x": -383.0,
-        "y": 348.0
+        "y": 348.5
     }
 }
 
@@ -5620,7 +5620,7 @@
     "m_Title": "Rim Light",
     "m_Position": {
         "x": -145.0,
-        "y": 1173.0
+        "y": 1173.5
     }
 }
 
