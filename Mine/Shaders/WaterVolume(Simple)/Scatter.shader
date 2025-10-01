@@ -250,14 +250,14 @@ Shader "Scatter"
 			uniform float4 _CameraDepthTexture_TexelSize;
 
 
-					float2 voronoihash8_g12( float2 p )
+					float2 voronoihash8_g14( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi8_g12( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi8_g14( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -268,7 +268,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash8_g12( n + g );
+						 		float2 o = voronoihash8_g14( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -301,14 +301,14 @@ Shader "Scatter"
 				return result;
 			}
 			
-					float2 voronoihash3_g12( float2 p )
+					float2 voronoihash3_g14( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi3_g12( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi3_g14( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -319,7 +319,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash3_g12( n + g );
+						 		float2 o = voronoihash3_g14( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -334,14 +334,14 @@ Shader "Scatter"
 						return F1;
 					}
 			
-					float2 voronoihash9_g12( float2 p )
+					float2 voronoihash9_g14( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi9_g12( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi9_g14( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -352,7 +352,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash9_g12( n + g );
+						 		float2 o = voronoihash9_g14( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -367,14 +367,14 @@ Shader "Scatter"
 						return F1;
 					}
 			
-					float2 voronoihash8_g13( float2 p )
+					float2 voronoihash8_g15( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi8_g13( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi8_g15( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -385,7 +385,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash8_g13( n + g );
+						 		float2 o = voronoihash8_g15( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -400,14 +400,14 @@ Shader "Scatter"
 						return F1;
 					}
 			
-					float2 voronoihash3_g13( float2 p )
+					float2 voronoihash3_g15( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi3_g13( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi3_g15( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -418,7 +418,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash3_g13( n + g );
+						 		float2 o = voronoihash3_g15( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -433,14 +433,14 @@ Shader "Scatter"
 						return F1;
 					}
 			
-					float2 voronoihash9_g13( float2 p )
+					float2 voronoihash9_g15( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi9_g13( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi9_g15( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -451,7 +451,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash9_g13( n + g );
+						 		float2 o = voronoihash9_g15( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -620,8 +620,8 @@ Shader "Scatter"
 						ShadowCoords = TransformWorldToShadowCoord( WorldPosition );
 					#endif
 				#endif
-				float time8_g12 = 0.0;
-				float2 voronoiSmoothId8_g12 = 0;
+				float time8_g14 = 0.0;
+				float2 voronoiSmoothId8_g14 = 0;
 				float4 screenPos = IN.ase_texcoord3;
 				float4 ase_screenPosNorm = screenPos / screenPos.w;
 				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
@@ -643,46 +643,46 @@ Shader "Scatter"
 				float4 appendResult49_g1 = (float4(localInvertDepthDirURP75_g1 , 1.0));
 				float4 temp_output_56_0 = mul( unity_CameraToWorld, appendResult49_g1 );
 				float2 temp_output_77_0 = (temp_output_56_0).xz;
-				float2 temp_output_2_0_g12 = ( (temp_output_77_0*_Scale1 + ( _TimeParameters.x * _Speed1 )) + float2( 0,0 ) );
-				float2 coords8_g12 = ( temp_output_2_0_g12 + _Range ) * 1.0;
-				float2 id8_g12 = 0;
-				float2 uv8_g12 = 0;
-				float voroi8_g12 = voronoi8_g12( coords8_g12, time8_g12, id8_g12, uv8_g12, 0, voronoiSmoothId8_g12 );
-				float time3_g12 = 0.0;
-				float2 voronoiSmoothId3_g12 = 0;
-				float2 coords3_g12 = temp_output_2_0_g12 * 1.0;
-				float2 id3_g12 = 0;
-				float2 uv3_g12 = 0;
-				float voroi3_g12 = voronoi3_g12( coords3_g12, time3_g12, id3_g12, uv3_g12, 0, voronoiSmoothId3_g12 );
-				float time9_g12 = 0.0;
-				float2 voronoiSmoothId9_g12 = 0;
+				float2 temp_output_2_0_g14 = ( (temp_output_77_0*_Scale1 + ( _TimeParameters.x * _Speed1 )) + float2( 0,0 ) );
+				float2 coords8_g14 = ( temp_output_2_0_g14 + _Range ) * 1.0;
+				float2 id8_g14 = 0;
+				float2 uv8_g14 = 0;
+				float voroi8_g14 = voronoi8_g14( coords8_g14, time8_g14, id8_g14, uv8_g14, 0, voronoiSmoothId8_g14 );
+				float time3_g14 = 0.0;
+				float2 voronoiSmoothId3_g14 = 0;
+				float2 coords3_g14 = temp_output_2_0_g14 * 1.0;
+				float2 id3_g14 = 0;
+				float2 uv3_g14 = 0;
+				float voroi3_g14 = voronoi3_g14( coords3_g14, time3_g14, id3_g14, uv3_g14, 0, voronoiSmoothId3_g14 );
+				float time9_g14 = 0.0;
+				float2 voronoiSmoothId9_g14 = 0;
 				float2 temp_cast_1 = (_Range).xx;
-				float2 coords9_g12 = ( temp_output_2_0_g12 - temp_cast_1 ) * 1.0;
-				float2 id9_g12 = 0;
-				float2 uv9_g12 = 0;
-				float voroi9_g12 = voronoi9_g12( coords9_g12, time9_g12, id9_g12, uv9_g12, 0, voronoiSmoothId9_g12 );
-				float3 appendResult12_g12 = (float3(( _Caustics.r * voroi8_g12 ) , ( voroi3_g12 * _Caustics.g ) , ( voroi9_g12 * _Caustics.b )));
-				float time8_g13 = 0.0;
-				float2 voronoiSmoothId8_g13 = 0;
-				float2 temp_output_2_0_g13 = ( (temp_output_77_0*_Scale2 + ( _TimeParameters.x * _Speed2 )) + float2( 0,0 ) );
-				float2 coords8_g13 = ( temp_output_2_0_g13 + _Range ) * 1.0;
-				float2 id8_g13 = 0;
-				float2 uv8_g13 = 0;
-				float voroi8_g13 = voronoi8_g13( coords8_g13, time8_g13, id8_g13, uv8_g13, 0, voronoiSmoothId8_g13 );
-				float time3_g13 = 0.0;
-				float2 voronoiSmoothId3_g13 = 0;
-				float2 coords3_g13 = temp_output_2_0_g13 * 1.0;
-				float2 id3_g13 = 0;
-				float2 uv3_g13 = 0;
-				float voroi3_g13 = voronoi3_g13( coords3_g13, time3_g13, id3_g13, uv3_g13, 0, voronoiSmoothId3_g13 );
-				float time9_g13 = 0.0;
-				float2 voronoiSmoothId9_g13 = 0;
+				float2 coords9_g14 = ( temp_output_2_0_g14 - temp_cast_1 ) * 1.0;
+				float2 id9_g14 = 0;
+				float2 uv9_g14 = 0;
+				float voroi9_g14 = voronoi9_g14( coords9_g14, time9_g14, id9_g14, uv9_g14, 0, voronoiSmoothId9_g14 );
+				float3 appendResult12_g14 = (float3(( _Caustics.r * voroi8_g14 ) , ( voroi3_g14 * _Caustics.g ) , ( voroi9_g14 * _Caustics.b )));
+				float time8_g15 = 0.0;
+				float2 voronoiSmoothId8_g15 = 0;
+				float2 temp_output_2_0_g15 = ( (temp_output_77_0*_Scale2 + ( _TimeParameters.x * _Speed2 )) + float2( 0,0 ) );
+				float2 coords8_g15 = ( temp_output_2_0_g15 + _Range ) * 1.0;
+				float2 id8_g15 = 0;
+				float2 uv8_g15 = 0;
+				float voroi8_g15 = voronoi8_g15( coords8_g15, time8_g15, id8_g15, uv8_g15, 0, voronoiSmoothId8_g15 );
+				float time3_g15 = 0.0;
+				float2 voronoiSmoothId3_g15 = 0;
+				float2 coords3_g15 = temp_output_2_0_g15 * 1.0;
+				float2 id3_g15 = 0;
+				float2 uv3_g15 = 0;
+				float voroi3_g15 = voronoi3_g15( coords3_g15, time3_g15, id3_g15, uv3_g15, 0, voronoiSmoothId3_g15 );
+				float time9_g15 = 0.0;
+				float2 voronoiSmoothId9_g15 = 0;
 				float2 temp_cast_2 = (_Range).xx;
-				float2 coords9_g13 = ( temp_output_2_0_g13 - temp_cast_2 ) * 1.0;
-				float2 id9_g13 = 0;
-				float2 uv9_g13 = 0;
-				float voroi9_g13 = voronoi9_g13( coords9_g13, time9_g13, id9_g13, uv9_g13, 0, voronoiSmoothId9_g13 );
-				float3 appendResult12_g13 = (float3(( _Caustics.r * voroi8_g13 ) , ( voroi3_g13 * _Caustics.g ) , ( voroi9_g13 * _Caustics.b )));
+				float2 coords9_g15 = ( temp_output_2_0_g15 - temp_cast_2 ) * 1.0;
+				float2 id9_g15 = 0;
+				float2 uv9_g15 = 0;
+				float voroi9_g15 = voronoi9_g15( coords9_g15, time9_g15, id9_g15, uv9_g15, 0, voronoiSmoothId9_g15 );
+				float3 appendResult12_g15 = (float3(( _Caustics.r * voroi8_g15 ) , ( voroi3_g15 * _Caustics.g ) , ( voroi9_g15 * _Caustics.b )));
 				
 				float3 worldToObj74 = mul( GetWorldToObjectMatrix(), float4( temp_output_56_0.xyz, 1 ) ).xyz;
 				float4 ase_grabScreenPos = ASE_ComputeGrabScreenPos( screenPos );
@@ -693,8 +693,8 @@ Shader "Scatter"
 				
 				float3 BakedAlbedo = 0;
 				float3 BakedEmission = 0;
-				float3 Color = ( min( appendResult12_g12 , appendResult12_g13 ) * _Strength2 );
-				float Alpha = saturate( ( ( ( min( voroi3_g12 , voroi3_g13 ) * _Strength1 ) * ( ( ( step( worldToObj74.x , 0.5 ) * ( 1.0 - step( worldToObj74.x , -0.5 ) ) ) * ( step( worldToObj74.y , 0.5 ) * ( 1.0 - step( worldToObj74.y , -0.5 ) ) ) * ( step( worldToObj74.z , 0.5 ) * ( 1.0 - step( worldToObj74.z , -0.5 ) ) ) ) * saturate( ( ( distance( IN.ase_texcoord4.xyz , float3( 0,0,0 ) ) - _FadeRadius ) / ( 0.0 - _FadeStrength ) ) ) ) ) * lerpResult136 ) );
+				float3 Color = ( min( appendResult12_g14 , appendResult12_g15 ) * _Strength2 );
+				float Alpha = saturate( ( ( ( min( voroi3_g14 , voroi3_g15 ) * _Strength1 ) * ( ( ( step( worldToObj74.x , 0.5 ) * ( 1.0 - step( worldToObj74.x , -0.5 ) ) ) * ( step( worldToObj74.y , 0.5 ) * ( 1.0 - step( worldToObj74.y , -0.5 ) ) ) * ( step( worldToObj74.z , 0.5 ) * ( 1.0 - step( worldToObj74.z , -0.5 ) ) ) ) * saturate( ( ( distance( IN.ase_texcoord4.xyz , float3( 0,0,0 ) ) - _FadeRadius ) / ( 0.0 - _FadeStrength ) ) ) ) ) * lerpResult136 ) );
 				float AlphaClipThreshold = 0.5;
 				float AlphaClipThresholdShadow = 0.5;
 
@@ -806,14 +806,14 @@ Shader "Scatter"
 			uniform float4 _CameraDepthTexture_TexelSize;
 
 
-					float2 voronoihash3_g12( float2 p )
+					float2 voronoihash3_g14( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi3_g12( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi3_g14( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -824,7 +824,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash3_g12( n + g );
+						 		float2 o = voronoihash3_g14( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -857,14 +857,14 @@ Shader "Scatter"
 				return result;
 			}
 			
-					float2 voronoihash3_g13( float2 p )
+					float2 voronoihash3_g15( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi3_g13( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi3_g15( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -875,7 +875,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash3_g13( n + g );
+						 		float2 o = voronoihash3_g15( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -1061,8 +1061,8 @@ Shader "Scatter"
 					#endif
 				#endif
 
-				float time3_g12 = 0.0;
-				float2 voronoiSmoothId3_g12 = 0;
+				float time3_g14 = 0.0;
+				float2 voronoiSmoothId3_g14 = 0;
 				float4 screenPos = IN.ase_texcoord2;
 				float4 ase_screenPosNorm = screenPos / screenPos.w;
 				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
@@ -1084,18 +1084,18 @@ Shader "Scatter"
 				float4 appendResult49_g1 = (float4(localInvertDepthDirURP75_g1 , 1.0));
 				float4 temp_output_56_0 = mul( unity_CameraToWorld, appendResult49_g1 );
 				float2 temp_output_77_0 = (temp_output_56_0).xz;
-				float2 temp_output_2_0_g12 = ( (temp_output_77_0*_Scale1 + ( _TimeParameters.x * _Speed1 )) + float2( 0,0 ) );
-				float2 coords3_g12 = temp_output_2_0_g12 * 1.0;
-				float2 id3_g12 = 0;
-				float2 uv3_g12 = 0;
-				float voroi3_g12 = voronoi3_g12( coords3_g12, time3_g12, id3_g12, uv3_g12, 0, voronoiSmoothId3_g12 );
-				float time3_g13 = 0.0;
-				float2 voronoiSmoothId3_g13 = 0;
-				float2 temp_output_2_0_g13 = ( (temp_output_77_0*_Scale2 + ( _TimeParameters.x * _Speed2 )) + float2( 0,0 ) );
-				float2 coords3_g13 = temp_output_2_0_g13 * 1.0;
-				float2 id3_g13 = 0;
-				float2 uv3_g13 = 0;
-				float voroi3_g13 = voronoi3_g13( coords3_g13, time3_g13, id3_g13, uv3_g13, 0, voronoiSmoothId3_g13 );
+				float2 temp_output_2_0_g14 = ( (temp_output_77_0*_Scale1 + ( _TimeParameters.x * _Speed1 )) + float2( 0,0 ) );
+				float2 coords3_g14 = temp_output_2_0_g14 * 1.0;
+				float2 id3_g14 = 0;
+				float2 uv3_g14 = 0;
+				float voroi3_g14 = voronoi3_g14( coords3_g14, time3_g14, id3_g14, uv3_g14, 0, voronoiSmoothId3_g14 );
+				float time3_g15 = 0.0;
+				float2 voronoiSmoothId3_g15 = 0;
+				float2 temp_output_2_0_g15 = ( (temp_output_77_0*_Scale2 + ( _TimeParameters.x * _Speed2 )) + float2( 0,0 ) );
+				float2 coords3_g15 = temp_output_2_0_g15 * 1.0;
+				float2 id3_g15 = 0;
+				float2 uv3_g15 = 0;
+				float voroi3_g15 = voronoi3_g15( coords3_g15, time3_g15, id3_g15, uv3_g15, 0, voronoiSmoothId3_g15 );
 				float3 worldToObj74 = mul( GetWorldToObjectMatrix(), float4( temp_output_56_0.xyz, 1 ) ).xyz;
 				float4 ase_grabScreenPos = ASE_ComputeGrabScreenPos( screenPos );
 				float4 ase_grabScreenPosNorm = ase_grabScreenPos / ase_grabScreenPos.w;
@@ -1103,7 +1103,7 @@ Shader "Scatter"
 				float grayscale143 = Luminance(fetchOpaqueVal135.rgb);
 				float lerpResult136 = lerp( 1.0 , grayscale143 , _LumStrength);
 				
-				float Alpha = saturate( ( ( ( min( voroi3_g12 , voroi3_g13 ) * _Strength1 ) * ( ( ( step( worldToObj74.x , 0.5 ) * ( 1.0 - step( worldToObj74.x , -0.5 ) ) ) * ( step( worldToObj74.y , 0.5 ) * ( 1.0 - step( worldToObj74.y , -0.5 ) ) ) * ( step( worldToObj74.z , 0.5 ) * ( 1.0 - step( worldToObj74.z , -0.5 ) ) ) ) * saturate( ( ( distance( IN.ase_texcoord3.xyz , float3( 0,0,0 ) ) - _FadeRadius ) / ( 0.0 - _FadeStrength ) ) ) ) ) * lerpResult136 ) );
+				float Alpha = saturate( ( ( ( min( voroi3_g14 , voroi3_g15 ) * _Strength1 ) * ( ( ( step( worldToObj74.x , 0.5 ) * ( 1.0 - step( worldToObj74.x , -0.5 ) ) ) * ( step( worldToObj74.y , 0.5 ) * ( 1.0 - step( worldToObj74.y , -0.5 ) ) ) * ( step( worldToObj74.z , 0.5 ) * ( 1.0 - step( worldToObj74.z , -0.5 ) ) ) ) * saturate( ( ( distance( IN.ase_texcoord3.xyz , float3( 0,0,0 ) ) - _FadeRadius ) / ( 0.0 - _FadeStrength ) ) ) ) ) * lerpResult136 ) );
 				float AlphaClipThreshold = 0.5;
 				float AlphaClipThresholdShadow = 0.5;
 
@@ -1200,14 +1200,14 @@ Shader "Scatter"
 			uniform float4 _CameraDepthTexture_TexelSize;
 
 
-					float2 voronoihash3_g12( float2 p )
+					float2 voronoihash3_g14( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi3_g12( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi3_g14( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -1218,7 +1218,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash3_g12( n + g );
+						 		float2 o = voronoihash3_g14( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -1251,14 +1251,14 @@ Shader "Scatter"
 				return result;
 			}
 			
-					float2 voronoihash3_g13( float2 p )
+					float2 voronoihash3_g15( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi3_g13( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi3_g15( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -1269,7 +1269,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash3_g13( n + g );
+						 		float2 o = voronoihash3_g15( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -1437,8 +1437,8 @@ Shader "Scatter"
 					#endif
 				#endif
 
-				float time3_g12 = 0.0;
-				float2 voronoiSmoothId3_g12 = 0;
+				float time3_g14 = 0.0;
+				float2 voronoiSmoothId3_g14 = 0;
 				float4 screenPos = IN.ase_texcoord2;
 				float4 ase_screenPosNorm = screenPos / screenPos.w;
 				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
@@ -1460,18 +1460,18 @@ Shader "Scatter"
 				float4 appendResult49_g1 = (float4(localInvertDepthDirURP75_g1 , 1.0));
 				float4 temp_output_56_0 = mul( unity_CameraToWorld, appendResult49_g1 );
 				float2 temp_output_77_0 = (temp_output_56_0).xz;
-				float2 temp_output_2_0_g12 = ( (temp_output_77_0*_Scale1 + ( _TimeParameters.x * _Speed1 )) + float2( 0,0 ) );
-				float2 coords3_g12 = temp_output_2_0_g12 * 1.0;
-				float2 id3_g12 = 0;
-				float2 uv3_g12 = 0;
-				float voroi3_g12 = voronoi3_g12( coords3_g12, time3_g12, id3_g12, uv3_g12, 0, voronoiSmoothId3_g12 );
-				float time3_g13 = 0.0;
-				float2 voronoiSmoothId3_g13 = 0;
-				float2 temp_output_2_0_g13 = ( (temp_output_77_0*_Scale2 + ( _TimeParameters.x * _Speed2 )) + float2( 0,0 ) );
-				float2 coords3_g13 = temp_output_2_0_g13 * 1.0;
-				float2 id3_g13 = 0;
-				float2 uv3_g13 = 0;
-				float voroi3_g13 = voronoi3_g13( coords3_g13, time3_g13, id3_g13, uv3_g13, 0, voronoiSmoothId3_g13 );
+				float2 temp_output_2_0_g14 = ( (temp_output_77_0*_Scale1 + ( _TimeParameters.x * _Speed1 )) + float2( 0,0 ) );
+				float2 coords3_g14 = temp_output_2_0_g14 * 1.0;
+				float2 id3_g14 = 0;
+				float2 uv3_g14 = 0;
+				float voroi3_g14 = voronoi3_g14( coords3_g14, time3_g14, id3_g14, uv3_g14, 0, voronoiSmoothId3_g14 );
+				float time3_g15 = 0.0;
+				float2 voronoiSmoothId3_g15 = 0;
+				float2 temp_output_2_0_g15 = ( (temp_output_77_0*_Scale2 + ( _TimeParameters.x * _Speed2 )) + float2( 0,0 ) );
+				float2 coords3_g15 = temp_output_2_0_g15 * 1.0;
+				float2 id3_g15 = 0;
+				float2 uv3_g15 = 0;
+				float voroi3_g15 = voronoi3_g15( coords3_g15, time3_g15, id3_g15, uv3_g15, 0, voronoiSmoothId3_g15 );
 				float3 worldToObj74 = mul( GetWorldToObjectMatrix(), float4( temp_output_56_0.xyz, 1 ) ).xyz;
 				float4 ase_grabScreenPos = ASE_ComputeGrabScreenPos( screenPos );
 				float4 ase_grabScreenPosNorm = ase_grabScreenPos / ase_grabScreenPos.w;
@@ -1479,7 +1479,7 @@ Shader "Scatter"
 				float grayscale143 = Luminance(fetchOpaqueVal135.rgb);
 				float lerpResult136 = lerp( 1.0 , grayscale143 , _LumStrength);
 				
-				float Alpha = saturate( ( ( ( min( voroi3_g12 , voroi3_g13 ) * _Strength1 ) * ( ( ( step( worldToObj74.x , 0.5 ) * ( 1.0 - step( worldToObj74.x , -0.5 ) ) ) * ( step( worldToObj74.y , 0.5 ) * ( 1.0 - step( worldToObj74.y , -0.5 ) ) ) * ( step( worldToObj74.z , 0.5 ) * ( 1.0 - step( worldToObj74.z , -0.5 ) ) ) ) * saturate( ( ( distance( IN.ase_texcoord3.xyz , float3( 0,0,0 ) ) - _FadeRadius ) / ( 0.0 - _FadeStrength ) ) ) ) ) * lerpResult136 ) );
+				float Alpha = saturate( ( ( ( min( voroi3_g14 , voroi3_g15 ) * _Strength1 ) * ( ( ( step( worldToObj74.x , 0.5 ) * ( 1.0 - step( worldToObj74.x , -0.5 ) ) ) * ( step( worldToObj74.y , 0.5 ) * ( 1.0 - step( worldToObj74.y , -0.5 ) ) ) * ( step( worldToObj74.z , 0.5 ) * ( 1.0 - step( worldToObj74.z , -0.5 ) ) ) ) * saturate( ( ( distance( IN.ase_texcoord3.xyz , float3( 0,0,0 ) ) - _FadeRadius ) / ( 0.0 - _FadeStrength ) ) ) ) ) * lerpResult136 ) );
 				float AlphaClipThreshold = 0.5;
 
 				#ifdef _ALPHATEST_ON
@@ -1593,14 +1593,14 @@ Shader "Scatter"
 			uniform float4 _CameraDepthTexture_TexelSize;
 
 
-					float2 voronoihash8_g12( float2 p )
+					float2 voronoihash8_g14( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi8_g12( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi8_g14( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -1611,7 +1611,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash8_g12( n + g );
+						 		float2 o = voronoihash8_g14( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -1644,14 +1644,14 @@ Shader "Scatter"
 				return result;
 			}
 			
-					float2 voronoihash3_g12( float2 p )
+					float2 voronoihash3_g14( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi3_g12( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi3_g14( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -1662,7 +1662,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash3_g12( n + g );
+						 		float2 o = voronoihash3_g14( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -1677,14 +1677,14 @@ Shader "Scatter"
 						return F1;
 					}
 			
-					float2 voronoihash9_g12( float2 p )
+					float2 voronoihash9_g14( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi9_g12( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi9_g14( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -1695,7 +1695,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash9_g12( n + g );
+						 		float2 o = voronoihash9_g14( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -1710,14 +1710,14 @@ Shader "Scatter"
 						return F1;
 					}
 			
-					float2 voronoihash8_g13( float2 p )
+					float2 voronoihash8_g15( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi8_g13( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi8_g15( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -1728,7 +1728,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash8_g13( n + g );
+						 		float2 o = voronoihash8_g15( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -1743,14 +1743,14 @@ Shader "Scatter"
 						return F1;
 					}
 			
-					float2 voronoihash3_g13( float2 p )
+					float2 voronoihash3_g15( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi3_g13( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi3_g15( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -1761,7 +1761,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash3_g13( n + g );
+						 		float2 o = voronoihash3_g15( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -1776,14 +1776,14 @@ Shader "Scatter"
 						return F1;
 					}
 			
-					float2 voronoihash9_g13( float2 p )
+					float2 voronoihash9_g15( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi9_g13( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi9_g15( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -1794,7 +1794,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash9_g13( n + g );
+						 		float2 o = voronoihash9_g15( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -1963,8 +1963,8 @@ Shader "Scatter"
 						ShadowCoords = TransformWorldToShadowCoord( WorldPosition );
 					#endif
 				#endif
-				float time8_g12 = 0.0;
-				float2 voronoiSmoothId8_g12 = 0;
+				float time8_g14 = 0.0;
+				float2 voronoiSmoothId8_g14 = 0;
 				float4 screenPos = IN.ase_texcoord3;
 				float4 ase_screenPosNorm = screenPos / screenPos.w;
 				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
@@ -1986,46 +1986,46 @@ Shader "Scatter"
 				float4 appendResult49_g1 = (float4(localInvertDepthDirURP75_g1 , 1.0));
 				float4 temp_output_56_0 = mul( unity_CameraToWorld, appendResult49_g1 );
 				float2 temp_output_77_0 = (temp_output_56_0).xz;
-				float2 temp_output_2_0_g12 = ( (temp_output_77_0*_Scale1 + ( _TimeParameters.x * _Speed1 )) + float2( 0,0 ) );
-				float2 coords8_g12 = ( temp_output_2_0_g12 + _Range ) * 1.0;
-				float2 id8_g12 = 0;
-				float2 uv8_g12 = 0;
-				float voroi8_g12 = voronoi8_g12( coords8_g12, time8_g12, id8_g12, uv8_g12, 0, voronoiSmoothId8_g12 );
-				float time3_g12 = 0.0;
-				float2 voronoiSmoothId3_g12 = 0;
-				float2 coords3_g12 = temp_output_2_0_g12 * 1.0;
-				float2 id3_g12 = 0;
-				float2 uv3_g12 = 0;
-				float voroi3_g12 = voronoi3_g12( coords3_g12, time3_g12, id3_g12, uv3_g12, 0, voronoiSmoothId3_g12 );
-				float time9_g12 = 0.0;
-				float2 voronoiSmoothId9_g12 = 0;
+				float2 temp_output_2_0_g14 = ( (temp_output_77_0*_Scale1 + ( _TimeParameters.x * _Speed1 )) + float2( 0,0 ) );
+				float2 coords8_g14 = ( temp_output_2_0_g14 + _Range ) * 1.0;
+				float2 id8_g14 = 0;
+				float2 uv8_g14 = 0;
+				float voroi8_g14 = voronoi8_g14( coords8_g14, time8_g14, id8_g14, uv8_g14, 0, voronoiSmoothId8_g14 );
+				float time3_g14 = 0.0;
+				float2 voronoiSmoothId3_g14 = 0;
+				float2 coords3_g14 = temp_output_2_0_g14 * 1.0;
+				float2 id3_g14 = 0;
+				float2 uv3_g14 = 0;
+				float voroi3_g14 = voronoi3_g14( coords3_g14, time3_g14, id3_g14, uv3_g14, 0, voronoiSmoothId3_g14 );
+				float time9_g14 = 0.0;
+				float2 voronoiSmoothId9_g14 = 0;
 				float2 temp_cast_1 = (_Range).xx;
-				float2 coords9_g12 = ( temp_output_2_0_g12 - temp_cast_1 ) * 1.0;
-				float2 id9_g12 = 0;
-				float2 uv9_g12 = 0;
-				float voroi9_g12 = voronoi9_g12( coords9_g12, time9_g12, id9_g12, uv9_g12, 0, voronoiSmoothId9_g12 );
-				float3 appendResult12_g12 = (float3(( _Caustics.r * voroi8_g12 ) , ( voroi3_g12 * _Caustics.g ) , ( voroi9_g12 * _Caustics.b )));
-				float time8_g13 = 0.0;
-				float2 voronoiSmoothId8_g13 = 0;
-				float2 temp_output_2_0_g13 = ( (temp_output_77_0*_Scale2 + ( _TimeParameters.x * _Speed2 )) + float2( 0,0 ) );
-				float2 coords8_g13 = ( temp_output_2_0_g13 + _Range ) * 1.0;
-				float2 id8_g13 = 0;
-				float2 uv8_g13 = 0;
-				float voroi8_g13 = voronoi8_g13( coords8_g13, time8_g13, id8_g13, uv8_g13, 0, voronoiSmoothId8_g13 );
-				float time3_g13 = 0.0;
-				float2 voronoiSmoothId3_g13 = 0;
-				float2 coords3_g13 = temp_output_2_0_g13 * 1.0;
-				float2 id3_g13 = 0;
-				float2 uv3_g13 = 0;
-				float voroi3_g13 = voronoi3_g13( coords3_g13, time3_g13, id3_g13, uv3_g13, 0, voronoiSmoothId3_g13 );
-				float time9_g13 = 0.0;
-				float2 voronoiSmoothId9_g13 = 0;
+				float2 coords9_g14 = ( temp_output_2_0_g14 - temp_cast_1 ) * 1.0;
+				float2 id9_g14 = 0;
+				float2 uv9_g14 = 0;
+				float voroi9_g14 = voronoi9_g14( coords9_g14, time9_g14, id9_g14, uv9_g14, 0, voronoiSmoothId9_g14 );
+				float3 appendResult12_g14 = (float3(( _Caustics.r * voroi8_g14 ) , ( voroi3_g14 * _Caustics.g ) , ( voroi9_g14 * _Caustics.b )));
+				float time8_g15 = 0.0;
+				float2 voronoiSmoothId8_g15 = 0;
+				float2 temp_output_2_0_g15 = ( (temp_output_77_0*_Scale2 + ( _TimeParameters.x * _Speed2 )) + float2( 0,0 ) );
+				float2 coords8_g15 = ( temp_output_2_0_g15 + _Range ) * 1.0;
+				float2 id8_g15 = 0;
+				float2 uv8_g15 = 0;
+				float voroi8_g15 = voronoi8_g15( coords8_g15, time8_g15, id8_g15, uv8_g15, 0, voronoiSmoothId8_g15 );
+				float time3_g15 = 0.0;
+				float2 voronoiSmoothId3_g15 = 0;
+				float2 coords3_g15 = temp_output_2_0_g15 * 1.0;
+				float2 id3_g15 = 0;
+				float2 uv3_g15 = 0;
+				float voroi3_g15 = voronoi3_g15( coords3_g15, time3_g15, id3_g15, uv3_g15, 0, voronoiSmoothId3_g15 );
+				float time9_g15 = 0.0;
+				float2 voronoiSmoothId9_g15 = 0;
 				float2 temp_cast_2 = (_Range).xx;
-				float2 coords9_g13 = ( temp_output_2_0_g13 - temp_cast_2 ) * 1.0;
-				float2 id9_g13 = 0;
-				float2 uv9_g13 = 0;
-				float voroi9_g13 = voronoi9_g13( coords9_g13, time9_g13, id9_g13, uv9_g13, 0, voronoiSmoothId9_g13 );
-				float3 appendResult12_g13 = (float3(( _Caustics.r * voroi8_g13 ) , ( voroi3_g13 * _Caustics.g ) , ( voroi9_g13 * _Caustics.b )));
+				float2 coords9_g15 = ( temp_output_2_0_g15 - temp_cast_2 ) * 1.0;
+				float2 id9_g15 = 0;
+				float2 uv9_g15 = 0;
+				float voroi9_g15 = voronoi9_g15( coords9_g15, time9_g15, id9_g15, uv9_g15, 0, voronoiSmoothId9_g15 );
+				float3 appendResult12_g15 = (float3(( _Caustics.r * voroi8_g15 ) , ( voroi3_g15 * _Caustics.g ) , ( voroi9_g15 * _Caustics.b )));
 				
 				float3 worldToObj74 = mul( GetWorldToObjectMatrix(), float4( temp_output_56_0.xyz, 1 ) ).xyz;
 				float4 ase_grabScreenPos = ASE_ComputeGrabScreenPos( screenPos );
@@ -2036,8 +2036,8 @@ Shader "Scatter"
 				
 				float3 BakedAlbedo = 0;
 				float3 BakedEmission = 0;
-				float3 Color = ( min( appendResult12_g12 , appendResult12_g13 ) * _Strength2 );
-				float Alpha = saturate( ( ( ( min( voroi3_g12 , voroi3_g13 ) * _Strength1 ) * ( ( ( step( worldToObj74.x , 0.5 ) * ( 1.0 - step( worldToObj74.x , -0.5 ) ) ) * ( step( worldToObj74.y , 0.5 ) * ( 1.0 - step( worldToObj74.y , -0.5 ) ) ) * ( step( worldToObj74.z , 0.5 ) * ( 1.0 - step( worldToObj74.z , -0.5 ) ) ) ) * saturate( ( ( distance( IN.ase_texcoord4.xyz , float3( 0,0,0 ) ) - _FadeRadius ) / ( 0.0 - _FadeStrength ) ) ) ) ) * lerpResult136 ) );
+				float3 Color = ( min( appendResult12_g14 , appendResult12_g15 ) * _Strength2 );
+				float Alpha = saturate( ( ( ( min( voroi3_g14 , voroi3_g15 ) * _Strength1 ) * ( ( ( step( worldToObj74.x , 0.5 ) * ( 1.0 - step( worldToObj74.x , -0.5 ) ) ) * ( step( worldToObj74.y , 0.5 ) * ( 1.0 - step( worldToObj74.y , -0.5 ) ) ) * ( step( worldToObj74.z , 0.5 ) * ( 1.0 - step( worldToObj74.z , -0.5 ) ) ) ) * saturate( ( ( distance( IN.ase_texcoord4.xyz , float3( 0,0,0 ) ) - _FadeRadius ) / ( 0.0 - _FadeStrength ) ) ) ) ) * lerpResult136 ) );
 				float AlphaClipThreshold = 0.5;
 				float AlphaClipThresholdShadow = 0.5;
 
@@ -2146,14 +2146,14 @@ Shader "Scatter"
 			uniform float4 _CameraDepthTexture_TexelSize;
 
 
-					float2 voronoihash3_g12( float2 p )
+					float2 voronoihash3_g14( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi3_g12( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi3_g14( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -2164,7 +2164,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash3_g12( n + g );
+						 		float2 o = voronoihash3_g14( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -2197,14 +2197,14 @@ Shader "Scatter"
 				return result;
 			}
 			
-					float2 voronoihash3_g13( float2 p )
+					float2 voronoihash3_g15( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi3_g13( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi3_g15( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -2215,7 +2215,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash3_g13( n + g );
+						 		float2 o = voronoihash3_g15( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -2368,8 +2368,8 @@ Shader "Scatter"
 			half4 frag(VertexOutput IN ) : SV_TARGET
 			{
 				SurfaceDescription surfaceDescription = (SurfaceDescription)0;
-				float time3_g12 = 0.0;
-				float2 voronoiSmoothId3_g12 = 0;
+				float time3_g14 = 0.0;
+				float2 voronoiSmoothId3_g14 = 0;
 				float4 screenPos = IN.ase_texcoord;
 				float4 ase_screenPosNorm = screenPos / screenPos.w;
 				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
@@ -2391,18 +2391,18 @@ Shader "Scatter"
 				float4 appendResult49_g1 = (float4(localInvertDepthDirURP75_g1 , 1.0));
 				float4 temp_output_56_0 = mul( unity_CameraToWorld, appendResult49_g1 );
 				float2 temp_output_77_0 = (temp_output_56_0).xz;
-				float2 temp_output_2_0_g12 = ( (temp_output_77_0*_Scale1 + ( _TimeParameters.x * _Speed1 )) + float2( 0,0 ) );
-				float2 coords3_g12 = temp_output_2_0_g12 * 1.0;
-				float2 id3_g12 = 0;
-				float2 uv3_g12 = 0;
-				float voroi3_g12 = voronoi3_g12( coords3_g12, time3_g12, id3_g12, uv3_g12, 0, voronoiSmoothId3_g12 );
-				float time3_g13 = 0.0;
-				float2 voronoiSmoothId3_g13 = 0;
-				float2 temp_output_2_0_g13 = ( (temp_output_77_0*_Scale2 + ( _TimeParameters.x * _Speed2 )) + float2( 0,0 ) );
-				float2 coords3_g13 = temp_output_2_0_g13 * 1.0;
-				float2 id3_g13 = 0;
-				float2 uv3_g13 = 0;
-				float voroi3_g13 = voronoi3_g13( coords3_g13, time3_g13, id3_g13, uv3_g13, 0, voronoiSmoothId3_g13 );
+				float2 temp_output_2_0_g14 = ( (temp_output_77_0*_Scale1 + ( _TimeParameters.x * _Speed1 )) + float2( 0,0 ) );
+				float2 coords3_g14 = temp_output_2_0_g14 * 1.0;
+				float2 id3_g14 = 0;
+				float2 uv3_g14 = 0;
+				float voroi3_g14 = voronoi3_g14( coords3_g14, time3_g14, id3_g14, uv3_g14, 0, voronoiSmoothId3_g14 );
+				float time3_g15 = 0.0;
+				float2 voronoiSmoothId3_g15 = 0;
+				float2 temp_output_2_0_g15 = ( (temp_output_77_0*_Scale2 + ( _TimeParameters.x * _Speed2 )) + float2( 0,0 ) );
+				float2 coords3_g15 = temp_output_2_0_g15 * 1.0;
+				float2 id3_g15 = 0;
+				float2 uv3_g15 = 0;
+				float voroi3_g15 = voronoi3_g15( coords3_g15, time3_g15, id3_g15, uv3_g15, 0, voronoiSmoothId3_g15 );
 				float3 worldToObj74 = mul( GetWorldToObjectMatrix(), float4( temp_output_56_0.xyz, 1 ) ).xyz;
 				float4 ase_grabScreenPos = ASE_ComputeGrabScreenPos( screenPos );
 				float4 ase_grabScreenPosNorm = ase_grabScreenPos / ase_grabScreenPos.w;
@@ -2410,7 +2410,7 @@ Shader "Scatter"
 				float grayscale143 = Luminance(fetchOpaqueVal135.rgb);
 				float lerpResult136 = lerp( 1.0 , grayscale143 , _LumStrength);
 				
-				surfaceDescription.Alpha = saturate( ( ( ( min( voroi3_g12 , voroi3_g13 ) * _Strength1 ) * ( ( ( step( worldToObj74.x , 0.5 ) * ( 1.0 - step( worldToObj74.x , -0.5 ) ) ) * ( step( worldToObj74.y , 0.5 ) * ( 1.0 - step( worldToObj74.y , -0.5 ) ) ) * ( step( worldToObj74.z , 0.5 ) * ( 1.0 - step( worldToObj74.z , -0.5 ) ) ) ) * saturate( ( ( distance( IN.ase_texcoord1.xyz , float3( 0,0,0 ) ) - _FadeRadius ) / ( 0.0 - _FadeStrength ) ) ) ) ) * lerpResult136 ) );
+				surfaceDescription.Alpha = saturate( ( ( ( min( voroi3_g14 , voroi3_g15 ) * _Strength1 ) * ( ( ( step( worldToObj74.x , 0.5 ) * ( 1.0 - step( worldToObj74.x , -0.5 ) ) ) * ( step( worldToObj74.y , 0.5 ) * ( 1.0 - step( worldToObj74.y , -0.5 ) ) ) * ( step( worldToObj74.z , 0.5 ) * ( 1.0 - step( worldToObj74.z , -0.5 ) ) ) ) * saturate( ( ( distance( IN.ase_texcoord1.xyz , float3( 0,0,0 ) ) - _FadeRadius ) / ( 0.0 - _FadeStrength ) ) ) ) ) * lerpResult136 ) );
 				surfaceDescription.AlphaClipThreshold = 0.5;
 
 
@@ -2506,14 +2506,14 @@ Shader "Scatter"
 			uniform float4 _CameraDepthTexture_TexelSize;
 
 
-					float2 voronoihash3_g12( float2 p )
+					float2 voronoihash3_g14( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi3_g12( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi3_g14( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -2524,7 +2524,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash3_g12( n + g );
+						 		float2 o = voronoihash3_g14( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -2557,14 +2557,14 @@ Shader "Scatter"
 				return result;
 			}
 			
-					float2 voronoihash3_g13( float2 p )
+					float2 voronoihash3_g15( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi3_g13( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi3_g15( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -2575,7 +2575,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash3_g13( n + g );
+						 		float2 o = voronoihash3_g15( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -2729,8 +2729,8 @@ Shader "Scatter"
 			half4 frag(VertexOutput IN ) : SV_TARGET
 			{
 				SurfaceDescription surfaceDescription = (SurfaceDescription)0;
-				float time3_g12 = 0.0;
-				float2 voronoiSmoothId3_g12 = 0;
+				float time3_g14 = 0.0;
+				float2 voronoiSmoothId3_g14 = 0;
 				float4 screenPos = IN.ase_texcoord;
 				float4 ase_screenPosNorm = screenPos / screenPos.w;
 				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
@@ -2752,18 +2752,18 @@ Shader "Scatter"
 				float4 appendResult49_g1 = (float4(localInvertDepthDirURP75_g1 , 1.0));
 				float4 temp_output_56_0 = mul( unity_CameraToWorld, appendResult49_g1 );
 				float2 temp_output_77_0 = (temp_output_56_0).xz;
-				float2 temp_output_2_0_g12 = ( (temp_output_77_0*_Scale1 + ( _TimeParameters.x * _Speed1 )) + float2( 0,0 ) );
-				float2 coords3_g12 = temp_output_2_0_g12 * 1.0;
-				float2 id3_g12 = 0;
-				float2 uv3_g12 = 0;
-				float voroi3_g12 = voronoi3_g12( coords3_g12, time3_g12, id3_g12, uv3_g12, 0, voronoiSmoothId3_g12 );
-				float time3_g13 = 0.0;
-				float2 voronoiSmoothId3_g13 = 0;
-				float2 temp_output_2_0_g13 = ( (temp_output_77_0*_Scale2 + ( _TimeParameters.x * _Speed2 )) + float2( 0,0 ) );
-				float2 coords3_g13 = temp_output_2_0_g13 * 1.0;
-				float2 id3_g13 = 0;
-				float2 uv3_g13 = 0;
-				float voroi3_g13 = voronoi3_g13( coords3_g13, time3_g13, id3_g13, uv3_g13, 0, voronoiSmoothId3_g13 );
+				float2 temp_output_2_0_g14 = ( (temp_output_77_0*_Scale1 + ( _TimeParameters.x * _Speed1 )) + float2( 0,0 ) );
+				float2 coords3_g14 = temp_output_2_0_g14 * 1.0;
+				float2 id3_g14 = 0;
+				float2 uv3_g14 = 0;
+				float voroi3_g14 = voronoi3_g14( coords3_g14, time3_g14, id3_g14, uv3_g14, 0, voronoiSmoothId3_g14 );
+				float time3_g15 = 0.0;
+				float2 voronoiSmoothId3_g15 = 0;
+				float2 temp_output_2_0_g15 = ( (temp_output_77_0*_Scale2 + ( _TimeParameters.x * _Speed2 )) + float2( 0,0 ) );
+				float2 coords3_g15 = temp_output_2_0_g15 * 1.0;
+				float2 id3_g15 = 0;
+				float2 uv3_g15 = 0;
+				float voroi3_g15 = voronoi3_g15( coords3_g15, time3_g15, id3_g15, uv3_g15, 0, voronoiSmoothId3_g15 );
 				float3 worldToObj74 = mul( GetWorldToObjectMatrix(), float4( temp_output_56_0.xyz, 1 ) ).xyz;
 				float4 ase_grabScreenPos = ASE_ComputeGrabScreenPos( screenPos );
 				float4 ase_grabScreenPosNorm = ase_grabScreenPos / ase_grabScreenPos.w;
@@ -2771,7 +2771,7 @@ Shader "Scatter"
 				float grayscale143 = Luminance(fetchOpaqueVal135.rgb);
 				float lerpResult136 = lerp( 1.0 , grayscale143 , _LumStrength);
 				
-				surfaceDescription.Alpha = saturate( ( ( ( min( voroi3_g12 , voroi3_g13 ) * _Strength1 ) * ( ( ( step( worldToObj74.x , 0.5 ) * ( 1.0 - step( worldToObj74.x , -0.5 ) ) ) * ( step( worldToObj74.y , 0.5 ) * ( 1.0 - step( worldToObj74.y , -0.5 ) ) ) * ( step( worldToObj74.z , 0.5 ) * ( 1.0 - step( worldToObj74.z , -0.5 ) ) ) ) * saturate( ( ( distance( IN.ase_texcoord1.xyz , float3( 0,0,0 ) ) - _FadeRadius ) / ( 0.0 - _FadeStrength ) ) ) ) ) * lerpResult136 ) );
+				surfaceDescription.Alpha = saturate( ( ( ( min( voroi3_g14 , voroi3_g15 ) * _Strength1 ) * ( ( ( step( worldToObj74.x , 0.5 ) * ( 1.0 - step( worldToObj74.x , -0.5 ) ) ) * ( step( worldToObj74.y , 0.5 ) * ( 1.0 - step( worldToObj74.y , -0.5 ) ) ) * ( step( worldToObj74.z , 0.5 ) * ( 1.0 - step( worldToObj74.z , -0.5 ) ) ) ) * saturate( ( ( distance( IN.ase_texcoord1.xyz , float3( 0,0,0 ) ) - _FadeRadius ) / ( 0.0 - _FadeStrength ) ) ) ) ) * lerpResult136 ) );
 				surfaceDescription.AlphaClipThreshold = 0.5;
 
 
@@ -2876,14 +2876,14 @@ Shader "Scatter"
 			uniform float4 _CameraDepthTexture_TexelSize;
 
 
-					float2 voronoihash3_g12( float2 p )
+					float2 voronoihash3_g14( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi3_g12( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi3_g14( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -2894,7 +2894,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash3_g12( n + g );
+						 		float2 o = voronoihash3_g14( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -2927,14 +2927,14 @@ Shader "Scatter"
 				return result;
 			}
 			
-					float2 voronoihash3_g13( float2 p )
+					float2 voronoihash3_g15( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi3_g13( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi3_g15( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -2945,7 +2945,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash3_g13( n + g );
+						 		float2 o = voronoihash3_g15( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -3098,8 +3098,8 @@ Shader "Scatter"
 			half4 frag(VertexOutput IN ) : SV_TARGET
 			{
 				SurfaceDescription surfaceDescription = (SurfaceDescription)0;
-				float time3_g12 = 0.0;
-				float2 voronoiSmoothId3_g12 = 0;
+				float time3_g14 = 0.0;
+				float2 voronoiSmoothId3_g14 = 0;
 				float4 screenPos = IN.ase_texcoord1;
 				float4 ase_screenPosNorm = screenPos / screenPos.w;
 				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
@@ -3121,18 +3121,18 @@ Shader "Scatter"
 				float4 appendResult49_g1 = (float4(localInvertDepthDirURP75_g1 , 1.0));
 				float4 temp_output_56_0 = mul( unity_CameraToWorld, appendResult49_g1 );
 				float2 temp_output_77_0 = (temp_output_56_0).xz;
-				float2 temp_output_2_0_g12 = ( (temp_output_77_0*_Scale1 + ( _TimeParameters.x * _Speed1 )) + float2( 0,0 ) );
-				float2 coords3_g12 = temp_output_2_0_g12 * 1.0;
-				float2 id3_g12 = 0;
-				float2 uv3_g12 = 0;
-				float voroi3_g12 = voronoi3_g12( coords3_g12, time3_g12, id3_g12, uv3_g12, 0, voronoiSmoothId3_g12 );
-				float time3_g13 = 0.0;
-				float2 voronoiSmoothId3_g13 = 0;
-				float2 temp_output_2_0_g13 = ( (temp_output_77_0*_Scale2 + ( _TimeParameters.x * _Speed2 )) + float2( 0,0 ) );
-				float2 coords3_g13 = temp_output_2_0_g13 * 1.0;
-				float2 id3_g13 = 0;
-				float2 uv3_g13 = 0;
-				float voroi3_g13 = voronoi3_g13( coords3_g13, time3_g13, id3_g13, uv3_g13, 0, voronoiSmoothId3_g13 );
+				float2 temp_output_2_0_g14 = ( (temp_output_77_0*_Scale1 + ( _TimeParameters.x * _Speed1 )) + float2( 0,0 ) );
+				float2 coords3_g14 = temp_output_2_0_g14 * 1.0;
+				float2 id3_g14 = 0;
+				float2 uv3_g14 = 0;
+				float voroi3_g14 = voronoi3_g14( coords3_g14, time3_g14, id3_g14, uv3_g14, 0, voronoiSmoothId3_g14 );
+				float time3_g15 = 0.0;
+				float2 voronoiSmoothId3_g15 = 0;
+				float2 temp_output_2_0_g15 = ( (temp_output_77_0*_Scale2 + ( _TimeParameters.x * _Speed2 )) + float2( 0,0 ) );
+				float2 coords3_g15 = temp_output_2_0_g15 * 1.0;
+				float2 id3_g15 = 0;
+				float2 uv3_g15 = 0;
+				float voroi3_g15 = voronoi3_g15( coords3_g15, time3_g15, id3_g15, uv3_g15, 0, voronoiSmoothId3_g15 );
 				float3 worldToObj74 = mul( GetWorldToObjectMatrix(), float4( temp_output_56_0.xyz, 1 ) ).xyz;
 				float4 ase_grabScreenPos = ASE_ComputeGrabScreenPos( screenPos );
 				float4 ase_grabScreenPosNorm = ase_grabScreenPos / ase_grabScreenPos.w;
@@ -3140,7 +3140,7 @@ Shader "Scatter"
 				float grayscale143 = Luminance(fetchOpaqueVal135.rgb);
 				float lerpResult136 = lerp( 1.0 , grayscale143 , _LumStrength);
 				
-				surfaceDescription.Alpha = saturate( ( ( ( min( voroi3_g12 , voroi3_g13 ) * _Strength1 ) * ( ( ( step( worldToObj74.x , 0.5 ) * ( 1.0 - step( worldToObj74.x , -0.5 ) ) ) * ( step( worldToObj74.y , 0.5 ) * ( 1.0 - step( worldToObj74.y , -0.5 ) ) ) * ( step( worldToObj74.z , 0.5 ) * ( 1.0 - step( worldToObj74.z , -0.5 ) ) ) ) * saturate( ( ( distance( IN.ase_texcoord2.xyz , float3( 0,0,0 ) ) - _FadeRadius ) / ( 0.0 - _FadeStrength ) ) ) ) ) * lerpResult136 ) );
+				surfaceDescription.Alpha = saturate( ( ( ( min( voroi3_g14 , voroi3_g15 ) * _Strength1 ) * ( ( ( step( worldToObj74.x , 0.5 ) * ( 1.0 - step( worldToObj74.x , -0.5 ) ) ) * ( step( worldToObj74.y , 0.5 ) * ( 1.0 - step( worldToObj74.y , -0.5 ) ) ) * ( step( worldToObj74.z , 0.5 ) * ( 1.0 - step( worldToObj74.z , -0.5 ) ) ) ) * saturate( ( ( distance( IN.ase_texcoord2.xyz , float3( 0,0,0 ) ) - _FadeRadius ) / ( 0.0 - _FadeStrength ) ) ) ) ) * lerpResult136 ) );
 				surfaceDescription.AlphaClipThreshold = 0.5;
 
 				#if _ALPHATEST_ON
@@ -3242,14 +3242,14 @@ Shader "Scatter"
 			uniform float4 _CameraDepthTexture_TexelSize;
 
 
-					float2 voronoihash3_g12( float2 p )
+					float2 voronoihash3_g14( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi3_g12( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi3_g14( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -3260,7 +3260,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash3_g12( n + g );
+						 		float2 o = voronoihash3_g14( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -3293,14 +3293,14 @@ Shader "Scatter"
 				return result;
 			}
 			
-					float2 voronoihash3_g13( float2 p )
+					float2 voronoihash3_g15( float2 p )
 					{
 						
 						p = float2( dot( p, float2( 127.1, 311.7 ) ), dot( p, float2( 269.5, 183.3 ) ) );
 						return frac( sin( p ) *43758.5453);
 					}
 			
-					float voronoi3_g13( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
+					float voronoi3_g15( float2 v, float time, inout float2 id, inout float2 mr, float smoothness, inout float2 smoothId )
 					{
 						float2 n = floor( v );
 						float2 f = frac( v );
@@ -3311,7 +3311,7 @@ Shader "Scatter"
 							for ( int i = -1; i <= 1; i++ )
 						 	{
 						 		float2 g = float2( i, j );
-						 		float2 o = voronoihash3_g13( n + g );
+						 		float2 o = voronoihash3_g15( n + g );
 								o = ( sin( time + o * 6.2831 ) * 0.5 + 0.5 ); float2 r = f - g - o;
 								float d = 0.5 * dot( r, r );
 						 		if( d<F1 ) {
@@ -3463,8 +3463,8 @@ Shader "Scatter"
 			half4 frag(VertexOutput IN ) : SV_TARGET
 			{
 				SurfaceDescription surfaceDescription = (SurfaceDescription)0;
-				float time3_g12 = 0.0;
-				float2 voronoiSmoothId3_g12 = 0;
+				float time3_g14 = 0.0;
+				float2 voronoiSmoothId3_g14 = 0;
 				float4 screenPos = IN.ase_texcoord1;
 				float4 ase_screenPosNorm = screenPos / screenPos.w;
 				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
@@ -3486,18 +3486,18 @@ Shader "Scatter"
 				float4 appendResult49_g1 = (float4(localInvertDepthDirURP75_g1 , 1.0));
 				float4 temp_output_56_0 = mul( unity_CameraToWorld, appendResult49_g1 );
 				float2 temp_output_77_0 = (temp_output_56_0).xz;
-				float2 temp_output_2_0_g12 = ( (temp_output_77_0*_Scale1 + ( _TimeParameters.x * _Speed1 )) + float2( 0,0 ) );
-				float2 coords3_g12 = temp_output_2_0_g12 * 1.0;
-				float2 id3_g12 = 0;
-				float2 uv3_g12 = 0;
-				float voroi3_g12 = voronoi3_g12( coords3_g12, time3_g12, id3_g12, uv3_g12, 0, voronoiSmoothId3_g12 );
-				float time3_g13 = 0.0;
-				float2 voronoiSmoothId3_g13 = 0;
-				float2 temp_output_2_0_g13 = ( (temp_output_77_0*_Scale2 + ( _TimeParameters.x * _Speed2 )) + float2( 0,0 ) );
-				float2 coords3_g13 = temp_output_2_0_g13 * 1.0;
-				float2 id3_g13 = 0;
-				float2 uv3_g13 = 0;
-				float voroi3_g13 = voronoi3_g13( coords3_g13, time3_g13, id3_g13, uv3_g13, 0, voronoiSmoothId3_g13 );
+				float2 temp_output_2_0_g14 = ( (temp_output_77_0*_Scale1 + ( _TimeParameters.x * _Speed1 )) + float2( 0,0 ) );
+				float2 coords3_g14 = temp_output_2_0_g14 * 1.0;
+				float2 id3_g14 = 0;
+				float2 uv3_g14 = 0;
+				float voroi3_g14 = voronoi3_g14( coords3_g14, time3_g14, id3_g14, uv3_g14, 0, voronoiSmoothId3_g14 );
+				float time3_g15 = 0.0;
+				float2 voronoiSmoothId3_g15 = 0;
+				float2 temp_output_2_0_g15 = ( (temp_output_77_0*_Scale2 + ( _TimeParameters.x * _Speed2 )) + float2( 0,0 ) );
+				float2 coords3_g15 = temp_output_2_0_g15 * 1.0;
+				float2 id3_g15 = 0;
+				float2 uv3_g15 = 0;
+				float voroi3_g15 = voronoi3_g15( coords3_g15, time3_g15, id3_g15, uv3_g15, 0, voronoiSmoothId3_g15 );
 				float3 worldToObj74 = mul( GetWorldToObjectMatrix(), float4( temp_output_56_0.xyz, 1 ) ).xyz;
 				float4 ase_grabScreenPos = ASE_ComputeGrabScreenPos( screenPos );
 				float4 ase_grabScreenPosNorm = ase_grabScreenPos / ase_grabScreenPos.w;
@@ -3505,7 +3505,7 @@ Shader "Scatter"
 				float grayscale143 = Luminance(fetchOpaqueVal135.rgb);
 				float lerpResult136 = lerp( 1.0 , grayscale143 , _LumStrength);
 				
-				surfaceDescription.Alpha = saturate( ( ( ( min( voroi3_g12 , voroi3_g13 ) * _Strength1 ) * ( ( ( step( worldToObj74.x , 0.5 ) * ( 1.0 - step( worldToObj74.x , -0.5 ) ) ) * ( step( worldToObj74.y , 0.5 ) * ( 1.0 - step( worldToObj74.y , -0.5 ) ) ) * ( step( worldToObj74.z , 0.5 ) * ( 1.0 - step( worldToObj74.z , -0.5 ) ) ) ) * saturate( ( ( distance( IN.ase_texcoord2.xyz , float3( 0,0,0 ) ) - _FadeRadius ) / ( 0.0 - _FadeStrength ) ) ) ) ) * lerpResult136 ) );
+				surfaceDescription.Alpha = saturate( ( ( ( min( voroi3_g14 , voroi3_g15 ) * _Strength1 ) * ( ( ( step( worldToObj74.x , 0.5 ) * ( 1.0 - step( worldToObj74.x , -0.5 ) ) ) * ( step( worldToObj74.y , 0.5 ) * ( 1.0 - step( worldToObj74.y , -0.5 ) ) ) * ( step( worldToObj74.z , 0.5 ) * ( 1.0 - step( worldToObj74.z , -0.5 ) ) ) ) * saturate( ( ( distance( IN.ase_texcoord2.xyz , float3( 0,0,0 ) ) - _FadeRadius ) / ( 0.0 - _FadeStrength ) ) ) ) ) * lerpResult136 ) );
 				surfaceDescription.AlphaClipThreshold = 0.5;
 				
 				#if _ALPHATEST_ON
@@ -3532,118 +3532,118 @@ Shader "Scatter"
 }
 /*ASEBEGIN
 Version=18935
-613;507;1384;480;-300.2291;79.55002;1;True;True
-Node;AmplifyShaderEditor.FunctionNode;56;-1766.816,119.6612;Inherit;False;Reconstruct World Position From Depth;-1;;1;e7094bcbcc80eb140b2a3dbe6a861de8;0;0;1;FLOAT4;0
+776;121.5;1908;978;1444.879;871.901;2.484772;True;True
+Node;AmplifyShaderEditor.FunctionNode;56;-1908.376,120.9599;Inherit;False;Reconstruct World Position From Depth;-1;;1;e7094bcbcc80eb140b2a3dbe6a861de8;0;0;1;FLOAT4;0
 Node;AmplifyShaderEditor.TransformPositionNode;74;-1319.315,114.8743;Inherit;False;World;Object;False;Fast;True;1;0;FLOAT3;0,0,0;False;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
+Node;AmplifyShaderEditor.BreakToComponentsNode;64;-1047.401,439.99;Inherit;False;FLOAT3;1;0;FLOAT3;0,0,0;False;16;FLOAT;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT;5;FLOAT;6;FLOAT;7;FLOAT;8;FLOAT;9;FLOAT;10;FLOAT;11;FLOAT;12;FLOAT;13;FLOAT;14;FLOAT;15
 Node;AmplifyShaderEditor.BreakToComponentsNode;63;-1045.956,268.0074;Inherit;False;FLOAT3;1;0;FLOAT3;0,0,0;False;16;FLOAT;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT;5;FLOAT;6;FLOAT;7;FLOAT;8;FLOAT;9;FLOAT;10;FLOAT;11;FLOAT;12;FLOAT;13;FLOAT;14;FLOAT;15
-Node;AmplifyShaderEditor.SimpleTimeNode;106;-1847.732,-557.3467;Inherit;False;1;0;FLOAT;1;False;1;FLOAT;0
-Node;AmplifyShaderEditor.SimpleTimeNode;112;-1841.819,-386.1343;Inherit;False;1;0;FLOAT;1;False;1;FLOAT;0
+Node;AmplifyShaderEditor.PosVertexDataNode;156;-1104.874,-238.37;Inherit;False;0;0;5;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.RangedFloatNode;111;-1675.097,-371.4035;Inherit;False;Property;_Speed2;Speed2;4;0;Create;True;0;0;0;False;0;False;0.6;0;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleTimeNode;106;-1847.732,-557.3467;Inherit;False;1;0;FLOAT;1;False;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode;108;-1681.01,-542.6159;Inherit;False;Property;_Speed1;Speed1;3;0;Create;True;0;0;0;False;0;False;0.5;0;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.BreakToComponentsNode;62;-1047.394,66.64597;Inherit;False;FLOAT3;1;0;FLOAT3;0,0,0;False;16;FLOAT;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT;5;FLOAT;6;FLOAT;7;FLOAT;8;FLOAT;9;FLOAT;10;FLOAT;11;FLOAT;12;FLOAT;13;FLOAT;14;FLOAT;15
-Node;AmplifyShaderEditor.PosVertexDataNode;156;-1104.874,-238.37;Inherit;False;0;0;5;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.BreakToComponentsNode;64;-1047.401,439.99;Inherit;False;FLOAT3;1;0;FLOAT3;0,0,0;False;16;FLOAT;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT;5;FLOAT;6;FLOAT;7;FLOAT;8;FLOAT;9;FLOAT;10;FLOAT;11;FLOAT;12;FLOAT;13;FLOAT;14;FLOAT;15
-Node;AmplifyShaderEditor.DistanceOpNode;150;-923.5912,-238.2825;Inherit;False;2;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode;110;-1398.738,-587.7106;Inherit;False;Property;_Scale1;Scale1;5;0;Create;True;0;0;0;False;0;False;1;1;0;0;0;1;FLOAT;0
-Node;AmplifyShaderEditor.SimpleMultiplyOpNode;113;-1517.944,-388.8649;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.SimpleMultiplyOpNode;107;-1523.857,-560.0773;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.StepOpNode;49;-909.8502,485.1341;Inherit;False;2;0;FLOAT;-0.5;False;1;FLOAT;-0.5;False;1;FLOAT;0
-Node;AmplifyShaderEditor.StepOpNode;48;-912.5088,291.0442;Inherit;False;2;0;FLOAT;-0.5;False;1;FLOAT;-0.5;False;1;FLOAT;0
-Node;AmplifyShaderEditor.ComponentMaskNode;77;-1379.109,-500.9186;Inherit;False;True;False;True;False;1;0;FLOAT4;0,0,0,0;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.RangedFloatNode;115;-1392.825,-416.4982;Inherit;False;Property;_Scale2;Scale2;6;0;Create;True;0;0;0;False;0;False;-1;1;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleTimeNode;112;-1841.819,-386.1343;Inherit;False;1;0;FLOAT;1;False;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode;161;-927.6125,-63.55846;Inherit;False;Property;_FadeStrength;FadeStrength;11;0;Create;True;0;0;0;False;0;False;1;0;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.StepOpNode;48;-912.5088,291.0442;Inherit;False;2;0;FLOAT;-0.5;False;1;FLOAT;-0.5;False;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode;160;-922.6239,-137.238;Inherit;False;Property;_FadeRadius;FadeRadius;10;0;Create;True;0;0;0;False;0;False;1;0;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleMultiplyOpNode;113;-1517.944,-388.8649;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode;115;-1392.825,-416.4982;Inherit;False;Property;_Scale2;Scale2;6;0;Create;True;0;0;0;False;0;False;-1;1;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode;110;-1398.738,-587.7106;Inherit;False;Property;_Scale1;Scale1;5;0;Create;True;0;0;0;False;0;False;1;1;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.StepOpNode;49;-909.8502,485.1341;Inherit;False;2;0;FLOAT;-0.5;False;1;FLOAT;-0.5;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleMultiplyOpNode;107;-1523.857,-560.0773;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.StepOpNode;47;-911.4443,115.0336;Inherit;False;2;0;FLOAT;-0.5;False;1;FLOAT;-0.5;False;1;FLOAT;0
+Node;AmplifyShaderEditor.DistanceOpNode;150;-923.5912,-238.2825;Inherit;False;2;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.ComponentMaskNode;77;-1379.109,-500.9186;Inherit;False;True;False;True;False;1;0;FLOAT4;0,0,0,0;False;1;FLOAT2;0
 Node;AmplifyShaderEditor.StepOpNode;37;-911.2548,385.6068;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0.5;False;1;FLOAT;0
-Node;AmplifyShaderEditor.StepOpNode;36;-914.2368,201.9888;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0.5;False;1;FLOAT;0
-Node;AmplifyShaderEditor.OneMinusNode;38;-766.9205,114.3978;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.SimpleSubtractOpNode;159;-685.4454,-238.1726;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.OneMinusNode;39;-765.7191,290.9553;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.OneMinusNode;40;-765.3795,485.0809;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.SimpleSubtractOpNode;162;-685.4597,-81.79111;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.StepOpNode;35;-909.8327,18.4801;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0.5;False;1;FLOAT;0
 Node;AmplifyShaderEditor.ScaleAndOffsetNode;114;-1126.759,-433.5035;Inherit;False;3;0;FLOAT2;0,0;False;1;FLOAT;1;False;2;FLOAT;0;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.OneMinusNode;38;-766.9205,114.3978;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.ScaleAndOffsetNode;105;-1132.671,-604.7159;Inherit;False;3;0;FLOAT2;0,0;False;1;FLOAT;1;False;2;FLOAT;0;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.FunctionNode;140;-846.7195,-604.8508;Inherit;False;Scatter;0;;12;2414e4bbf2f59124ab92fdea41b9839d;0;1;1;FLOAT2;0,0;False;2;FLOAT;14;FLOAT3;0
-Node;AmplifyShaderEditor.SimpleMultiplyOpNode;43;-547.8262,17.8188;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.FunctionNode;141;-843.7393,-432.8439;Inherit;False;Scatter;0;;13;2414e4bbf2f59124ab92fdea41b9839d;0;1;1;FLOAT2;0,0;False;2;FLOAT;14;FLOAT3;0
-Node;AmplifyShaderEditor.SimpleMultiplyOpNode;44;-547.7128,201.1589;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.SimpleDivideOpNode;158;-490.7953,-104.9602;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleSubtractOpNode;162;-685.4597,-81.79111;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.OneMinusNode;39;-765.7191,290.9553;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleSubtractOpNode;159;-685.4454,-238.1726;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.OneMinusNode;40;-765.3795,485.0809;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.StepOpNode;36;-914.2368,201.9888;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0.5;False;1;FLOAT;0
+Node;AmplifyShaderEditor.FunctionNode;140;-846.7195,-604.8508;Inherit;False;Scatter;0;;14;2414e4bbf2f59124ab92fdea41b9839d;0;1;1;FLOAT2;0,0;False;2;FLOAT;14;FLOAT3;0
+Node;AmplifyShaderEditor.FunctionNode;141;-843.7393,-432.8439;Inherit;False;Scatter;0;;15;2414e4bbf2f59124ab92fdea41b9839d;0;1;1;FLOAT2;0,0;False;2;FLOAT;14;FLOAT3;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;45;-549.3654,385.2358;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.SimpleMultiplyOpNode;54;-341.5047,178.53;Inherit;True;3;3;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.SimpleMinOpNode;130;-582.4983,-603.4711;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.ScreenColorNode;135;-107.1609,296.2764;Inherit;False;Global;_GrabScreen0;Grab Screen 0;7;0;Create;True;0;0;0;False;0;False;Object;-1;False;False;False;False;2;0;FLOAT2;0,0;False;1;FLOAT;0;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.SimpleDivideOpNode;158;-490.7953,-104.9602;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleMultiplyOpNode;43;-547.8262,17.8188;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleMultiplyOpNode;44;-547.7128,201.1589;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SaturateNode;157;-274.7086,89.89307;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleMinOpNode;130;-582.4983,-603.4711;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode;145;-590.3096,-688.4789;Inherit;False;Property;_Strength1;Strength1;8;0;Create;True;0;0;0;False;0;False;2;0;0;0;0;1;FLOAT;0
-Node;AmplifyShaderEditor.SimpleMultiplyOpNode;146;-399.7076,-603.4748;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.SimpleMultiplyOpNode;163;-33.44647,179.0148;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;1;False;1;FLOAT;0
-Node;AmplifyShaderEditor.TFHCGrayscale;143;68.40637,291.1337;Inherit;False;0;1;0;FLOAT3;0,0,0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleMultiplyOpNode;54;-341.5047,178.53;Inherit;True;3;3;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.ScreenColorNode;135;-107.1609,296.2764;Inherit;False;Global;_GrabScreen0;Grab Screen 0;7;0;Create;True;0;0;0;False;0;False;Object;-1;False;False;False;False;2;0;FLOAT2;0,0;False;1;FLOAT;0;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.RangedFloatNode;137;62.13845,408.3232;Inherit;False;Property;_LumStrength;LumStrength;9;0;Create;True;0;0;0;False;0;False;0.5;0.5;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleMultiplyOpNode;163;-33.44647,179.0148;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;1;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleMultiplyOpNode;146;-399.7076,-603.4748;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.TFHCGrayscale;143;68.40637,291.1337;Inherit;False;0;1;0;FLOAT3;0,0,0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.LerpOp;136;252.1536,296.5805;Inherit;False;3;0;FLOAT;1;False;1;FLOAT;0;False;2;FLOAT;1;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;97;283.9504,154.7891;Inherit;False;2;2;0;FLOAT;1;False;1;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;138;484.2136,153.5596;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.SaturateNode;172;679.3604,153.5152;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMinOpNode;129;-581.0402,-432.6535;Inherit;False;2;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;1;FLOAT3;0
+Node;AmplifyShaderEditor.SaturateNode;172;679.3604,153.5152;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode;132;-592.8069,-329.8151;Inherit;False;Property;_Strength2;Strength2;7;0;Create;True;0;0;0;False;0;False;2;0;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;133;-396.4985,-432.6249;Inherit;False;2;2;0;FLOAT3;0,0,0;False;1;FLOAT;0;False;1;FLOAT3;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;0;0,0;Float;False;False;-1;2;UnityEditor.ShaderGraphUnlitGUI;0;3;New Amplify Shader;2992e84f91cbeb14eab234972e07ea9d;True;ExtraPrePass;0;0;ExtraPrePass;5;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;True;0;False;-1;False;False;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;False;False;False;False;True;3;RenderPipeline=UniversalPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;2;True;17;d3d9;d3d11;glcore;gles;gles3;metal;vulkan;xbox360;xboxone;xboxseries;ps4;playstation;psp2;n3ds;wiiu;switch;nomrt;0;False;True;1;1;False;-1;0;False;-1;0;1;False;-1;0;False;-1;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;True;True;True;True;True;0;False;-1;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;False;True;1;False;-1;True;3;False;-1;True;True;0;False;-1;0;False;-1;True;0;False;False;0;Hidden/InternalErrorShader;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;8;0,0;Float;False;False;-1;2;UnityEditor.ShaderGraphUnlitGUI;0;3;New Amplify Shader;2992e84f91cbeb14eab234972e07ea9d;True;DepthNormals;0;8;DepthNormals;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;True;0;False;-1;False;False;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;False;False;False;False;True;3;RenderPipeline=UniversalPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;2;True;17;d3d9;d3d11;glcore;gles;gles3;metal;vulkan;xbox360;xboxone;xboxseries;ps4;playstation;psp2;n3ds;wiiu;switch;nomrt;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;False;-1;True;3;False;-1;False;True;1;LightMode=DepthNormalsOnly;False;True;4;d3d11;glcore;gles;gles3;0;Hidden/InternalErrorShader;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;3;0,0;Float;False;False;-1;2;UnityEditor.ShaderGraphUnlitGUI;0;3;New Amplify Shader;2992e84f91cbeb14eab234972e07ea9d;True;DepthOnly;0;3;DepthOnly;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;True;0;False;-1;False;False;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;False;False;False;False;True;3;RenderPipeline=UniversalPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;2;True;17;d3d9;d3d11;glcore;gles;gles3;metal;vulkan;xbox360;xboxone;xboxseries;ps4;playstation;psp2;n3ds;wiiu;switch;nomrt;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;False;False;True;False;False;False;False;0;False;-1;False;False;False;False;False;False;False;False;False;True;1;False;-1;False;False;True;1;LightMode=DepthOnly;False;False;0;Hidden/InternalErrorShader;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;7;0,0;Float;False;False;-1;2;UnityEditor.ShaderGraphUnlitGUI;0;3;New Amplify Shader;2992e84f91cbeb14eab234972e07ea9d;True;ScenePickingPass;0;7;ScenePickingPass;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;True;0;False;-1;False;False;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;False;False;False;False;True;3;RenderPipeline=UniversalPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;2;True;17;d3d9;d3d11;glcore;gles;gles3;metal;vulkan;xbox360;xboxone;xboxseries;ps4;playstation;psp2;n3ds;wiiu;switch;nomrt;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=Picking;False;True;4;d3d11;glcore;gles;gles3;0;Hidden/InternalErrorShader;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;8;0,0;Float;False;False;-1;2;UnityEditor.ShaderGraphUnlitGUI;0;3;New Amplify Shader;2992e84f91cbeb14eab234972e07ea9d;True;DepthNormals;0;8;DepthNormals;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;True;0;False;-1;False;False;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;False;False;False;False;True;3;RenderPipeline=UniversalPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;2;True;17;d3d9;d3d11;glcore;gles;gles3;metal;vulkan;xbox360;xboxone;xboxseries;ps4;playstation;psp2;n3ds;wiiu;switch;nomrt;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;False;-1;True;3;False;-1;False;True;1;LightMode=DepthNormalsOnly;False;True;4;d3d11;glcore;gles;gles3;0;Hidden/InternalErrorShader;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;6;0,0;Float;False;False;-1;2;UnityEditor.ShaderGraphUnlitGUI;0;3;New Amplify Shader;2992e84f91cbeb14eab234972e07ea9d;True;SceneSelectionPass;0;6;SceneSelectionPass;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;True;0;False;-1;False;False;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;False;False;False;False;True;3;RenderPipeline=UniversalPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;2;True;17;d3d9;d3d11;glcore;gles;gles3;metal;vulkan;xbox360;xboxone;xboxseries;ps4;playstation;psp2;n3ds;wiiu;switch;nomrt;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;-1;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=SceneSelectionPass;False;True;4;d3d11;glcore;gles;gles3;0;Hidden/InternalErrorShader;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;5;0,0;Float;False;False;-1;2;UnityEditor.ShaderGraphUnlitGUI;0;3;New Amplify Shader;2992e84f91cbeb14eab234972e07ea9d;True;Universal2D;0;5;Universal2D;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;True;0;False;-1;False;False;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;False;False;False;False;True;3;RenderPipeline=UniversalPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;2;True;17;d3d9;d3d11;glcore;gles;gles3;metal;vulkan;xbox360;xboxone;xboxseries;ps4;playstation;psp2;n3ds;wiiu;switch;nomrt;0;False;True;1;5;False;-1;10;False;-1;1;1;False;-1;10;False;-1;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;True;True;True;True;0;False;-1;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;False;True;2;False;-1;True;7;False;-1;True;True;0;False;-1;0;False;-1;True;1;LightMode=Universal2D;False;False;0;Hidden/InternalErrorShader;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;9;0,0;Float;False;False;-1;2;UnityEditor.ShaderGraphUnlitGUI;0;3;New Amplify Shader;2992e84f91cbeb14eab234972e07ea9d;True;DepthNormalsOnly;0;9;DepthNormalsOnly;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;True;0;False;-1;False;False;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;False;False;False;False;True;3;RenderPipeline=UniversalPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;2;True;17;d3d9;d3d11;glcore;gles;gles3;metal;vulkan;xbox360;xboxone;xboxseries;ps4;playstation;psp2;n3ds;wiiu;switch;nomrt;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;False;-1;True;3;False;-1;False;True;1;LightMode=DepthNormalsOnly;False;True;15;d3d9;d3d11_9x;d3d11;metal;vulkan;xbox360;xboxone;xboxseries;ps4;playstation;psp2;n3ds;wiiu;switch;nomrt;0;Hidden/InternalErrorShader;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;1;894.889,129.8265;Float;False;True;-1;2;UnityEditor.ShaderGraphUnlitGUI;0;3;Scatter;2992e84f91cbeb14eab234972e07ea9d;True;Forward;0;1;Forward;8;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;True;1;False;-1;False;False;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;False;False;False;False;True;3;RenderPipeline=UniversalPipeline;RenderType=Transparent=RenderType;Queue=Transparent=Queue=0;True;2;True;17;d3d9;d3d11;glcore;gles;gles3;metal;vulkan;xbox360;xboxone;xboxseries;ps4;playstation;psp2;n3ds;wiiu;switch;nomrt;0;False;True;1;5;False;-1;10;False;-1;1;1;False;-1;10;False;-1;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;True;True;True;True;0;False;-1;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;True;True;2;False;-1;True;7;False;-1;True;True;0;False;-1;0;False;-1;True;1;LightMode=UniversalForwardOnly;False;False;0;Hidden/InternalErrorShader;0;0;Standard;22;Surface;1;638890411441930264;  Blend;0;0;Two Sided;2;638890411466546777;Cast Shadows;1;0;  Use Shadow Threshold;0;0;Receive Shadows;1;0;GPU Instancing;1;0;LOD CrossFade;0;0;Built-in Fog;0;0;DOTS Instancing;0;0;Meta Pass;0;0;Extra Pre Pass;0;0;Tessellation;0;0;  Phong;0;0;  Strength;0.5,False,-1;0;  Type;0;0;  Tess;16,False,-1;0;  Min;10,False,-1;0;  Max;25,False,-1;0;  Edge Length;16,False,-1;0;  Max Displacement;25,False,-1;0;Vertex Position,InvertActionOnDeselection;1;0;0;10;False;True;True;True;False;True;True;True;True;True;False;;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;2;0,0;Float;False;False;-1;2;UnityEditor.ShaderGraphUnlitGUI;0;3;New Amplify Shader;2992e84f91cbeb14eab234972e07ea9d;True;ShadowCaster;0;2;ShadowCaster;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;True;0;False;-1;False;False;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;False;False;False;False;True;3;RenderPipeline=UniversalPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;2;True;17;d3d9;d3d11;glcore;gles;gles3;metal;vulkan;xbox360;xboxone;xboxseries;ps4;playstation;psp2;n3ds;wiiu;switch;nomrt;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;False;False;True;False;False;False;False;0;False;-1;False;False;False;False;False;False;False;False;False;True;1;False;-1;True;3;False;-1;False;True;1;LightMode=ShadowCaster;False;False;0;Hidden/InternalErrorShader;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;4;0,0;Float;False;False;-1;2;UnityEditor.ShaderGraphUnlitGUI;0;3;New Amplify Shader;2992e84f91cbeb14eab234972e07ea9d;True;Meta;0;4;Meta;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;True;0;False;-1;False;False;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;False;False;False;False;True;3;RenderPipeline=UniversalPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;2;True;17;d3d9;d3d11;glcore;gles;gles3;metal;vulkan;xbox360;xboxone;xboxseries;ps4;playstation;psp2;n3ds;wiiu;switch;nomrt;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;-1;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=Meta;False;False;0;Hidden/InternalErrorShader;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;5;0,0;Float;False;False;-1;2;UnityEditor.ShaderGraphUnlitGUI;0;3;New Amplify Shader;2992e84f91cbeb14eab234972e07ea9d;True;Universal2D;0;5;Universal2D;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;True;0;False;-1;False;False;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;False;False;False;False;True;3;RenderPipeline=UniversalPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;2;True;17;d3d9;d3d11;glcore;gles;gles3;metal;vulkan;xbox360;xboxone;xboxseries;ps4;playstation;psp2;n3ds;wiiu;switch;nomrt;0;False;True;1;5;False;-1;10;False;-1;1;1;False;-1;10;False;-1;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;True;True;True;True;0;False;-1;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;False;True;2;False;-1;True;7;False;-1;True;True;0;False;-1;0;False;-1;True;1;LightMode=Universal2D;False;False;0;Hidden/InternalErrorShader;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;6;0,0;Float;False;False;-1;2;UnityEditor.ShaderGraphUnlitGUI;0;3;New Amplify Shader;2992e84f91cbeb14eab234972e07ea9d;True;SceneSelectionPass;0;6;SceneSelectionPass;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;True;0;False;-1;False;False;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;False;False;False;False;True;3;RenderPipeline=UniversalPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;2;True;17;d3d9;d3d11;glcore;gles;gles3;metal;vulkan;xbox360;xboxone;xboxseries;ps4;playstation;psp2;n3ds;wiiu;switch;nomrt;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;-1;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=SceneSelectionPass;False;True;4;d3d11;glcore;gles;gles3;0;Hidden/InternalErrorShader;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;1;894.889,129.8265;Float;False;True;-1;2;UnityEditor.ShaderGraphUnlitGUI;0;3;Scatter;2992e84f91cbeb14eab234972e07ea9d;True;Forward;0;1;Forward;8;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;True;1;False;-1;False;False;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;False;False;False;False;True;3;RenderPipeline=UniversalPipeline;RenderType=Transparent=RenderType;Queue=Transparent=Queue=0;True;2;True;17;d3d9;d3d11;glcore;gles;gles3;metal;vulkan;xbox360;xboxone;xboxseries;ps4;playstation;psp2;n3ds;wiiu;switch;nomrt;0;False;True;1;5;False;-1;10;False;-1;1;1;False;-1;10;False;-1;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;True;True;True;True;0;False;-1;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;True;True;2;False;-1;True;7;False;-1;True;True;0;False;-1;0;False;-1;True;1;LightMode=UniversalForwardOnly;False;False;0;Hidden/InternalErrorShader;0;0;Standard;22;Surface;1;638890411441930264;  Blend;0;0;Two Sided;2;638890411466546777;Cast Shadows;1;0;  Use Shadow Threshold;0;0;Receive Shadows;1;0;GPU Instancing;1;0;LOD CrossFade;0;0;Built-in Fog;0;0;DOTS Instancing;0;0;Meta Pass;0;0;Extra Pre Pass;0;0;Tessellation;0;0;  Phong;0;0;  Strength;0.5,False,-1;0;  Type;0;0;  Tess;16,False,-1;0;  Min;10,False,-1;0;  Max;25,False,-1;0;  Edge Length;16,False,-1;0;  Max Displacement;25,False,-1;0;Vertex Position,InvertActionOnDeselection;1;0;0;10;False;True;True;True;False;True;True;True;True;True;False;;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;9;0,0;Float;False;False;-1;2;UnityEditor.ShaderGraphUnlitGUI;0;3;New Amplify Shader;2992e84f91cbeb14eab234972e07ea9d;True;DepthNormalsOnly;0;9;DepthNormalsOnly;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;True;0;False;-1;False;False;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;False;False;False;False;True;3;RenderPipeline=UniversalPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;2;True;17;d3d9;d3d11;glcore;gles;gles3;metal;vulkan;xbox360;xboxone;xboxseries;ps4;playstation;psp2;n3ds;wiiu;switch;nomrt;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;False;-1;True;3;False;-1;False;True;1;LightMode=DepthNormalsOnly;False;True;15;d3d9;d3d11_9x;d3d11;metal;vulkan;xbox360;xboxone;xboxseries;ps4;playstation;psp2;n3ds;wiiu;switch;nomrt;0;Hidden/InternalErrorShader;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;0;0,0;Float;False;False;-1;2;UnityEditor.ShaderGraphUnlitGUI;0;3;New Amplify Shader;2992e84f91cbeb14eab234972e07ea9d;True;ExtraPrePass;0;0;ExtraPrePass;5;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;True;0;False;-1;False;False;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;False;False;False;False;True;3;RenderPipeline=UniversalPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;2;True;17;d3d9;d3d11;glcore;gles;gles3;metal;vulkan;xbox360;xboxone;xboxseries;ps4;playstation;psp2;n3ds;wiiu;switch;nomrt;0;False;True;1;1;False;-1;0;False;-1;0;1;False;-1;0;False;-1;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;True;True;True;True;True;0;False;-1;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;False;True;1;False;-1;True;3;False;-1;True;True;0;False;-1;0;False;-1;True;0;False;False;0;Hidden/InternalErrorShader;0;0;Standard;0;False;0
 WireConnection;74;0;56;0
+WireConnection;64;0;74;0
 WireConnection;63;0;74;0
 WireConnection;62;0;74;0
-WireConnection;64;0;74;0
-WireConnection;150;0;156;0
+WireConnection;48;0;63;1
 WireConnection;113;0;112;0
 WireConnection;113;1;111;0
+WireConnection;49;0;64;2
 WireConnection;107;0;106;0
 WireConnection;107;1;108;0
-WireConnection;49;0;64;2
-WireConnection;48;0;63;1
-WireConnection;77;0;56;0
 WireConnection;47;0;62;0
+WireConnection;150;0;156;0
+WireConnection;77;0;56;0
 WireConnection;37;0;64;2
-WireConnection;36;0;63;1
-WireConnection;38;0;47;0
-WireConnection;159;0;150;0
-WireConnection;159;1;160;0
-WireConnection;39;0;48;0
-WireConnection;40;0;49;0
-WireConnection;162;1;161;0
 WireConnection;35;0;62;0
 WireConnection;114;0;77;0
 WireConnection;114;1;115;0
 WireConnection;114;2;113;0
+WireConnection;38;0;47;0
 WireConnection;105;0;77;0
 WireConnection;105;1;110;0
 WireConnection;105;2;107;0
+WireConnection;162;1;161;0
+WireConnection;39;0;48;0
+WireConnection;159;0;150;0
+WireConnection;159;1;160;0
+WireConnection;40;0;49;0
+WireConnection;36;0;63;1
 WireConnection;140;1;105;0
-WireConnection;43;0;35;0
-WireConnection;43;1;38;0
 WireConnection;141;1;114;0
-WireConnection;44;0;36;0
-WireConnection;44;1;39;0
-WireConnection;158;0;159;0
-WireConnection;158;1;162;0
 WireConnection;45;0;37;0
 WireConnection;45;1;40;0
+WireConnection;158;0;159;0
+WireConnection;158;1;162;0
+WireConnection;43;0;35;0
+WireConnection;43;1;38;0
+WireConnection;44;0;36;0
+WireConnection;44;1;39;0
+WireConnection;157;0;158;0
+WireConnection;130;0;140;14
+WireConnection;130;1;141;14
 WireConnection;54;0;43;0
 WireConnection;54;1;44;0
 WireConnection;54;2;45;0
-WireConnection;130;0;140;14
-WireConnection;130;1;141;14
-WireConnection;157;0;158;0
-WireConnection;146;0;130;0
-WireConnection;146;1;145;0
 WireConnection;163;0;54;0
 WireConnection;163;1;157;0
+WireConnection;146;0;130;0
+WireConnection;146;1;145;0
 WireConnection;143;0;135;0
 WireConnection;136;1;143;0
 WireConnection;136;2;137;0
@@ -3651,12 +3651,12 @@ WireConnection;97;0;146;0
 WireConnection;97;1;163;0
 WireConnection;138;0;97;0
 WireConnection;138;1;136;0
-WireConnection;172;0;138;0
 WireConnection;129;0;140;0
 WireConnection;129;1;141;0
+WireConnection;172;0;138;0
 WireConnection;133;0;129;0
 WireConnection;133;1;132;0
 WireConnection;1;2;133;0
 WireConnection;1;3;172;0
 ASEEND*/
-//CHKSM=A3B3B2D2A0D00C714BBE22FE54B0BF92891C0ACD
+//CHKSM=4C6A025FB64D7A9CF96388082BA1B05C77E99CB0

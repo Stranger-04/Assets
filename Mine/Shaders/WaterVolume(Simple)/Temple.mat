@@ -50,7 +50,7 @@ Material:
     - _Foam_Amount: 0.6
     - _Foam_Cutoff: 2
     - _Foam_Speed: 0.05
-    - _Object_Color_Value: 5.14
+    - _Object_Color_Value: 10
     - _QueueControl: 0
     - _QueueOffset: 0
     - _Refraction_Speed: 0.05
