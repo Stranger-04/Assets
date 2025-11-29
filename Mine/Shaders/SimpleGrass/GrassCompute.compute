@@ -1,0 +1,55 @@
+#pragma kernel CSMain
+
+struct GrassProperties
+{
+    float3 offset;
+    float3 normal;
+    float height;
+};
+
+// Data Structures
+StructuredBuffer<float4x4> _MeshProperties;
+RWStructuredBuffer<GrassProperties> _GrassProperties;
+AppendStructuredBuffer<uint> _ClipProperties;
+
+// Parameters
+float3 _WindDirection;
+float _WindFrequency;
+float _WindStrength;
+float _WindScale;
+Texture2D<float4> _WindNoiseTexture; 
+SamplerState sampler_WindNoiseTexture;
+
+float3 _InteractionCenter;
+float4x4 _InteractionMatrix;
+Texture2D<float4> _InteractionTexture;
+SamplerState sampler_InteractionTexture;
+
+float _Time;
+int _GrassCount;
+
+[numthreads(64, 1, 1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    uint i = id.x;
+    if (i >= _GrassCount) return;
+    if (_GrassProperties[i].height > 0) _ClipProperties.Append(i);
+
+    // Calculate wind effect
+    float3 windDir = normalize(_WindDirection);
+    float3 positionWS = mul(_MeshProperties[i], float4(0,0,0,1)).xyz;
+    float2 uv = positionWS.xz * _WindScale - windDir.xz * _Time * _WindFrequency;
+    float wind = _WindNoiseTexture.SampleLevel(sampler_WindNoiseTexture, uv, 0).r;
+    float3 windEffect = wind * _WindStrength * windDir;
+
+    // Interaction
+    float4x4 interactionMatrix = _InteractionMatrix;
+    float3 interactionCenter = _InteractionCenter;
+    float2 interactionUV = mul(interactionMatrix, float4(positionWS.xyz - interactionCenter,1)).xz;
+    float interaction = _InteractionTexture.SampleLevel(sampler_InteractionTexture, interactionUV, 0).r;
+    float3 interactionEffect = float3(0, interaction, 0);
+
+    float3 totalEffect = saturate(windEffect - interactionEffect) * _GrassProperties[i].height; 
+
+    _GrassProperties[i].offset = totalEffect;
+}

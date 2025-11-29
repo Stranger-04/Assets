@@ -54,7 +54,8 @@ MonoBehaviour:
   m_RendererFeatures:
   - {fileID: -1878332245247344467}
   - {fileID: 4027723568076841694}
-  m_RendererFeatureMap: adc0de57c6d2eee5de62b0d03e59e537
+  - {fileID: 4820113590001359770}
+  m_RendererFeatureMap: adc0de57c6d2eee5de62b0d03e59e5379a5b10a5c57be442
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -91,7 +92,7 @@ MonoBehaviour:
     passOperation: 2
     failOperation: 0
     zFailOperation: 0
-  m_ShadowTransparentReceive: 1
+  m_ShadowTransparentReceive: 0
   m_RenderingMode: 0
   m_DepthPrimingMode: 0
   m_CopyDepthMode: 0
@@ -139,3 +140,23 @@ MonoBehaviour:
       restoreCamera: 1
       offset: {x: 0, y: 0, z: 0, w: 0}
       cameraFieldOfView: 60
+--- !u!114 &4820113590001359770
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59babb7daa8e46c42843fb05f3114ff5, type: 3}
+  m_Name: SSRFeature
+  m_EditorClassIdentifier: 
+  m_Active: 0
+  settings:
+    ssrShader: {fileID: 0}
+    stepSize: 0.2
+    maxDistance: 50
+    maxSteps: 64
+    thickness: 0.05
+    smoothness: 1

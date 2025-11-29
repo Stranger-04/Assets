@@ -12,7 +12,8 @@ Material:
     type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _REFLECTION_ON
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -24,8 +25,16 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _NormalMap:
+        m_Texture: {fileID: 2800000, guid: e134143e99ca43b41a2b51619bad5a14, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Reflection_Cube:
+        m_Texture: {fileID: 8900000, guid: 855a8a5562f4f6d4dbe49367ef69d743, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _SampleCubemap_bce661c78522415ea9071000c8ed6378_Cube_1_Cubemap:
-        m_Texture: {fileID: 8900000, guid: 23dd56558970be343b8d4c84bd115511, type: 3}
+        m_Texture: {fileID: 8900000, guid: b04e08f0809bcad40af1b372a47bbd71, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SampleTexture2D_007b1558c86c4d0aa4e908bc9064e118_Texture_1_Texture2D:
@@ -65,12 +74,14 @@ Material:
     - _Alpha: 1
     - _BlinnPhong_On: 1
     - _DIFFUSE: 0
-    - _Depth_Fade_Distance: 0.052
+    - _Depth_Fade_Distance: 0.5
     - _DiffuseConstrate: 0
     - _DiffuseStrength: 0
-    - _Diffuse_Contrastion: 0
+    - _Diffuse_Contrastion: 0.1
     - _Diffuse_On: 0
     - _Diffuse_Strength: 1
+    - _Distoration_Adjustment: 0.97
+    - _Distoration_Strength: 0.5
     - _Float: 0
     - _Flow_Direction: 0
     - _Flow_Noise_Scale: 0
@@ -80,14 +91,14 @@ Material:
     - _Foam_Cutoff: 100
     - _Foam_Edge1: 0.18
     - _Foam_Edge2: 0
-    - _Foam_Noise_Scale: 10
+    - _Foam_Noise_Scale: 1
     - _Foam_On: 1
     - _Foam_Speed: 0.05
     - _Foam_Strength: 2
     - _Highlight_Smoothstep1: 0.01
-    - _Highlight_Smoothstep2: 0.1
+    - _Highlight_Smoothstep2: 0.015
     - _Highlight_Strength: 1
-    - _Hightlight_Contrastion: 80
+    - _Hightlight_Contrastion: 33.3
     - _Hightlight_Normal_Strength: 1
     - _Hightlight_Power: 1
     - _Hightlight_Scale: 0.1
@@ -96,21 +107,21 @@ Material:
     - _Hightlight_Strength: 0.9
     - _IsNormalDistorationAllowed: 1
     - _Normal_Distoration_On: 1
-    - _Normal_Scale: 0.4
+    - _Normal_Scale: 0.3
     - _Normal_Speed: 0.1
     - _Normal_Strength: 1
-    - _Object_Color_Value: 5
+    - _Object_Color_Value: 10
     - _QueueControl: 1
     - _QueueOffset: 0
-    - _REFLECTION: 0
+    - _REFLECTION: 1
     - _Reflection_On: 0
-    - _Reflection_Power_Fresnel: 0
-    - _Reflection_Strength_Fresnel: 1
+    - _Reflection_Power_Fresnel: 25
+    - _Reflection_Strength_Fresnel: 0.25
     - _Refraction_Cooperated_Adjustment: 0.8
-    - _Refraction_Cooperated_Strength: 0.01
-    - _Refraction_Cooperation_On: 0
-    - _Refraction_Speed: 0.01
-    - _Refraction_Strength: 0.001
+    - _Refraction_Cooperated_Strength: 0.1
+    - _Refraction_Cooperation_On: 1
+    - _Refraction_Speed: 0.1
+    - _Refraction_Strength: 0.003
     - _Smoothstep1: 0.01
     - _Smoothstep2: 6
     - _Strength: 0
@@ -120,17 +131,17 @@ Material:
     - _Water_Clean_Bias: 0
     - _Water_Clean_Factor: 1
     m_Colors:
-    - _Deep_Color: {r: 0, g: 0.20810206, b: 0.3537736, a: 0.9490196}
+    - _Deep_Color: {r: 0, g: 0.2797222, b: 0.475, a: 0.9490196}
     - _Flow_Color: {r: 0, g: 0, b: 0, a: 0}
     - _Foam_Color: {r: 1, g: 1, b: 1, a: 0}
-    - _Foam_Edge: {r: 0, g: 2, b: 0, a: 0}
-    - _Foam_Scale: {r: 0.4, g: 0.4, b: 0, a: 0}
-    - _Foam_Speed: {r: 0, g: 0.06, b: 0, a: 0}
+    - _Foam_Edge: {r: 0.3, g: 0.3, b: 0, a: 0}
+    - _Foam_Scale: {r: 1, g: 1, b: 0, a: 0}
+    - _Foam_Speed: {r: 0, g: 0.1, b: 0, a: 0}
     - _Hightlight_Color: {r: 0.7411765, g: 0.8117647, b: 0.8235294, a: 1}
     - _Normal_Direction1: {r: -0.2, g: 0, b: 0, a: 0}
     - _Normal_Direction2: {r: -0.1, g: -0.1, b: 0, a: 0}
-    - _Refraction_XY_Scale: {r: 4, g: 4, b: 0, a: 0}
-    - _Shallow_Color: {r: 0, g: 0.4972255, b: 0.6037736, a: 0.7803922}
+    - _Refraction_XY_Scale: {r: 0.1, g: 0.1, b: 0, a: 0}
+    - _Shallow_Color: {r: 0, g: 0.61685735, b: 0.748, a: 0.7803922}
     - _View_Bias: {r: 0, g: 0, b: 0, a: 0}
     - _Water_Clean_Vector: {r: 0, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []
