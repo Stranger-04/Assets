@@ -642,7 +642,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 100, y: 0, z: 100}
+  m_LocalScale: {x: 100, y: 0.1, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 673530024}
@@ -2128,7 +2128,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: -876546973899608171, guid: 103eaebada64ed947a150c755547b46d, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -7990,6 +7990,11 @@ PrefabInstance:
     - target: {fileID: 1848946570798470236, guid: 3692029fcb0ff5348b3257fd0fd67986,
         type: 3}
       propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2531544324810776774, guid: 3692029fcb0ff5348b3257fd0fd67986,
+        type: 3}
+      propertyPath: m_RendererIndex
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3614710971152160104, guid: 3692029fcb0ff5348b3257fd0fd67986,
@@ -7997,6 +8002,11 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: f94f08f340f147f4395a2faa956f39b3, type: 2}
+    - target: {fileID: 6695748511997343654, guid: 3692029fcb0ff5348b3257fd0fd67986,
+        type: 3}
+      propertyPath: m_RendererIndex
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7907795340724161357, guid: 3692029fcb0ff5348b3257fd0fd67986,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -9885,6 +9895,26 @@ PrefabInstance:
     - target: {fileID: 2046908026482758543, guid: 5eceafe90a309534ba1cc16797146b5a,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7344414876359552379, guid: 5eceafe90a309534ba1cc16797146b5a,
+        type: 3}
+      propertyPath: m_RenderShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7344414876359552379, guid: 5eceafe90a309534ba1cc16797146b5a,
+        type: 3}
+      propertyPath: m_RendererIndex
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7344414876359552379, guid: 5eceafe90a309534ba1cc16797146b5a,
+        type: 3}
+      propertyPath: m_RequiresDepthTextureOption
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7344414876359552379, guid: 5eceafe90a309534ba1cc16797146b5a,
+        type: 3}
+      propertyPath: m_RequiresOpaqueTextureOption
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7738386768351071589, guid: 5eceafe90a309534ba1cc16797146b5a,

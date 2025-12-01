@@ -17,7 +17,9 @@ Shader "Custom/SSL_ScreenSpaceLight"
             "Queue" = "Transparent"
         }
 
-        Cull Off ZWrite Off ZTest Always
+        Cull Off 
+        ZWrite Off 
+        ZTest Always
 
         Pass
         {
@@ -40,7 +42,7 @@ Shader "Custom/SSL_ScreenSpaceLight"
             float _MaxDistance;
             float _Intensity;
 
-            float SSL_float(
+            float SSL(
                 float3 CameraPos,
                 float3 WorldPosFromDepth,
                 int MaxSteps,
@@ -93,9 +95,8 @@ Shader "Custom/SSL_ScreenSpaceLight"
             float3 ReconstructWorldPos(float2 uv)
             {
                 float depth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, sampler_CameraDepthTexture, uv);
-                float4 positionCS = float4(uv * 2.0 - 1.0, depth, 1.0);
-                float4 positionWS = TransformClipToWorld(positionCS);
-                return positionWS.xyz / positionWS.w;
+                float3 worldPos = ComputeWorldSpacePosition(uv, depth, UNITY_MATRIX_I_VP);
+                return worldPos;
             }
 
             half4 frag (Varyings i) : SV_Target
@@ -105,7 +106,7 @@ Shader "Custom/SSL_ScreenSpaceLight"
                 float3 cameraPosWS = GetCameraPositionWS();
                 float3 worldPos = ReconstructWorldPos(i.uv);
 
-                float density = SSL_float(
+                float density = SSL(
                     cameraPosWS,
                     worldPos,
                     _MaxSteps,
