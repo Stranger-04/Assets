@@ -25,9 +25,9 @@ public class SSRFeature : ScriptableRendererFeature
 
         public SSRRenderPass(Shader shader, Settings s)
         {
-            ssrMaterial = CoreUtils.CreateEngineMaterial(shader);
             settings = s;
             ssrRT.Init("_SSRResultRT");
+            ssrMaterial = CoreUtils.CreateEngineMaterial(shader);
             renderPassEvent = RenderPassEvent.BeforeRenderingTransparents; 
         }
 
@@ -69,7 +69,10 @@ public class SSRFeature : ScriptableRendererFeature
             ssrMaterial.SetMatrix("_InverseViewProjectionMatrix", inverseViewProjectionMatrix);
             ssrMaterial.SetVector("_WorldSpaceCameraPosCustom", cameraData.camera.transform.position);
 
-            cmd.Blit(renderer.cameraColorTargetHandle.nameID, ssrRT.Identifier(), ssrMaterial, 0);
+            cmd.Blit(
+                renderer.cameraColorTargetHandle.nameID, 
+                ssrRT.Identifier(), 
+                ssrMaterial, 0);
             cmd.SetGlobalTexture("_SSRTexture", ssrRT.id);
 
             if (settings.SSRFeature)
@@ -83,10 +86,8 @@ public class SSRFeature : ScriptableRendererFeature
 
         public override void FrameCleanup(CommandBuffer cmd)
         {
-            if (cmd != null)
-            {
-                cmd.ReleaseTemporaryRT(ssrRT.id);
-            }
+            if (cmd == null) return;
+            cmd.ReleaseTemporaryRT(ssrRT.id);
         }
     }
 
