@@ -2,6 +2,7 @@ Shader "Hidden/CelToon/SSL_ScreenSpaceLight"
 {
     Properties
     {
+        _MainTex ("Texture", 2D) = "white" { }
         _Intensity("SSL Intensity", Float) = 1.0
         _MaxSteps("Max Steps", Int) = 32
         _MaxDistance("Max Distance", Float) = 10.0
@@ -11,6 +12,7 @@ Shader "Hidden/CelToon/SSL_ScreenSpaceLight"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+    #include "Assets/Mine/Special/HLSL/BlurFunction.hlsl"
 
     struct Attributes
     {
@@ -30,17 +32,17 @@ Shader "Hidden/CelToon/SSL_ScreenSpaceLight"
     float  _BlurScale;
     float  _JitterScale;
 
-    Texture2D _MainTex;
-    SAMPLER(sampler_MainTex);
-    Texture2D _SSLResultRT;
-    SAMPLER(sampler_SSLResultRT);
+    TEXTURE2D_X(_MainTex);
+    TEXTURE2D_X(_SSLResultTex);
 
+    // Reconstruct world position from depth
     float3 ReconstructWorldPos(float2 uv, float3 CameraPos, float MaxDistance)
     {
         float rawDepth = SampleSceneDepth(uv);
         return ComputeWorldSpacePosition(uv, rawDepth, UNITY_MATRIX_I_VP);
     }
 
+    // Sample shadow map at given world position
     float SampleShadow(float3 positionCS)
     {
         float4 shadowCoord = TransformWorldToShadowCoord(positionCS);
@@ -50,11 +52,13 @@ Shader "Hidden/CelToon/SSL_ScreenSpaceLight"
             shadowCoord);
     }
 
+    // Screen Space Light calculation
     float SSL(
         float3 CameraPos,
         float3 WorldPosFromDepth,
         int MaxSteps,
-        float MaxDistance
+        float MaxDistance,
+        float2 uv
     )
     {
         float3 RayVector = WorldPosFromDepth - CameraPos;
@@ -62,7 +66,8 @@ Shader "Hidden/CelToon/SSL_ScreenSpaceLight"
         float RayLength = clamp(length(RayVector), 0.0, MaxDistance);
 
         float StepSize = RayLength / MaxSteps;
-        float3 pCurrent = CameraPos;
+        float3 jitter = frac(sin(dot(uv ,float2(12.9898,78.233))) * 43758.5453);
+        float3 pCurrent = CameraPos + RayDir * (jitter * _JitterScale);
         float Density = 0.0;
 
         [loop]
@@ -72,12 +77,8 @@ Shader "Hidden/CelToon/SSL_ScreenSpaceLight"
             {    
                 break;
             }
-
             float lighting = SampleShadow(pCurrent);
-
             pCurrent += RayDir * StepSize;
-            float3 jitter = float3(Hash(pCurrent.xy), Hash(pCurrent.yx), Hash(pCurrent.xy));
-            pCurrent += jitter * (_JitterScale / MaxSteps);
             Density += StepSize * lighting;
         }
 
@@ -93,6 +94,7 @@ Shader "Hidden/CelToon/SSL_ScreenSpaceLight"
         return o;
     }
 
+    // Main SSL fragment shader
     half4 Frag (Varyings i) : SV_Target
     {
         float2 uv = i.uv;
@@ -105,7 +107,8 @@ Shader "Hidden/CelToon/SSL_ScreenSpaceLight"
             cameraPosWS,
             worldPos,
             _MaxSteps,
-            _MaxDistance
+            _MaxDistance,
+            uv
         );
 
         float sslLight = density * _Intensity;
@@ -113,41 +116,30 @@ Shader "Hidden/CelToon/SSL_ScreenSpaceLight"
         return float4(sslColor, 1.0);
     }
 
-    half4 Frag_Mix(Varyings i) : SV_Target
-    {
-        half4 mainColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
-        half4 lightColor = SAMPLE_TEXTURE2D(_SSLResultRT, sampler_SSLResultRT, i.uv);
-        return mainColor + lightColor;
-    }
-
+    // Horizontal blur pass
     float4 Frag_BlurHorizontal(Varyings i) : SV_Target
     {
         float2 uv = i.uv;
         float2 texelSize = 1.0 / _ScreenParams.xy;
-
-        float4 color = float4(0,0,0,0);
-        color += SAMPLE_TEXTURE2D(_SSLResultRT, sampler_SSLResultRT, uv + _BlurScale * texelSize * float2(-2.0, 0.0)) * 0.1216216;
-        color += SAMPLE_TEXTURE2D(_SSLResultRT, sampler_SSLResultRT, uv + _BlurScale * texelSize * float2(-1.0, 0.0)) * 0.2332432;
-        color += SAMPLE_TEXTURE2D(_SSLResultRT, sampler_SSLResultRT, uv) * 0.290918;
-        color += SAMPLE_TEXTURE2D(_SSLResultRT, sampler_SSLResultRT, uv + _BlurScale * texelSize * float2(1.0, 0.0)) * 0.2332432;
-        color += SAMPLE_TEXTURE2D(_SSLResultRT, sampler_SSLResultRT, uv + _BlurScale * texelSize * float2(2.0, 0.0)) * 0.1216216;
-
+        float4 color = BlurHorizontal(uv, texelSize, _BlurScale, _MainTex, sampler_LinearClamp);
         return color;
     }
 
+    // Vertical blur pass
     float4 Frag_BlurVertical(Varyings i) : SV_Target
     {
         float2 uv = i.uv;
         float2 texelSize = 1.0 / _ScreenParams.xy;
-
-        float4 color = float4(0,0,0,0);
-        color += SAMPLE_TEXTURE2D(_SSLResultRT, sampler_SSLResultRT, uv + _BlurScale * texelSize * float2(0.0, -2.0)) * 0.1216216;
-        color += SAMPLE_TEXTURE2D(_SSLResultRT, sampler_SSLResultRT, uv + _BlurScale * texelSize * float2(0.0, -1.0)) * 0.2332432;
-        color += SAMPLE_TEXTURE2D(_SSLResultRT, sampler_SSLResultRT, uv) * 0.290918;
-        color += SAMPLE_TEXTURE2D(_SSLResultRT, sampler_SSLResultRT, uv + _BlurScale * texelSize * float2(0.0, 1.0)) * 0.2332432;
-        color += SAMPLE_TEXTURE2D(_SSLResultRT, sampler_SSLResultRT, uv + _BlurScale * texelSize * float2(0.0, 2.0)) * 0.1216216;
-
+        float4 color = BlurVertical(uv, texelSize, _BlurScale, _MainTex, sampler_LinearClamp); 
         return color;
+    }
+
+    // Mix pass to combine the original scene color with the SSL effect
+    half4 Frag_Mix(Varyings i) : SV_Target
+    {
+        half4 mainColor = SAMPLE_TEXTURE2D_X(_MainTex, sampler_LinearClamp, i.uv);
+        half4 lightColor = SAMPLE_TEXTURE2D_X(_SSLResultTex, sampler_LinearClamp, i.uv);
+        return mainColor + lightColor;
     }
     ENDHLSL
 

@@ -9,6 +9,10 @@ public class GrassGeneratorEditor : Editor
         DrawDefaultInspector();
 
         GrassGenerator grassGenerator = (GrassGenerator)target;
+        if (GUILayout.Button("Load From Database"))
+        {
+            grassGenerator.LoadFromDatabase(true);
+        }
         if (GUILayout.Button("Generate Points"))
         {
             grassGenerator.GeneratePoints();

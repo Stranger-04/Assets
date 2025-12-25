@@ -127,11 +127,11 @@ Shader "GrassInstance"
 
                 float3 Diffuse = DiffuseLambert(N, L);
                 float3 Specular = SpecularBlinnPhong(N, L, V, _Smoothness);   
-                float3 Light = saturate(Diffuse + Specular);
-                float3 direct = Light * LightColor;
+                float3 direct = (Diffuse + Specular) * LightColor;
                 float3 ambient = SampleSH(N);
+                float3 Light = direct + ambient;
 
-                half4 finalColor = float4(lerp(ambient, direct, ShadowAtten), 1.0) * basecolor;
+                half4 finalColor = float4(lerp(0.6, 1, ShadowAtten) * Light, 1.0) * basecolor;
                 return finalColor;
             }
 

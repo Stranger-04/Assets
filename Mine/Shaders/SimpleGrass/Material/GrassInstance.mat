@@ -32,7 +32,7 @@ Material:
     - _AlphaClipThreshold: 0.5
     - _Smoothness: 0
     m_Colors:
-    - _Base_Color_A: {r: 0.654902, g: 1, b: 0.7058824, a: 1}
+    - _Base_Color_A: {r: 0.7028302, g: 1, b: 0.74673027, a: 1}
     - _Base_Color_B: {r: 0.41960788, g: 0.8000001, b: 0.454902, a: 1}
     - _Wind_Color_A: {r: 0.9843138, g: 1, b: 0.854902, a: 1}
     - _Wind_Color_B: {r: 0.4784314, g: 0.67058825, b: 0.6313726, a: 1}

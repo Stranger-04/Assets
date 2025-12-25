@@ -21,7 +21,7 @@ MonoBehaviour:
     m_Value: 1
   intensity:
     m_OverrideState: 1
-    m_Value: 0.1
+    m_Value: 1
   scatter:
     m_OverrideState: 0
     m_Value: 0.7
@@ -59,7 +59,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 899c54efeace73346a0a16faa3afe726, type: 3}
   m_Name: Vignette
   m_EditorClassIdentifier: 
-  active: 1
+  active: 0
   color:
     m_OverrideState: 0
     m_Value: {r: 0, g: 0, b: 0, a: 1}
@@ -120,6 +120,39 @@ MonoBehaviour:
   - {fileID: -7893295128165547882}
   - {fileID: -7011558710299706105}
   - {fileID: -4392309889701624169}
+  - {fileID: 8546487866699594350}
+--- !u!114 &593188512892110541
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 263371ab550946e478c57921ab332122, type: 3}
+  m_Name: GodRay
+  m_EditorClassIdentifier: 
+  active: 1
+  <displayName>k__BackingField: 
+  maxIterations:
+    m_OverrideState: 0
+    m_Value: 64
+  maxDistance:
+    m_OverrideState: 0
+    m_Value: 12
+  intensity:
+    m_OverrideState: 0
+    m_Value: 0
+  blurRange:
+    m_OverrideState: 0
+    m_Value: 0.1
+  jitterScale:
+    m_OverrideState: 0
+    m_Value: 0.5
+  blurIterations:
+    m_OverrideState: 0
+    m_Value: 10
 --- !u!114 &849379129802519247
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -132,7 +165,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 97c23e3b12dc18c42a140437e53d3951, type: 3}
   m_Name: Tonemapping
   m_EditorClassIdentifier: 
-  active: 1
+  active: 0
   mode:
     m_OverrideState: 1
     m_Value: 1
@@ -160,3 +193,40 @@ MonoBehaviour:
   maxNits:
     m_OverrideState: 0
     m_Value: 1000
+--- !u!114 &8546487866699594350
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e09a9d70c6030d46875e9b29f575368, type: 3}
+  m_Name: SSLVolume
+  m_EditorClassIdentifier: 
+  active: 1
+  maxSteps:
+    m_OverrideState: 0
+    m_Value: 32
+  maxDistance:
+    m_OverrideState: 0
+    m_Value: 10
+  intensity:
+    m_OverrideState: 1
+    m_Value: 1
+  jitterScale:
+    m_OverrideState: 0
+    m_Value: 0.5
+  blurScale:
+    m_OverrideState: 0
+    m_Value: 0.5
+  blurLevels:
+    m_OverrideState: 0
+    m_Value: 1
+  blurIterations:
+    m_OverrideState: 0
+    m_Value: 1
+  enabled:
+    m_OverrideState: 0
+    m_Value: 1

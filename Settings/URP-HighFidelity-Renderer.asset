@@ -15,12 +15,17 @@ MonoBehaviour:
   m_Active: 0
   settings:
     ssrShader: {fileID: 4800000, guid: 7252a6ae0aadcc04ab92ed7c3b9ec861, type: 3}
-    stepSize: 0.1
-    maxDistance: 60
-    maxSteps: 100
-    thickness: 0.2
+    stepSize: 1
+    maxDistance: 50
+    stepCount: 64
+    binaryCount: 4
+    mipCount: 4
+    thickness: 0.15
     smoothness: 0.5
+    jitterScale: 0.05
+    blurScale: 1
     SSRFeature: 0
+    ssrType: 0
 --- !u!114 &-2590062678036469317
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -36,10 +41,10 @@ MonoBehaviour:
   m_Active: 0
   settings:
     sslShader: {fileID: 4800000, guid: 9181acf22f4db7d43be92990d435f68b, type: 3}
-    maxSteps: 32
-    maxDistance: 10
+    maxSteps: 8
+    maxDistance: 4
     intensity: 1
-    jitterScale: 0
+    jitterScale: 0.25
     blurScale: 1
     blurLevels: 1
     blurIterations: 1
@@ -79,6 +84,27 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 3302065f671a8450b82c9ddf07426f3a, type: 3}
   - {fileID: 2800000, guid: 56a77a3e8d64f47b6afe9e3c95cb57d5, type: 3}
   m_Shader: {fileID: 4800000, guid: 0849e84e3d62649e8882e9d6f056a017, type: 3}
+--- !u!114 &-1406407218027020756
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67a37b7c0371b8248b519ade472dbe2a, type: 3}
+  m_Name: RimToonScreenFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  settings:
+    rimToonScreenShader: {fileID: 4800000, guid: 141523391565fa94aa149b8fc7746b49,
+      type: 3}
+    rimPower: 5
+    blurScale: 0.5
+    blurIntensity: 0.5
+    blurLevels: 1
+    blurIterations: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -100,7 +126,11 @@ MonoBehaviour:
   - {fileID: 1392438380609559688}
   - {fileID: -7292419652271666987}
   - {fileID: -2590062678036469317}
-  m_RendererFeatureMap: adc0de57c6d2eee5885cda6754ef5213d5084591f61ecc9abba9a391b73f0edc
+  - {fileID: 6444607242988573653}
+  - {fileID: 6688678796388826183}
+  - {fileID: 2097672503106323041}
+  - {fileID: 6543334011327472316}
+  m_RendererFeatureMap: adc0de57c6d2eee5885cda6754ef5213d5084591f61ecc9abba9a391b73f0edcd5533e7b24d86f59477c715bedf5d25c61c2c112076e1c1dbce2e77f9d97ce5a
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -138,7 +168,7 @@ MonoBehaviour:
     failOperation: 0
     zFailOperation: 0
   m_ShadowTransparentReceive: 0
-  m_RenderingMode: 2
+  m_RenderingMode: 0
   m_DepthPrimingMode: 0
   m_CopyDepthMode: 0
   m_AccurateGbufferNormals: 0
@@ -155,7 +185,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b3d386ba5cd94485973aee1479b272e, type: 3}
   m_Name: Stencil 1 Opaques
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   settings:
     passTag: Stencil 1 Opaques
     Event: 300
@@ -185,3 +215,74 @@ MonoBehaviour:
       restoreCamera: 1
       offset: {x: 0, y: 0, z: 0, w: 0}
       cameraFieldOfView: 60
+--- !u!114 &2097672503106323041
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4fac0415525e9e4fb663d7d954e54c1, type: 3}
+  m_Name: KuwaharaFeature
+  m_EditorClassIdentifier: 
+  m_Active: 0
+  settings:
+    kuwaharaShader: {fileID: 4800000, guid: 40f2c5ca2cdf8c8409bdbda1a28fe4a9, type: 3}
+    Radius: 3
+    kuwaharaType: 0
+--- !u!114 &6444607242988573653
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43ad3e4bfb553ee4e9755998d6d4eca1, type: 3}
+  m_Name: DDOFFeature
+  m_EditorClassIdentifier: 
+  m_Active: 0
+  settings:
+    ddofShader: {fileID: 4800000, guid: 781cb17ab29405d438941c18d2ea4bdc, type: 3}
+    focusRange: 5
+    blurScale: 1
+--- !u!114 &6543334011327472316
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1ee3ee184c99f24884c764a42088423, type: 3}
+  m_Name: SNNFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  settings:
+    snnShader: {fileID: 4800000, guid: 799e757eaa382aa40a8658978998d8f0, type: 3}
+    Radius: 2
+--- !u!114 &6688678796388826183
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67a37b7c0371b8248b519ade472dbe2a, type: 3}
+  m_Name: RimToonScreenFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  settings:
+    rimToonScreenShader: {fileID: 4800000, guid: 141523391565fa94aa149b8fc7746b49,
+      type: 3}
+    rimPower: 5
+    blurScale: 5
+    blurIntensity: 0.25
+    blurLevels: 1
+    blurIterations: 1

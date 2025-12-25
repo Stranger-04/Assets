@@ -43,8 +43,6 @@ public class GrassGenerator : MonoBehaviour
 
     public void GeneratePoints()
     {
-        if (Generated) return;
-
         float[] meshAreas = new float[GrassSurfaces.Length];
         float totalSurfaceArea = 0f;
 
@@ -139,6 +137,37 @@ public class GrassGenerator : MonoBehaviour
         EditorUtility.SetDirty(targetDatabase);
         #endif
         Debug.Log("Grass data saved to database: " + targetDatabase.name);
+    }
+
+    public void LoadFromDatabase(bool clearExisting = true)
+    {
+        if (targetDatabase == null)
+        {
+            return;
+        }
+        if (targetDatabase.Count <= 0)
+        {
+            return;
+        }
+
+        if (clearExisting)
+            pointProperties.Clear();
+
+        int count = targetDatabase.Count;
+        for (int i = 0; i < count; i++)
+        {
+            PointProperties p = new PointProperties
+            {
+                position = targetDatabase.GetPosition(i),
+                rotation = targetDatabase.GetRotation(i),
+                normal = targetDatabase.GetNormal(i),
+                height = targetDatabase.GetHeight(i)
+            };
+            pointProperties.Add(p);
+        }
+
+        Generated = true;
+        Debug.Log($"Loaded {count} grass points from database '{targetDatabase.name}'.");
     }
 
     public void CleanPoints()

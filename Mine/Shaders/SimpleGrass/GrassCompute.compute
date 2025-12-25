@@ -25,7 +25,9 @@ float4x4 _InteractionMatrix;
 Texture2D<float4> _InteractionTexture;
 SamplerState sampler_InteractionTexture;
 
+float _DepthClipTreshold;
 float _Time;
+float4x4 _VP;
 int _GrassCount;
 
 [numthreads(64, 1, 1)]
@@ -33,11 +35,31 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 {
     uint i = id.x;
     if (i >= _GrassCount) return;
-    if (_GrassProperties[i].height > 0) _ClipProperties.Append(i);
+
+    // Clipping Logic
+    bool Clip = false;
+    bool HeightClip = false;
+    bool ViewClip = false;
+    bool DepthClip = false;
+
+    if (_GrassProperties[i].height <= 0) HeightClip = true;
+
+    float3 positionWS = mul(_MeshProperties[i], float4(0,0,0,1)).xyz;
+    float4 positionCS = mul(_VP, float4(positionWS,1));
+    float3 ndc = positionCS.xyz / positionCS.w;
+    if (positionCS.w <= 0 || ndc.x < -1.0 || ndc.x > 1.0 || ndc.y < -1.0 || ndc.y > 1.0)
+        ViewClip = true;
+
+    float depth = ndc.z;
+    if (depth < _DepthClipTreshold) 
+        DepthClip = true;
+
+    if (HeightClip || ViewClip || DepthClip) 
+        Clip = true;
+    if (!Clip) _ClipProperties.Append(i);
 
     // Calculate wind effect
     float3 windDir = normalize(_WindDirection);
-    float3 positionWS = mul(_MeshProperties[i], float4(0,0,0,1)).xyz;
     float2 uv = positionWS.xz * _WindScale - windDir.xz * _Time * _WindFrequency;
     float wind = _WindNoiseTexture.SampleLevel(sampler_WindNoiseTexture, uv, 0).r;
     float3 windEffect = wind * _WindStrength * windDir;

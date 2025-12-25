@@ -17,12 +17,8 @@ void MainLight_float(float3 WorldPos, out float3 Direction, out float3 Color, ou
 #if SHADOWS_SCREEN
     float4 clipPos = TransformWorldToHClip(WorldPos);
     float4 shadowCoord = ComputeScreenPos(clipPos);
-    //ShadowAtten = SampleScreenSpaceShadowmap(shadowCoord);
 #else
     float4 shadowCoord = TransformWorldToShadowCoord(WorldPos);
-    //ShadowSamplingData shadowSamplingData = GetMainLightShadowSamplingData();
-    //half4 shadowParams = GetMainLightShadowParams();
-    //ShadowAtten = SampleShadowmap(TEXTURE2D_ARGS(_MainLightShadowmapTexture, sampler_MainLightShadowmapTexture), shadowCoord, shadowSamplingData, shadowParams, false);
 #endif
     Light mainLight = GetMainLight(shadowCoord);
     Direction = mainLight.direction;
@@ -44,12 +40,8 @@ void MainLight_half(float3 WorldPos, out half3 Direction, out half3 Color, out h
 #if SHADOWS_SCREEN
     half4 clipPos = TransformWorldToHClip(WorldPos);
     half4 shadowCoord = ComputeScreenPos(clipPos);
-    //ShadowAtten = SampleScreenSpaceShadowmap(shadowCoord);
 #else
     half4 shadowCoord = TransformWorldToShadowCoord(WorldPos);
-    //ShadowSamplingData shadowSamplingData = GetMainLightShadowSamplingData();
-    //half4 shadowParams = GetMainLightShadowParams();
-    //ShadowAtten = SampleShadowmap(TEXTURE2D_ARGS(_MainLightShadowmapTexture, sampler_MainLightShadowmapTexture), shadowCoord, shadowSamplingData, shadowParams, false);
 #endif
     Light mainLight = GetMainLight(shadowCoord);
     Direction = mainLight.direction;

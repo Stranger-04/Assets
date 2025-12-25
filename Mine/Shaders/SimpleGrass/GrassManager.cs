@@ -36,6 +36,8 @@ public class GrassManager : MonoBehaviour
     public Quaternion BaseRotation = Quaternion.identity;
     public float BaseScale = 1f;
 
+    [Header("Clip Settings")]
+    [Range(0.001f, 0.1f)]public float DepthClipTreshold = 0.01f;
     private Bounds grassBounds;
 
     [ReadOnly]
@@ -87,12 +89,35 @@ public class GrassManager : MonoBehaviour
         }
     }
 
+    void OnEnable()
+    {
+        if (grassDatabase != null && grassDatabase.Count > 0)
+        {
+            ReleaseBuffers();
+            InitGrass();
+        }
+    }
+
+    void Start()
+    {
+        if (grassDatabase != null && grassDatabase.Count > 0)
+        {
+            ReleaseBuffers();
+            InitGrass();
+        }
+    }
+
     void OnDisable()
     {
         ReleaseBuffers();
     }
 
     void OnDisabled()
+    {
+        ReleaseBuffers();
+    }
+
+    void OnDestroy()
     {
         ReleaseBuffers();
     }
@@ -112,9 +137,14 @@ public class GrassManager : MonoBehaviour
         grassComputeShader.SetVector("_InteractionCenter", interactionCamera.transform.position);
 
         grassComputeShader.SetFloat("_Time", Time.time);
+        
+        Matrix4x4 vp = GL.GetGPUProjectionMatrix(Camera.main.projectionMatrix, false) * Camera.main.worldToCameraMatrix;
+        grassComputeShader.SetMatrix("_VP", vp);
 
+        ClipBuffer.SetCounterValue(0);
         int threadGroups = Mathf.CeilToInt(grassCount / 64f);
         grassComputeShader.Dispatch(kernel, threadGroups, 1, 1);
+        ComputeBuffer.CopyCount(ClipBuffer, ArgsBuffer, 4);
 
         Graphics.DrawMeshInstancedIndirect
         (
@@ -197,6 +227,8 @@ public class GrassManager : MonoBehaviour
 
         grassComputeShader.SetTexture(kernel, "_InteractionTexture", interactionTexture);
         grassComputeShader.SetMatrix("_InteractionMatrix", worldToUV);
+
+        grassComputeShader.SetFloat("_DepthClipTreshold", DepthClipTreshold);
 
         int threadGroups = Mathf.CeilToInt(grassCount / 64f);
         grassComputeShader.Dispatch(kernel, threadGroups, 1, 1);
