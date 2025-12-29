@@ -19,6 +19,7 @@ public class GrassManager : MonoBehaviour
     public Material grassMaterial;
     public int grassCount = 1024;
     public float areaSize = 10f;
+    public Camera functionCamera;
 
     [Header("Wind Settings")]
     public Vector3 windDirection = new Vector3(1f, 0f, 0f);
@@ -28,8 +29,14 @@ public class GrassManager : MonoBehaviour
     public Texture2D windNoiseTexture;
 
     [Header("Interaction Settings")]
+    public Vector3 interactionDirection = new Vector3(0f, 1f, 0f);
+    public float interactionHeight = 3f;
+    public float interactionRadius = 1f;
     public RenderTexture interactionTexture;
-    public Camera interactionCamera;
+
+    [Header("ColorBlend Settings")]
+    public RenderTexture groundColorTexture;
+    [Range(0f, 1f)] public float groundColorBlend = 0.5f;
 
     [Header("Grass Settings")]
     public Vector3 BasePosition = Vector3.zero;
@@ -37,7 +44,7 @@ public class GrassManager : MonoBehaviour
     public float BaseScale = 1f;
 
     [Header("Clip Settings")]
-    [Range(0.001f, 0.1f)]public float DepthClipTreshold = 0.01f;
+    [Range(1f, 1000f)]public float DepthClipTreshold = 50f;
     private Bounds grassBounds;
 
     [ReadOnly]
@@ -60,13 +67,13 @@ public class GrassManager : MonoBehaviour
 
     struct GrassProperties
     {
-        public Vector3 offset;
+        // public Vector3 offset;
         public Vector3 normal;
         public float height;
 
         public static int size()
         {
-            return sizeof(float) * 7;
+            return sizeof(float) * 4;
         }
     }
 
@@ -127,17 +134,9 @@ public class GrassManager : MonoBehaviour
         if (!initialized) return;
 
         int kernel = grassComputeShader.FindKernel("CSMain");
-        // Dynamic Parameters
-        grassComputeShader.SetVector("_WindDirection", windDirection);
-        grassComputeShader.SetFloat("_WindFrequency", windFrequency);
-        grassComputeShader.SetFloat("_WindStrength", windStrength);
-        grassComputeShader.SetFloat("_WindScale", windScale);
+        // // Dynamic Parameters
 
-        grassComputeShader.SetTexture(kernel, "_InteractionTexture", interactionTexture);
-        grassComputeShader.SetVector("_InteractionCenter", interactionCamera.transform.position);
-
-        grassComputeShader.SetFloat("_Time", Time.time);
-        
+        grassMaterial.SetVector("_CameraPosition", functionCamera.transform.position);
         Matrix4x4 vp = GL.GetGPUProjectionMatrix(Camera.main.projectionMatrix, false) * Camera.main.worldToCameraMatrix;
         grassComputeShader.SetMatrix("_VP", vp);
 
@@ -160,7 +159,7 @@ public class GrassManager : MonoBehaviour
     void InitGrass()
     {
         if (initialized) return;
-        grassBounds = new Bounds(Vector3.zero, new Vector3(areaSize, 10f, areaSize));
+        grassBounds = new Bounds(transform.position, new Vector3(areaSize, 10f, areaSize));
 
         if (grassDatabase == null || grassDatabase.Count == 0)
         {
@@ -182,8 +181,7 @@ public class GrassManager : MonoBehaviour
             Vector3 position = grassDatabase.GetPosition(i) + BasePosition;
             float scale = Random.Range(0.8f, 1.2f) * BaseScale;
             meshproperties[i].matrix = Matrix4x4.TRS(position, rotation, Vector3.one * scale);
-
-            grassproperties[i].offset = Vector3.zero;
+            // grassproperties[i].offset = Vector3.zero;
             grassproperties[i].normal = grassDatabase.GetNormal(i);
             grassproperties[i].height = grassDatabase.GetHeight(i);
         }
@@ -214,19 +212,9 @@ public class GrassManager : MonoBehaviour
         // Compute Shader
         
         grassComputeShader.SetInt("_GrassCount", grassCount);
-        grassComputeShader.SetTexture(kernel, "_WindNoiseTexture", windNoiseTexture);
         grassComputeShader.SetBuffer(kernel, "_MeshProperties", MeshBuffer);
         grassComputeShader.SetBuffer(kernel, "_GrassProperties", GrassBuffer);
         grassComputeShader.SetBuffer(kernel, "_ClipProperties", ClipBuffer);
-
-        Matrix4x4 worldToUV = Matrix4x4.identity;
-        worldToUV.m00 = 1f / areaSize;
-        worldToUV.m03 = 0.5f;
-        worldToUV.m22 = 1f / areaSize;
-        worldToUV.m23 = 0.5f;
-
-        grassComputeShader.SetTexture(kernel, "_InteractionTexture", interactionTexture);
-        grassComputeShader.SetMatrix("_InteractionMatrix", worldToUV);
 
         grassComputeShader.SetFloat("_DepthClipTreshold", DepthClipTreshold);
 
@@ -239,6 +227,29 @@ public class GrassManager : MonoBehaviour
         grassMaterial.SetBuffer("_MeshProperties", MeshBuffer);
         grassMaterial.SetBuffer("_GrassProperties", GrassBuffer);
         grassMaterial.SetBuffer("_ClipProperties", ClipBuffer);
+
+        grassMaterial.SetTexture("_WindNoiseTexture", windNoiseTexture);
+        grassMaterial.SetTexture("_InteractionTexture", interactionTexture);
+        grassMaterial.SetTexture("_GroundColorTexture", groundColorTexture);
+
+        Matrix4x4 worldToUV = Matrix4x4.identity;
+        worldToUV.m00 = 1f / areaSize;
+        worldToUV.m03 = 0.5f;
+        worldToUV.m22 = 1f / areaSize;
+        worldToUV.m23 = 0.5f;
+
+        grassMaterial.SetMatrix("_CameraMatrix", worldToUV);
+
+        grassMaterial.SetVector("_WindDirection", windDirection);
+        grassMaterial.SetFloat("_WindFrequency", windFrequency);
+        grassMaterial.SetFloat("_WindStrength", windStrength);
+        grassMaterial.SetFloat("_WindScale", windScale);
+
+        grassMaterial.SetVector("_InteractionDirection", interactionDirection);
+        grassMaterial.SetFloat("_InteractionRadius", interactionRadius);
+        grassMaterial.SetFloat("_InteractionHeight", interactionHeight);
+
+        grassMaterial.SetFloat("_GroundColorBlend", groundColorBlend);
 
         Debug.Log("Grass initialized");
         initialized = true;

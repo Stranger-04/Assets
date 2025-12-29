@@ -261,10 +261,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1ee3ee184c99f24884c764a42088423, type: 3}
   m_Name: SNNFeature
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   settings:
     snnShader: {fileID: 4800000, guid: 799e757eaa382aa40a8658978998d8f0, type: 3}
-    Radius: 2
+    Radius: 3
 --- !u!114 &6688678796388826183
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -277,7 +277,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67a37b7c0371b8248b519ade472dbe2a, type: 3}
   m_Name: RimToonScreenFeature
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   settings:
     rimToonScreenShader: {fileID: 4800000, guid: 141523391565fa94aa149b8fc7746b49,
       type: 3}

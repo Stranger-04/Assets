@@ -672,7 +672,7 @@ GameObject:
   - component: {fileID: 341026922}
   - component: {fileID: 341026921}
   - component: {fileID: 341026925}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Ground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6080,22 +6080,22 @@ PrefabInstance:
     - target: {fileID: 2843564016217691069, guid: 5b0120a2c75a14a43855996f292408d3,
         type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 2843564016217691069, guid: 5b0120a2c75a14a43855996f292408d3,
         type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2843564016217691069, guid: 5b0120a2c75a14a43855996f292408d3,
         type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 2843564016217691069, guid: 5b0120a2c75a14a43855996f292408d3,
         type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2843564016217691069, guid: 5b0120a2c75a14a43855996f292408d3,
         type: 3}
@@ -6105,7 +6105,7 @@ PrefabInstance:
     - target: {fileID: 2843564016217691069, guid: 5b0120a2c75a14a43855996f292408d3,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: 90
       objectReference: {fileID: 0}
     - target: {fileID: 2843564016217691069, guid: 5b0120a2c75a14a43855996f292408d3,
         type: 3}
@@ -10961,28 +10961,18 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 157590658712428505, guid: 5eceafe90a309534ba1cc16797146b5a,
         type: 3}
+      propertyPath: Eraser
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 157590658712428505, guid: 5eceafe90a309534ba1cc16797146b5a,
+        type: 3}
       propertyPath: DrawGrass
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 157590658712428505, guid: 5eceafe90a309534ba1cc16797146b5a,
-        type: 3}
-      propertyPath: Generated
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 157590658712428505, guid: 5eceafe90a309534ba1cc16797146b5a,
-        type: 3}
-      propertyPath: ShowGrass
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 157590658712428505, guid: 5eceafe90a309534ba1cc16797146b5a,
-        type: 3}
-      propertyPath: pointCount
-      value: 10240
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 533032113868823886, guid: 5eceafe90a309534ba1cc16797146b5a,
         type: 3}
-      propertyPath: DepthClipTreshold
-      value: 0.01
+      propertyPath: groundColorBlend
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2046908026482758543, guid: 5eceafe90a309534ba1cc16797146b5a,
         type: 3}
@@ -11034,24 +11024,9 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7344414876359552379, guid: 5eceafe90a309534ba1cc16797146b5a,
+    - target: {fileID: 2698356568830847053, guid: 5eceafe90a309534ba1cc16797146b5a,
         type: 3}
-      propertyPath: m_RenderShadows
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7344414876359552379, guid: 5eceafe90a309534ba1cc16797146b5a,
-        type: 3}
-      propertyPath: m_RendererIndex
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7344414876359552379, guid: 5eceafe90a309534ba1cc16797146b5a,
-        type: 3}
-      propertyPath: m_RequiresDepthTextureOption
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7344414876359552379, guid: 5eceafe90a309534ba1cc16797146b5a,
-        type: 3}
-      propertyPath: m_RequiresOpaqueTextureOption
+      propertyPath: m_LocalPosition.z
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7738386768351071589, guid: 5eceafe90a309534ba1cc16797146b5a,

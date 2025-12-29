@@ -57,7 +57,7 @@ VisualEffect:
       - m_Value: 1
         m_Name: Lifetime
         m_Overridden: 1
-      - m_Value: 0.2
+      - m_Value: 2
         m_Name: Size
         m_Overridden: 1
     m_Vector2f:
@@ -120,6 +120,38 @@ VFXRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+--- !u!1 &5117674511221199383
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4845052310971792025}
+  m_Layer: 0
+  m_Name: GrassBlender
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4845052310971792025
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5117674511221199383}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 7327449224257230434}
+  m_Father: {fileID: 2046908026482758543}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6887651975631332630
 GameObject:
   m_ObjectHideFlags: 0
@@ -216,12 +248,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_RenderShadows: 1
-  m_RequiresDepthTextureOption: 2
-  m_RequiresOpaqueTextureOption: 2
+  m_RenderShadows: 0
+  m_RequiresDepthTextureOption: 0
+  m_RequiresOpaqueTextureOption: 0
   m_CameraType: 0
   m_Cameras: []
-  m_RendererIndex: -1
+  m_RendererIndex: 1
   m_VolumeLayerMask:
     serializedVersion: 2
     m_Bits: 1
@@ -295,14 +327,14 @@ MonoBehaviour:
   GrassSurfaces:
   - MeshFilter: {fileID: 3251686678096841809}
     transform: {fileID: 7727510717220306727}
-  pointCount: 4096
+  pointCount: 10240
   targetDatabase: {fileID: 11400000, guid: c97a4c9628cf8b041b7e71db9a601944, type: 2}
   ShowGrass: 1
-  DrawGrass: 0
+  DrawGrass: 1
   BrushRadius: 0.5
   BrushStrength: 0.25
   Eraser: 0
-  Generated: 0
+  Generated: 1
 --- !u!1 &7738386768351071589
 GameObject:
   m_ObjectHideFlags: 0
@@ -336,6 +368,7 @@ Transform:
   - {fileID: 2698356568830847053}
   - {fileID: 986147472216299143}
   - {fileID: 7727510717220306727}
+  - {fileID: 4845052310971792025}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &533032113868823886
@@ -355,19 +388,153 @@ MonoBehaviour:
   grassMesh: {fileID: -1317210101720645879, guid: 91d070380c5271f4db966cd8bdc5adba,
     type: 3}
   grassMaterial: {fileID: 2100000, guid: f1add97be08fe9940b76087bc8b77a4f, type: 2}
-  grassCount: 4096
-  areaSize: 100
+  grassCount: 10240
+  areaSize: 10
+  functionCamera: {fileID: 3813079906165242150}
   windDirection: {x: 0.1, y: 1, z: 0.1}
   windFrequency: 1
-  windStrength: 2
+  windStrength: 3
   windScale: 0.1
   windNoiseTexture: {fileID: 2800000, guid: 181a09cc1b636c0438e1cc6074f1fdf6, type: 3}
+  interactionDirection: {x: 0, y: -1, z: 0}
+  interactionHeight: 3
+  interactionRadius: 0.5
   interactionTexture: {fileID: 8400000, guid: 719ce7869aace8a47b0e1e5ce3e3156f, type: 2}
-  interactionCamera: {fileID: 3813079906165242150}
+  groundColorTexture: {fileID: 8400000, guid: 152a7f081ca76e94d81d62ce41c116b8, type: 2}
+  groundColorBlend: 0.5
   BasePosition: {x: 0, y: 0, z: 0}
   BaseRotation: {x: 0.70710677, y: 0, z: 0, w: -0.70710677}
   BaseScale: 1
+  DepthClipTreshold: 20
   initialized: 1
+--- !u!1 &8307385425959161555
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7327449224257230434}
+  - component: {fileID: 323409990056740582}
+  - component: {fileID: 4743345601533166255}
+  m_Layer: 0
+  m_Name: BlenderCamera
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7327449224257230434
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8307385425959161555}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4845052310971792025}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+--- !u!20 &323409990056740582
+Camera:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8307385425959161555}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 0}
+  m_projectionMatrixMode: 1
+  m_GateFitMode: 2
+  m_FOVAxisMode: 0
+  m_Iso: 200
+  m_ShutterSpeed: 0.005
+  m_Aperture: 16
+  m_FocusDistance: 10
+  m_FocalLength: 50
+  m_BladeCount: 5
+  m_Curvature: {x: 2, y: 11}
+  m_BarrelClipping: 0.25
+  m_Anamorphism: 0
+  m_SensorSize: {x: 36, y: 24}
+  m_LensShift: {x: 0, y: 0}
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: 0.3
+  far clip plane: 10
+  field of view: 60
+  orthographic: 1
+  orthographic size: 5
+  m_Depth: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 72
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 8400000, guid: 152a7f081ca76e94d81d62ce41c116b8, type: 2}
+  m_TargetDisplay: 0
+  m_TargetEye: 3
+  m_HDR: 1
+  m_AllowMSAA: 1
+  m_AllowDynamicResolution: 0
+  m_ForceIntoRT: 0
+  m_OcclusionCulling: 0
+  m_StereoConvergence: 10
+  m_StereoSeparation: 0.022
+--- !u!114 &4743345601533166255
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8307385425959161555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_RenderShadows: 0
+  m_RequiresDepthTextureOption: 0
+  m_RequiresOpaqueTextureOption: 0
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: 1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_Version: 2
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
 --- !u!1 &8435818742487843765
 GameObject:
   m_ObjectHideFlags: 0
@@ -378,7 +545,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2698356568830847053}
   m_Layer: 0
-  m_Name: GrassInteractor
+  m_Name: UniversalInteractor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -414,7 +581,7 @@ GameObject:
   - component: {fileID: 4503305607244377592}
   - component: {fileID: 3828639482996140578}
   m_Layer: 0
-  m_Name: Plane
+  m_Name: Ground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

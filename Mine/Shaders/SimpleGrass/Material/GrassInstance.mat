@@ -27,9 +27,14 @@ Material:
         m_Texture: {fileID: 2800000, guid: 138ee45b494c0754ebbe7601767264d9, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _GroundColorTexture:
+        m_Texture: {fileID: 8400000, guid: 152a7f081ca76e94d81d62ce41c116b8, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _AlphaClipThreshold: 0.5
+    - _GroundColorBlend: 0
     - _Smoothness: 0
     m_Colors:
     - _Base_Color_A: {r: 0.7028302, g: 1, b: 0.74673027, a: 1}
