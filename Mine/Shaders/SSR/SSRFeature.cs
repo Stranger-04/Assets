@@ -13,7 +13,7 @@ public class SSRFeature : ScriptableRendererFeature
 
         [Range(8, 256)] public int stepCount = 64;
         [Range(0, 32)] public int binaryCount = 6;
-        [Range(0f, 8f)] public int mipCount = 4;
+        [Range(1, 8)] public int mipCount = 4;
 
         [Range(0.001f, 0.5f)] public float thickness = 0.05f;
         [Range(0f, 1f)] public float smoothness = 1f;
@@ -25,6 +25,7 @@ public class SSRFeature : ScriptableRendererFeature
 
         public enum SSRType
         {
+            HiZ2D,
             DDA2D,
             Ray3D
         }
@@ -101,6 +102,7 @@ public class SSRFeature : ScriptableRendererFeature
 
             ssrMaterial.DisableKeyword("SSR_DDA2D");
             ssrMaterial.DisableKeyword("SSR_RAY3D");
+            ssrMaterial.DisableKeyword("SSR_HIZ2D");
             if (settings.ssrType == Settings.SSRType.DDA2D)
             {
                 ssrMaterial.EnableKeyword("SSR_DDA2D");
@@ -108,6 +110,10 @@ public class SSRFeature : ScriptableRendererFeature
             else if (settings.ssrType == Settings.SSRType.Ray3D)
             {
                 ssrMaterial.EnableKeyword("SSR_RAY3D");
+            }
+            else if (settings.ssrType == Settings.SSRType.HiZ2D)
+            {
+                ssrMaterial.EnableKeyword("SSR_HIZ2D");
             }
 
             Matrix4x4 viewMatrix = cameraData.GetViewMatrix();
@@ -123,7 +129,6 @@ public class SSRFeature : ScriptableRendererFeature
 
         void Render(CommandBuffer cmd, ref RenderingData renderingData)
         {
-            var source = renderingData.cameraData.renderer.cameraColorTarget;
             var renderer = renderingData.cameraData.renderer;
             var desc = renderingData.cameraData.cameraTargetDescriptor;
             desc.depthBufferBits = 0;
@@ -133,11 +138,8 @@ public class SSRFeature : ScriptableRendererFeature
             cmd.GetTemporaryRT(blur1RT.id, desc, FilterMode.Bilinear);
             cmd.GetTemporaryRT(blur2RT.id, desc, FilterMode.Bilinear);
 
-            cmd.Blit(source, blur1RT.Identifier(), ssrMaterial, 0);
-            cmd.Blit(blur1RT.Identifier(), blur2RT.Identifier(), ssrMaterial, 1);
-            cmd.Blit(blur2RT.Identifier(), ssrRT.Identifier(), ssrMaterial, 2);
             // mHiz generation
-            cmd.Blit(null, mHiZRTs[0], ssrMaterial, 4);
+            cmd.Blit(renderer.cameraDepthTargetHandle.nameID, mHiZRTs[0].nameID);
             cmd.CopyTexture(mHiZRTs[0].nameID, 0, 0, mHiZRT.nameID, 0, 0);
 
             for (int i = 1; i < settings.mipCount; i++)
@@ -153,13 +155,17 @@ public class SSRFeature : ScriptableRendererFeature
                 cmd.CopyTexture(mHiZRTs[i].nameID, 0, 0, mHiZRT.nameID, 0, i);
             }
             ssrMaterial.SetFloat("_MaxMipLevel", settings.mipCount);
-            // mHiz generation end
             cmd.SetGlobalTexture("_HiZTex", mHiZRT.nameID);
+            // mHiz generation end
+
+            cmd.Blit(null, blur1RT.Identifier(), ssrMaterial, 0);
+            cmd.Blit(blur1RT.Identifier(), blur2RT.Identifier(), ssrMaterial, 1);
+            cmd.Blit(blur2RT.Identifier(), ssrRT.Identifier(), ssrMaterial, 2);
             cmd.SetGlobalTexture("_SSRTexture", ssrRT.id);
 
             if (settings.SSRFeature)
             {
-                cmd.Blit(ssrRT.Identifier(), renderer.cameraColorTargetHandle.nameID);
+                cmd.Blit(ssrRT.id, renderer.cameraColorTargetHandle.nameID);
             }
             cmd.ReleaseTemporaryRT(ssrRT.id);
             cmd.ReleaseTemporaryRT(blur1RT.id);

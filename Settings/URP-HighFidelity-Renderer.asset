@@ -19,13 +19,13 @@ MonoBehaviour:
     maxDistance: 50
     stepCount: 64
     binaryCount: 4
-    mipCount: 4
+    mipCount: 7
     thickness: 0.15
     smoothness: 0.5
     jitterScale: 0.05
     blurScale: 1
     SSRFeature: 0
-    ssrType: 0
+    ssrType: 1
 --- !u!114 &-2590062678036469317
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -44,6 +44,7 @@ MonoBehaviour:
     maxSteps: 8
     maxDistance: 4
     intensity: 1
+    sslScale: 0.5
     jitterScale: 0.25
     blurScale: 1
     blurLevels: 1
@@ -130,7 +131,8 @@ MonoBehaviour:
   - {fileID: 6688678796388826183}
   - {fileID: 2097672503106323041}
   - {fileID: 6543334011327472316}
-  m_RendererFeatureMap: adc0de57c6d2eee5885cda6754ef5213d5084591f61ecc9abba9a391b73f0edcd5533e7b24d86f59477c715bedf5d25c61c2c112076e1c1dbce2e77f9d97ce5a
+  - {fileID: 2329654776754853481}
+  m_RendererFeatureMap: adc0de57c6d2eee5885cda6754ef5213d5084591f61ecc9abba9a391b73f0edcd5533e7b24d86f59477c715bedf5d25c61c2c112076e1c1dbce2e77f9d97ce5a69d6c329ad985420
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -232,6 +234,26 @@ MonoBehaviour:
     kuwaharaShader: {fileID: 4800000, guid: 40f2c5ca2cdf8c8409bdbda1a28fe4a9, type: 3}
     Radius: 3
     kuwaharaType: 0
+--- !u!114 &2329654776754853481
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d613f08f173d4dd895bb07b3230baa9, type: 3}
+  m_Name: FullScreenPassRendererFeature
+  m_EditorClassIdentifier: 
+  m_Active: 0
+  injectionPoint: 600
+  fetchColorBuffer: 1
+  requirements: 0
+  passMaterial: {fileID: 2100000, guid: 4756d2761898b1e4e9f35286f44af301, type: 2}
+  passIndex: 0
+  bindDepthStencilAttachment: 0
+  m_Version: 1
 --- !u!114 &6444607242988573653
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -247,7 +269,7 @@ MonoBehaviour:
   m_Active: 0
   settings:
     ddofShader: {fileID: 4800000, guid: 781cb17ab29405d438941c18d2ea4bdc, type: 3}
-    focusRange: 5
+    focusRange: 1
     blurScale: 1
 --- !u!114 &6543334011327472316
 MonoBehaviour:

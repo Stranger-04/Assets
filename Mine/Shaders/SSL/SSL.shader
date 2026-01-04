@@ -1,4 +1,4 @@
-Shader "Hidden/CelToon/SSL_ScreenSpaceLight"
+Shader "Hidden/CelToon/SSL"
 {
     Properties
     {
@@ -26,9 +26,11 @@ Shader "Hidden/CelToon/SSL_ScreenSpaceLight"
         float2 uv         : TEXCOORD0;
     };
 
-    float  _Intensity;
+    int    _SSLType;
     int    _MaxSteps;
     float  _MaxDistance;
+    float  _Intensity;
+    float  _SSLScale;
     float  _BlurScale;
     float  _JitterScale;
 
@@ -52,35 +54,58 @@ Shader "Hidden/CelToon/SSL_ScreenSpaceLight"
             shadowCoord);
     }
 
+    float HG(float cosTheta, float g)
+    {
+        return (1 - g * g) / pow(1 + g * g - 2 * g * cosTheta, 1.5);
+    }
+
     // Screen Space Light calculation
     float SSL(
         float3 CameraPos,
+        float3 LightDir,
         float3 WorldPosFromDepth,
         int MaxSteps,
         float MaxDistance,
         float2 uv
     )
     {
-        float3 RayVector = WorldPosFromDepth - CameraPos;
-        float3 RayDir = normalize(RayVector);
-        float RayLength = clamp(length(RayVector), 0.0, MaxDistance);
+        float3 RayVec = WorldPosFromDepth - CameraPos;
+        float3 RayDir = normalize(RayVec);
+        float  RayLen = clamp(length(RayVec), 0.0, MaxDistance);
 
-        float StepSize = RayLength / MaxSteps;
-        float3 jitter = frac(sin(dot(uv ,float2(12.9898,78.233))) * 43758.5453);
-        float3 pCurrent = CameraPos + RayDir * (jitter * _JitterScale);
+        float  StepSize   = RayLen / MaxSteps;
+        float3 jitter     = frac(sin(dot(uv ,float2(12.9898,78.233))) * 43758.5453);
+        float3 CurrentPos = CameraPos + RayDir * (StepSize * jitter.x * _JitterScale);
         float Density = 0.0;
 
+        #if defined(SSL_LIGHT)
         [loop]
         for (int i = 0; i < MaxSteps; i++)
         {
-            if (length(pCurrent - CameraPos) > MaxDistance)
+            if (length(CurrentPos - CameraPos) > MaxDistance)
             {    
                 break;
             }
-            float lighting = SampleShadow(pCurrent);
-            pCurrent += RayDir * StepSize;
+            float lighting = SampleShadow(CurrentPos);
+            float phase = HG(dot(RayDir, LightDir), _SSLScale);
+            lighting *= saturate(phase);
+            CurrentPos += RayDir * StepSize;
             Density += StepSize * lighting;
         }
+        #elif defined(SSL_FOG)
+        [loop]
+        for (int i = 0; i < MaxSteps; i++)
+        {
+            if (length(CurrentPos - CameraPos) > MaxDistance)
+            {    
+                break;
+            }
+            CurrentPos += RayDir * StepSize;
+            Density += StepSize;
+        }
+        #else
+        Density = 0.0;
+        #endif
 
         Density /= MaxSteps;
         return Density;
@@ -99,13 +124,14 @@ Shader "Hidden/CelToon/SSL_ScreenSpaceLight"
     {
         float2 uv = i.uv;
         Light mainLight = GetMainLight();
-
+        float3 lightDirWS  = mainLight.direction;
         float3 cameraPosWS = GetCameraPositionWS();
-        float3 worldPos = ReconstructWorldPos(uv, cameraPosWS, _MaxDistance);
+        float3 positionWS  = ReconstructWorldPos(uv, cameraPosWS, _MaxDistance);
 
         float density = SSL(
             cameraPosWS,
-            worldPos,
+            lightDirWS,
+            positionWS,
             _MaxSteps,
             _MaxDistance,
             uv
@@ -161,6 +187,7 @@ Shader "Hidden/CelToon/SSL_ScreenSpaceLight"
         {
             Name "SSL_ScreenSpaceLight"
             HLSLPROGRAM
+            #pragma multi_compile _ SSL_FOG SSL_LIGHT
             #pragma vertex Vert
             #pragma fragment Frag
             ENDHLSL

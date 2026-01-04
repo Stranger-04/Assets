@@ -154,11 +154,6 @@ Shader "Hidden/CelToon/SSR"
         return max(max(depth.x, depth.y), max(depth.z, depth.w));
     }
 
-    half4 Frag_HiZInitial(Varyings input) : SV_Target
-    {
-        return SampleSceneDepth(input.uv);
-    }
-
     half4 HiZProcess(float4 color, float3 reflectDir, float dk, float2 ds, float3 dv, float K, float2 S, float3 V)
     {
         int mipLevel = 0;
@@ -254,7 +249,11 @@ Shader "Hidden/CelToon/SSR"
         float2 S = startS;
         float3 V = startV;
 
-        color = BinaryProcess(color, reflectDir, dk, ds, dv, K, S, V);
+        #if defined(SSR_HIZ2D)
+            color = HiZProcess(color, reflectDir, dk, ds, dv, K, S, V);
+        #else
+            color = BinaryProcess(color, reflectDir, dk, ds, dv, K, S, V);
+        #endif
         return color;
     }
 
@@ -336,8 +335,10 @@ Shader "Hidden/CelToon/SSR"
             return Frag_SSR_DDA(input);
         #elif defined(SSR_RAY3D)
             return Frag_SSR_Ray3D(input);
-        #else
+        #elif defined(SSR_HIZ2D)
             return Frag_SSR_DDA(input);
+        #else
+            return half4(0,0,0,0);
         #endif
     }
     ENDHLSL
@@ -356,7 +357,7 @@ Shader "Hidden/CelToon/SSR"
             Name "SSR_Raymarch"
 
             HLSLPROGRAM
-            #pragma multi_compile _ SSR_DDA2D SSR_RAY3D
+            #pragma multi_compile _ SSR_DDA2D SSR_RAY3D SSR_HIZ2D
             #pragma vertex Vert
             #pragma fragment Frag
             ENDHLSL
@@ -389,16 +390,6 @@ Shader "Hidden/CelToon/SSR"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment Frag_HiZDepthMip
-            ENDHLSL
-        }
-
-        Pass
-        {
-            Name "SSR_HiZInitial"
-
-            HLSLPROGRAM
-            #pragma vertex Vert
-            #pragma fragment Frag_HiZInitial
             ENDHLSL
         }
     }

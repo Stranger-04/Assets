@@ -119,10 +119,13 @@ void CubeVolume_float
 
             float Step = StepSize;
             tCurrent += Step;
-            Diffuse += Step * DeltaDensity;
-            Density += Step * LocalDensity;
+            Diffuse += Step * DeltaDensity * (1.0 - Density);
+            Density += Step * LocalDensity * (1.0 - Density);
             continue;
         } 
+
+        Diffuse /= MaxSteps;
+        Density /= MaxSteps;
 
         if (SDF >= 0.0) 
         { 

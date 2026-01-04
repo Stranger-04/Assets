@@ -12,6 +12,7 @@ public class SSLFeature : ScriptableRendererFeature
         [Range(1, 256)] public int   maxSteps = 32;
         [Range(0.1f, 100f)] public float maxDistance = 10f;
         [Range(0f, 5f)] public float intensity = 1f;
+        [Range(0f, 2f)] public float sslScale = 0.5f;
         [Range(0f, 1f)] public float jitterScale = 0.5f;
         [Range(0f, 5f)] public float blurScale = 0.5f;
         [Range(0, 4)]   public int blurLevels = 1;
@@ -56,8 +57,20 @@ public class SSLFeature : ScriptableRendererFeature
             sslMaterial.SetInt("_MaxSteps", vol.maxSteps.value);
             sslMaterial.SetFloat("_MaxDistance", vol.maxDistance.value);
             sslMaterial.SetFloat("_Intensity", vol.intensity.value);
+            sslMaterial.SetFloat("_SSLScale", vol.sslScale.value);
             sslMaterial.SetFloat("_BlurScale", vol.blurScale.value);
             sslMaterial.SetFloat("_JitterScale", vol.jitterScale.value);
+
+            sslMaterial.DisableKeyword("SSL_FOG");
+            sslMaterial.DisableKeyword("SSL_LIGHT");
+            if (vol.sslType == SSLVolume.SSLType.Fog)
+            {
+                sslMaterial.EnableKeyword("SSL_FOG");
+            }
+            else if (vol.sslType == SSLVolume.SSLType.Light)
+            {
+                sslMaterial.EnableKeyword("SSL_LIGHT");
+            }
 
             Render(cmd, ref renderingData);
             context.ExecuteCommandBuffer(cmd);

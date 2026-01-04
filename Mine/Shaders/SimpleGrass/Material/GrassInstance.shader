@@ -55,8 +55,6 @@ Shader "GrassInstance"
     float  _WindScale;
 
     float3 _InteractionDirection;
-    float  _InteractionRadius;
-    float  _InteractionHeight;
 
     float _GroundColorBlend;
 
@@ -66,8 +64,8 @@ Shader "GrassInstance"
     SamplerState sampler_WindNoiseTexture;
     Texture2D _InteractionTexture;
     SamplerState sampler_InteractionTexture;
-    Texture2D _GroundColorTexture;
-    SamplerState sampler_GroundColorTexture;
+    Texture2D _SceneColorTex;
+    SamplerState sampler_SceneColorTex;
 
     struct appdata
     {
@@ -99,12 +97,9 @@ Shader "GrassInstance"
     void InteractionEffect(float3 positionWS, out float3 interactionOffset, out float2 uv)
     {
         float3 interactionDir = normalize(_InteractionDirection);
-        float3 interactionPos = _CameraPosition - float3(0, _InteractionHeight, 0);
-        float3 positionOS = positionWS - interactionPos;
-        uv = mul(_CameraMatrix, float4(positionOS, 1)).xz;
-        float  interactionA = _InteractionTexture.SampleLevel(sampler_InteractionTexture, uv, 0).r;
-        float  interactionB = 1 -saturate(SphereSDF(positionOS, _InteractionRadius));
-        interactionOffset = interactionA * interactionB * interactionDir;
+        uv = mul(_CameraMatrix, float4(positionWS - _CameraPosition, 1)).xz;
+        float  interaction = _InteractionTexture.SampleLevel(sampler_InteractionTexture, uv, 0).r;
+        interactionOffset = interaction * interactionDir;
     }
 
     v2f vert(appdata v)
@@ -149,7 +144,7 @@ Shader "GrassInstance"
         clip(grassTex.a - _AlphaClipThreshold);
         half4 grasscolor = lerp(_Base_Color_B, _Base_Color_A, i.uv.y) * grassTex;
         half4 windColor = lerp(_Wind_Color_B, _Wind_Color_A, i.posdepth);
-        half4 groundColor = _GroundColorTexture.Sample(sampler_GroundColorTexture, i.cameraUV);
+        half4 groundColor = _SceneColorTex.Sample(sampler_SceneColorTex, i.cameraUV);
         half4 basecolor = lerp(saturate(grasscolor * windColor), groundColor, _GroundColorBlend);
 
         // Lighting Functions
@@ -163,7 +158,7 @@ Shader "GrassInstance"
         float3 L = normalize(LightDirection);
         float3 V = normalize(_WorldSpaceCameraPos - i.positionWS.xyz);
 
-        float3 Diffuse = DiffuseLambert(N, L);
+        float3 Diffuse = DiffuseLambert(N, L) * 0.5 + 0.5;
         float3 Specular = SpecularBlinnPhong(N, L, V, _Smoothness);   
         float3 direct = (Diffuse + Specular) * LightColor;
         float3 ambient = SampleSH(N);

@@ -29,10 +29,8 @@ public class GrassManager : MonoBehaviour
     public Texture2D windNoiseTexture;
 
     [Header("Interaction Settings")]
-    public Vector3 interactionDirection = new Vector3(0f, 1f, 0f);
-    public float interactionHeight = 3f;
-    public float interactionRadius = 1f;
     public RenderTexture interactionTexture;
+    public Vector3 interactionDirection = new Vector3(0f, 1f, 0f);
 
     [Header("ColorBlend Settings")]
     public RenderTexture groundColorTexture;
@@ -159,7 +157,7 @@ public class GrassManager : MonoBehaviour
     void InitGrass()
     {
         if (initialized) return;
-        grassBounds = new Bounds(transform.position, new Vector3(areaSize, 10f, areaSize));
+        grassBounds = new Bounds(transform.position, Vector3.one * areaSize);
 
         if (grassDatabase == null || grassDatabase.Count == 0)
         {
@@ -246,8 +244,6 @@ public class GrassManager : MonoBehaviour
         grassMaterial.SetFloat("_WindScale", windScale);
 
         grassMaterial.SetVector("_InteractionDirection", interactionDirection);
-        grassMaterial.SetFloat("_InteractionRadius", interactionRadius);
-        grassMaterial.SetFloat("_InteractionHeight", interactionHeight);
 
         grassMaterial.SetFloat("_GroundColorBlend", groundColorBlend);
 

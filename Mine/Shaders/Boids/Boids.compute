@@ -1,0 +1,54 @@
+#pragma Instancekernel CS_InstanceUpdate
+
+struct InstanceProperties
+{
+    float3 position;
+    float3 velocity;
+    float  phase;
+};
+
+RWStructuredBuffer<InstanceProperties> _InstanceBuffer;
+AppendStructuredBuffer<uint> _ClipBuffer;
+
+float  _DepthClipThreshold;
+float  _MaxSpeed;
+float  _DeltaTime;
+float  _CollisionRadius;
+float3 _CollisionTarget;
+float3 _PositionTarget;
+float4x4 _VP;
+
+int _InstanceCount;
+
+[numthreads(64, 1, 1)]
+void CS_InstanceUpdate (uint3 id : SV_DispatchThreadID)
+{
+    uint i = id.x;
+    if (i >= _InstanceCount) return;
+
+    // Clipping Logic
+    bool Clip = false;
+    bool DepthClip = false;
+    bool ViewClip = false;
+
+    float3 positionWS = _InstanceBuffer[i].position;
+    float4 positionCS = mul(_VP, float4(positionWS,1));
+    float3 ndc = positionCS.xyz / positionCS.w;
+    float  treshold = 1.1;
+    if (positionCS.w <= 0 || ndc.x < -treshold || ndc.x > treshold || ndc.y < -treshold || ndc.y > treshold)
+        ViewClip = true;
+    
+    float depth = positionCS.w;
+    if (depth > _DepthClipThreshold) 
+        DepthClip = true;
+
+    if (ViewClip || DepthClip)
+        Clip = true;
+    if (!Clip) _ClipBuffer.Append(i);
+
+    // Boid Logic
+    InstanceProperties boid = _InstanceBuffer[i];
+    float3 toTarget = _PositionTarget - boid.position;
+    float  distToTarget = length(toTarget);
+    float3 dirToTarget  = normalize(toTarget);
+}

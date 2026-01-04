@@ -162,13 +162,13 @@ Shader "Custom/RimToon"
 
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags { "RenderType"="Opaque" "Queue"="Geometry" }
         LOD 200
 
         Pass
         {
             Name "FORWARD"
-            Tags { "LightMode"="UniversalForward" "Queue"="Geometry" }
+            Tags { "LightMode"="UniversalForward" }
 
             Cull Back
             ZWrite On
@@ -195,7 +195,7 @@ Shader "Custom/RimToon"
         Pass
         {
             Name "OUTLINE"
-            Tags { "LightMode"="SRPDefaultUnlit" "Queue"="Geometry" }
+            Tags { "LightMode"="SRPDefaultUnlit" }
 
             Cull Front
             ZWrite On
