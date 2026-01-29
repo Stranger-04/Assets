@@ -21,8 +21,8 @@ Shader "GrassInstance"
     HLSLINCLUDE
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-    #include "Assets/Mine/Special/HLSL/CustomLighting.hlsl"
     #include "Assets/Mine/Special/HLSL/LightFunction.hlsl"
+    #include "Assets/Mine/Special/HLSL/AdditionalLightsFunction.hlsl"
     #include "Assets/Mine/Special/HLSL/TBN.hlsl"
     #include "Assets/Mine/Special/HLSL/SDF.hlsl"
 
@@ -152,7 +152,7 @@ Shader "GrassInstance"
         float3 LightColor;
         float DistanceAtten, ShadowAtten;
 
-        MainLight_float(i.positionWS.xyz, LightDirection, LightColor, DistanceAtten, ShadowAtten);
+        MainLight(i.positionWS.xyz, LightDirection, LightColor, DistanceAtten, ShadowAtten);
 
         float3 N = normalize(i.normalWS.xyz);
         float3 L = normalize(LightDirection);

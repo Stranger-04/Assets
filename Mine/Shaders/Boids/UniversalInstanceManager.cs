@@ -7,6 +7,7 @@ using UnityEngine.Rendering;
 using UnityEditor;
 #endif
 
+// [ExecuteAlways]
 public class UniversalInstanceManager : MonoBehaviour
 {
     public ComputeShader computeShader;
@@ -17,9 +18,13 @@ public class UniversalInstanceManager : MonoBehaviour
     public int instanceCount = 1024;
     public float spawnRadius = 10f;
     public Vector3 spawnVelocity = Vector3.zero;
-    public float maxSpeed = 5f;
+    public float maxCenterSpeed = 5f;
+    public float aveInstanceSpeed = 2f;
+    [Range(0.001f, 1f)] public float posDelayFactor = 0.005f;
+    [Range(0.001f, 1f)] public float radiusFixFactor = 1f;
 
-    [Header("Collision Settings")]
+    [Header("Group Settings")]
+    public Transform positionTarget;
     public Transform collisionTarget;
     public float collisionRadius = 1f;
 
@@ -36,11 +41,37 @@ public class UniversalInstanceManager : MonoBehaviour
     [ReadOnly]
     [SerializeField]
     public bool initialized = false;
+
+    private static readonly int DeltaTimeID           = Shader.PropertyToID("_DeltaTime");
+    private static readonly int PositionTargetID      = Shader.PropertyToID("_PositionTarget");
+    private static readonly int CollisionTargetID     = Shader.PropertyToID("_CollisionTarget");
+    private static readonly int CollisionRadiusID     = Shader.PropertyToID("_CollisionRadius");
+    private static readonly int VPID                  = Shader.PropertyToID("_VP");
+    private static readonly int InstanceCountID       = Shader.PropertyToID("_InstanceCount");
+    private static readonly int PartialCountID        = Shader.PropertyToID("_PartialCount");
+
+    private static readonly int MaxCenterSpeedID      = Shader.PropertyToID("_MaxCenterSpeed");
+    private static readonly int AveInstanceSpeedID    = Shader.PropertyToID("_AveInstanceSpeed");
+    private static readonly int DepthClipThresholdID  = Shader.PropertyToID("_DepthClipThreshold");
+    private static readonly int PosDelayFactorID      = Shader.PropertyToID("_PosDelayFactor");
+    private static readonly int RadiusFixFactorID     = Shader.PropertyToID("_RadiusFixFactor");
+    private static readonly int InnerRadiusID         = Shader.PropertyToID("_InnerRadius");
+    private static readonly int SpawnRadiusID         = Shader.PropertyToID("_SpawnRadius");
+
+    private static readonly int MeshBufferID          = Shader.PropertyToID("_MeshBuffer");
+    private static readonly int InstanceBufferID      = Shader.PropertyToID("_InstanceBuffer");
+    private static readonly int GroupBufferID         = Shader.PropertyToID("_GroupBuffer");
+    private static readonly int ClipBufferID          = Shader.PropertyToID("_ClipBuffer");
+    private static readonly int CenterBufferID        = Shader.PropertyToID("_CenterBuffer");
+
     private ComputeBuffer MeshBuffer;
     private ComputeBuffer InstanceBuffer;
     private ComputeBuffer GroupBuffer;
     private ComputeBuffer ClipBuffer;
     private ComputeBuffer ArgsBuffer;
+    private ComputeBuffer CenterBuffer;
+
+    private int partialCount;
 
     struct MeshProperties
     {
@@ -54,25 +85,24 @@ public class UniversalInstanceManager : MonoBehaviour
 
     struct InstanceProperties
     {
-        public Vector3 position;
+        public Vector3 positionOG;
+        public Vector3 positionWS;
         public Vector3 velocity;
-        public float animation;
+        public float anime;
 
         public static int Size()
         {
-            return sizeof(float) * (3 + 3 + 1);
+            return sizeof(float) * (3 + 3 + 3 + 1);
         }
     }
 
     struct GroupProperties
     {
         public Vector3 center;
-        public Vector3 velocity;
-        public float state;
 
         public static int Size()
         {
-            return sizeof(float) * (3 + 3 +1);
+            return sizeof(float) * 3;
         }
     }
 
@@ -154,6 +184,12 @@ public class UniversalInstanceManager : MonoBehaviour
             ClipBuffer = null;
         }
 
+        if (CenterBuffer != null)
+        {
+            CenterBuffer.Release();
+            CenterBuffer = null;
+        }
+
         if (ArgsBuffer != null)
         {
             ArgsBuffer.Release();
@@ -168,21 +204,34 @@ public class UniversalInstanceManager : MonoBehaviour
     {
         if (!initialized) return;
 
-        int Groupkernel = computeShader.FindKernel("CS_GroupUpdate");
-        computeShader.SetFloat("_DeltaTime", Time.deltaTime);
-        computeShader.SetVector("_PositionTarget", transform.position);
-        computeShader.Dispatch(Groupkernel, 1, 1, 1);
-
-        int Instancekernel = computeShader.FindKernel("CS_InstanceUpdate");
-        computeShader.SetFloat("_DeltaTime", Time.deltaTime);
-        computeShader.SetVector("_CollisionTarget", collisionTarget.position);
+        computeShader.SetFloat(DeltaTimeID, Time.deltaTime);
+        computeShader.SetVector(PositionTargetID, positionTarget.position);
+        computeShader.SetVector(CollisionTargetID, collisionTarget.position);
+        computeShader.SetFloat(CollisionRadiusID, collisionRadius);
         Matrix4x4 vp = GL.GetGPUProjectionMatrix(Camera.main.projectionMatrix, false) * Camera.main.worldToCameraMatrix;
-        computeShader.SetMatrix("_VP", vp);
+        computeShader.SetMatrix(VPID, vp);
+
+        int threadGroups = Mathf.CeilToInt((float)instanceCount / 64);
+        int instanceKernel = computeShader.FindKernel("CS_InstanceUpdate");
+        int centerKernel = computeShader.FindKernel("CS_CenterUpdate");
+        int groupKernel  = computeShader.FindKernel("CS_GroupUpdate");
 
         ClipBuffer.SetCounterValue(0);
-        int threadGroups = Mathf.CeilToInt((float)instanceCount / 64);
-        computeShader.Dispatch(Instancekernel, threadGroups, 1, 1);
+        computeShader.Dispatch(instanceKernel, threadGroups, 1, 1);
+        computeShader.Dispatch(centerKernel, threadGroups, 1, 1);
+        computeShader.Dispatch(groupKernel, 1, 1, 1);
+
         ComputeBuffer.CopyCount(ClipBuffer, ArgsBuffer, 4);
+
+        if (Time.frameCount % 30 == 0)
+        {
+            var debugArgs1 = new InstanceProperties[1];
+            var debugArgs2 = new GroupProperties[1];
+            InstanceBuffer.GetData(debugArgs1, 0, 0, 1);
+            GroupBuffer.GetData(debugArgs2, 0, 0, 1);
+            Debug.Log("pos" + debugArgs1[0].positionWS);
+            Debug.Log("center: " + debugArgs2[0].center);
+        }
 
         Graphics.DrawMeshInstancedIndirect
         (
@@ -200,31 +249,52 @@ public class UniversalInstanceManager : MonoBehaviour
         instanceBounds = new Bounds(transform.position, Vector3.one * boundsSize);
 
         // Buffer Setup
-        MeshProperties [] meshProperties = new MeshProperties[instanceCount];
+        MeshProperties [] meshProperties = new MeshProperties[1];
         InstanceProperties [] instanceProperties = new InstanceProperties[instanceCount];
         GroupProperties [] groupProperties = new GroupProperties[1];
         ClipProperties [] clipProperties = new ClipProperties[instanceCount];
 
+        float innerRadius = spawnRadius * 0.5f;
         for (int i = 0; i < instanceCount; i++)
         {
-            meshProperties[i].matrix = Matrix4x4.TRS(basePosition, baseRotation, Vector3.one * baseScale * Random.Range(0.8f, 1.2f));
-            instanceProperties[i].position = Random.insideUnitSphere * spawnRadius + transform.position;
+            float R = (spawnRadius + innerRadius) * 0.5f;
+            float r = (spawnRadius - innerRadius) * 0.5f;
+
+            float u = Random.value * Mathf.PI * 2;
+            float v = Random.value * Mathf.PI * 2;
+            float t = Mathf.Sqrt(Random.value) * r;
+
+            float cu = Mathf.Cos(u), su = Mathf.Sin(u);
+            float cv = Mathf.Cos(v), sv = Mathf.Sin(v);
+
+            Vector3 radial = new Vector3(cu, 0, su);
+            Vector3 center = radial * R;
+            Vector3 offset = radial * t * cv + new Vector3(0, t * sv, 0);
+
+            instanceProperties[i].positionOG = center + offset;
+            instanceProperties[i].positionWS = instanceProperties[i].positionOG + positionTarget.position;
             instanceProperties[i].velocity = spawnVelocity + Random.insideUnitSphere;
-            instanceProperties[i].animation = Random.Range(0f, 1f);
+            instanceProperties[i].anime = Mathf.Atan2(instanceProperties[i].positionOG.z, instanceProperties[i].positionOG.x);
             clipProperties[i].depthClipThreshold = depthClipThreshold;
         }
+        meshProperties[0].matrix = Matrix4x4.TRS(basePosition, baseRotation, Vector3.one * baseScale);
+        groupProperties[0].center = transform.position;
 
-        MeshBuffer = new ComputeBuffer(instanceCount, MeshProperties.Size());
+        MeshBuffer = new ComputeBuffer(1, MeshProperties.Size());
         MeshBuffer.SetData(meshProperties);
 
         InstanceBuffer = new ComputeBuffer(instanceCount, InstanceProperties.Size());
         InstanceBuffer.SetData(instanceProperties);
 
         GroupBuffer = new ComputeBuffer(1, GroupProperties.Size());
+        GroupBuffer.SetData(groupProperties);
 
         ClipBuffer = new ComputeBuffer(instanceCount, ClipProperties.Size(), ComputeBufferType.Append);
         ClipBuffer.SetCounterValue(0);
         ClipBuffer.SetData(clipProperties);
+
+        partialCount = Mathf.CeilToInt((float)instanceCount / 64);
+        CenterBuffer = new ComputeBuffer(partialCount, sizeof(float) * 3);
 
         uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
         args[0] = (uint)instanceMesh.GetIndexCount(0);
@@ -234,27 +304,41 @@ public class UniversalInstanceManager : MonoBehaviour
         ArgsBuffer = new ComputeBuffer(1, args.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
         ArgsBuffer.SetData(args);
         // Compute Shader Setup
-        int Groupkernel = computeShader.FindKernel("CS_GroupUpdate");
-        computeShader.SetBuffer(Groupkernel, "_GroupBuffer", GroupBuffer);
-        computeShader.Dispatch(Groupkernel, 1, 1, 1);
+        int Instancekernel  = computeShader.FindKernel("CS_InstanceUpdate");
+        int Centerkernel    = computeShader.FindKernel("CS_CenterUpdate");
+        int Groupkernel     = computeShader.FindKernel("CS_GroupUpdate");
 
-        int Instancekernel = computeShader.FindKernel("CS_InstanceUpdate");
-        computeShader.SetInt("_InstanceCount", instanceCount);
-        computeShader.SetBuffer(Instancekernel, "_InstanceBuffer", InstanceBuffer);
-        computeShader.SetBuffer(Instancekernel, "_ClipBuffer", ClipBuffer);
+        computeShader.SetInt(InstanceCountID, instanceCount);
+        computeShader.SetInt(PartialCountID, partialCount);
+        computeShader.SetBuffer(Instancekernel, InstanceBufferID, InstanceBuffer);
+        computeShader.SetBuffer(Instancekernel, GroupBufferID, GroupBuffer);
+        computeShader.SetBuffer(Instancekernel, ClipBufferID, ClipBuffer);
+        computeShader.SetBuffer(Groupkernel, GroupBufferID, GroupBuffer);
+        computeShader.SetBuffer(Groupkernel, CenterBufferID, CenterBuffer);
+        computeShader.SetBuffer(Centerkernel, InstanceBufferID, InstanceBuffer);
+        computeShader.SetBuffer(Centerkernel, CenterBufferID, CenterBuffer);
 
-        computeShader.SetFloat("_MaxSpeed", maxSpeed);
-        computeShader.SetFloat("_CollisionRadius", collisionRadius);
-        computeShader.SetFloat("_DepthClipThreshold", depthClipThreshold);
+        computeShader.SetFloat(DeltaTimeID, Time.deltaTime);
+        computeShader.SetFloat(MaxCenterSpeedID, maxCenterSpeed);
+        computeShader.SetFloat(AveInstanceSpeedID, aveInstanceSpeed);
+        computeShader.SetFloat(DepthClipThresholdID, depthClipThreshold);
+        computeShader.SetFloat(PosDelayFactorID, posDelayFactor);
+        computeShader.SetFloat(RadiusFixFactorID, radiusFixFactor);
+        computeShader.SetFloat(InnerRadiusID, innerRadius);
+        computeShader.SetFloat(SpawnRadiusID, spawnRadius);
 
+        ClipBuffer.SetCounterValue(0);
         int threadGroups = Mathf.CeilToInt((float)instanceCount / 64);
         computeShader.Dispatch(Instancekernel, threadGroups, 1, 1);
+        computeShader.Dispatch(Centerkernel, threadGroups, 1, 1);
+        computeShader.Dispatch(Groupkernel, 1, 1, 1);
+
         ComputeBuffer.CopyCount(ClipBuffer, ArgsBuffer, 4);
 
         // Material Setup
-        instanceMaterial.SetBuffer("_MeshBuffer", MeshBuffer);
-        instanceMaterial.SetBuffer("_InstanceBuffer", InstanceBuffer);
-        instanceMaterial.SetBuffer("_ClipBuffer", ClipBuffer);
+        instanceMaterial.SetBuffer(MeshBufferID, MeshBuffer);
+        instanceMaterial.SetBuffer(InstanceBufferID, InstanceBuffer);
+        instanceMaterial.SetBuffer(ClipBufferID, ClipBuffer);
 
         Debug.Log("Instances Initialized: " + instanceCount);
         initialized = true;

@@ -19,6 +19,7 @@ float SpecularBlinnPhong(float3 normalWS, float3 lightDirWS, float3 viewDirWS, f
     return pow(NdotH, smoothness * 64) * smoothness;
 }
 
+//fresnel rim lighting function
 float RimFresnel(float3 normalWS, float3 viewDirWS, float rimPower)
 {
     if (rimPower <= 0.0)
