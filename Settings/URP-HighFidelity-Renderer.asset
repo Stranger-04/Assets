@@ -267,24 +267,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 936499e87f5826348ad143299eddd983, type: 3}
   m_Name: SSOFeature
   m_EditorClassIdentifier: 
-  m_Active: 0
+  m_Active: 1
   settings:
     ssoShader: {fileID: 4800000, guid: a2f57ac10d03f674caf4d7c2be4fbac5, type: 3}
-    colorParams:
-      intensity: 0
-      thickness: 1
-      threshold: {x: 0, y: 1}
+    ssoType: 1
     depthParams:
       intensity: 1
-      thickness: 1
-      threshold: {x: 0, y: 1}
+      thickness: 2
+      threshold: {x: 0, y: 0.25}
     normalParams:
       intensity: 1
-      thickness: 1
+      thickness: 2
       threshold: {x: 0, y: 1}
-    ssoType: 0
-    jitter: 0
-    SSOFeature: 1
+    shadowParams:
+      shadowType: 2
+      Intensity: 1
+      Sharpness: 0.2
+      Thickness: 0.01
+      Density: 0.2
+    jitter: 0.2
+    downsample: 0
+    OutlineColor: {r: 1, g: 1, b: 1, a: 0.2}
+    SSOFeature: 0
 --- !u!114 &6444607242988573653
 MonoBehaviour:
   m_ObjectHideFlags: 0

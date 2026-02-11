@@ -41,7 +41,7 @@ Material:
     - _EnableStencil: 0
     - _FresnelRimPower: 0
     - _OutlineScale: 0.5
-    - _Smoothness: 0.5
+    - _Smoothness: 1
     m_Colors:
     - _BaseColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _OutlineColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}

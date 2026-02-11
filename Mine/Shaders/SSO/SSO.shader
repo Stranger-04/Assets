@@ -2,9 +2,7 @@ Shader "Custom/SSO"
 {
     Properties
     {
-        _Thickness ("Thickness", Range(1,5)) = 1
-        _Intensity ("Intensity", Range(0,1)) = 1
-        _Threshold ("Threshold", Range(0,1)) = 0.5
+
     }
 
     HLSLINCLUDE
@@ -13,6 +11,7 @@ Shader "Custom/SSO"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareNormalsTexture.hlsl"
+    #include "Assets/Mine/Special/HLSL/DeclareCustomTexture.hlsl"
 
     struct Attributes
     {
@@ -26,10 +25,6 @@ Shader "Custom/SSO"
         float2 uv         : TEXCOORD0;
     };
 
-    float _ColorThickness;
-    float _ColorIntensity;
-    float2 _ColorThreshold;
-
     float _DepthThickness;
     float _DepthIntensity;
     float2 _DepthThreshold;
@@ -38,7 +33,21 @@ Shader "Custom/SSO"
     float _NormalIntensity;
     float2 _NormalThreshold;
 
+    float _ShadowIntensity;
+    float _ShadowSharpness;
+    float _ShadowThickness;
+    float _ShadowDensity;
+
     float _Jitter;
+    float _Downsample;
+    float4 _OutlineColor;
+
+    TEXTURE2D_X(_MainTex);
+    TEXTURE2D_X(_SSODiffTex);
+
+    static const float2 UVoffsetsDDXY[2] = {
+        float2(-1, 0), float2(0, -1)
+    };
 
     static const float2 UVoffsetsBasic[4] = {
         float2(-1, 0), float2(1, 0),
@@ -51,19 +60,16 @@ Shader "Custom/SSO"
         float2(-1,  1), float2(0,  1), float2(1,  1)
     };
 
-    float SampleColor(float2 uv)
-    {
-        return Luminance(SampleSceneColor(uv));
-    }
-
     float SampleDepth(float2 uv)
     {
-        return LinearEyeDepth(SampleSceneDepth(uv), _ZBufferParams);
+        float rawDepth = SampleSceneDepth(uv);
+        return LinearEyeDepth(rawDepth, _ZBufferParams);
     }
 
     float3 SampleNormal(float2 uv)
     {
-        return normalize(SampleSceneNormals(uv));
+        float3 normal = SampleSceneNormals(uv);
+        return normalize(normal);
     }
 
     float2 Hash21(float2 p)
@@ -80,41 +86,44 @@ Shader "Custom/SSO"
         return uv + offset + jitter * offset * _Jitter;
     }
 
-    float ColorDiffBasic(float luminance, float2 uv, float2 thickness)
+    float2 RotateUV(float2 uv, float angle)
     {
-        float lumDiff = 0.0;
-        float lumBase = max(luminance, 1e-6);
-        
-        [unroll]
-        for (int i = 0; i < UVoffsetsBasic.Length; i++)
-        {
-            float2 offsetUV = OffsetUV(uv, UVoffsetsBasic[i], thickness);
-            float  offsetLum = SampleColor(offsetUV);
-            lumDiff = max(abs(luminance - offsetLum) / lumBase, lumDiff);
-        }
-        return lumDiff;
+        float s = sin(angle);
+        float c = cos(angle);
+        return float2(
+            uv.x * c - uv.y * s,
+            uv.x * s + uv.y * c
+        );
     }
 
-    float ColorDiffSobel(float luminance, float2 uv, float2 thickness)
+    float ShadowLine(float2 uv, float density, float thickness)
     {
-        float lumDiff = 0.0;
-        float lumDiffs[8];
+        float2 jitter = Hash21(uv);
+        uv += jitter * thickness * 0.1;
+        uv = RotateUV(uv, 45.0 * PI / 180.0);
+        float shadowline = abs(frac(uv.x * 1 / density) - 0.5);
+        return smoothstep(thickness, 0.0, shadowline);
+    }
+
+    #ifndef SAMPLE_CUSTOM
+    #define SAMPLE_CUSTOM(tex, sam, uv) \
+        ShadowLine(uv, _ShadowDensity, _ShadowThickness)
+    #endif
+    #include "Assets/Mine/Special/HLSL/ProjectionFunction.hlsl"
+
+    float DepthDiffDDXY(float depth, float2 uv, float2 thickness)
+    {
+        float depthDiff = 0.0;
+        float depthBase = max(depth, 1e-6);
 
         [unroll]
-        for (int i = 0; i < UVoffsetsSobel.Length; i++)
+        for (int i = 0; i < UVoffsetsDDXY.Length; i++)
         {
-            float2 offsetUV = OffsetUV(uv, UVoffsetsSobel[i], thickness);
-            float  offsetLum = SampleColor(offsetUV);
-            lumDiffs[i] = abs(luminance - offsetLum);
+            float2 offsetUV = OffsetUV(uv, UVoffsetsDDXY[i], thickness);
+            float  offsetDepth = SampleDepth(offsetUV);
+            depthDiff += abs(depth - offsetDepth);
         }
-
-        float gradx = lumDiffs[0] + 2.0 * lumDiffs[3] + lumDiffs[5]
-                    - lumDiffs[2] - 2.0 * lumDiffs[4] - lumDiffs[7];
-        float grady = lumDiffs[0] + 2.0 * lumDiffs[1] + lumDiffs[2]
-                    - lumDiffs[5] - 2.0 * lumDiffs[6] - lumDiffs[7];
-        float2 grad = float2(gradx, grady);
-        lumDiff = length(grad);
-        return lumDiff;
+        return depthDiff;
     }
 
     float DepthDiffBasic(float depth, float2 uv, float2 thickness)
@@ -154,6 +163,20 @@ Shader "Custom/SSO"
         return depthDiff;
     }
 
+    float NormalDiffDDXY(float3 normal, float2 uv, float2 thickness)
+    {
+        float normalDiff = 0.0;
+
+        [unroll]
+        for (int i = 0; i < UVoffsetsDDXY.Length; i++)
+        {
+            float2 offsetUV = OffsetUV(uv, UVoffsetsDDXY[i], thickness);
+            float3 offsetNormal = SampleNormal(offsetUV);
+            normalDiff += 1 - dot(normal, offsetNormal);
+        }
+        return normalDiff;
+    }
+
     float NormalDiffBasic(float3 normal, float2 uv, float2 thickness)
     {
         float normalDiff = 0.0;
@@ -181,40 +204,65 @@ Shader "Custom/SSO"
         float2 uv = input.uv;
         float2 texelSize = 1.0 / _ScreenParams.xy;
 
-        float  color  = SampleColor(uv);
+        float3 color  = SampleSceneColor(uv);
         float  depth  = SampleDepth(uv);
         float3 normal = SampleNormal(uv);
+
+        Light mainLight = GetMainLight();
+        float3 litDir = mainLight.direction;
 
         float3 positionWS = ComputeWorldSpacePosition(uv, SampleSceneDepth(uv), UNITY_MATRIX_I_VP);
         float3 viewDir = normalize(positionWS - _WorldSpaceCameraPos);
 
         float jitter = Hash21(uv).x;
-        float colorDiff;
         float depthDiff;
         float normalDiff;
 
         #ifdef SSO_Basic
-            colorDiff = ColorDiffBasic(color, uv, _ColorThickness * texelSize);
             depthDiff = DepthDiffBasic(depth, uv, _DepthThickness * texelSize);
             normalDiff = NormalDiffBasic(normal, uv, _NormalThickness * texelSize);
         #elif defined(SSO_Sobel)
-            colorDiff = ColorDiffSobel(color, uv, _ColorThickness * texelSize);
             depthDiff = DepthDiffSobel(depth, uv, _DepthThickness * texelSize);
             normalDiff = NormalDiffBasic(normal, uv, _NormalThickness * texelSize);
+        #elif defined(SSO_DDXY)
+            depthDiff = DepthDiffDDXY(depth, uv, _DepthThickness * texelSize);
+            normalDiff = NormalDiffDDXY(normal, uv, _NormalThickness * texelSize);
         #else
-            colorDiff = 0.0;
             depthDiff = 0.0;
             normalDiff = 0.0;
         #endif
 
-
         float depthMask = pow(dot(normal, -viewDir), 2);
-        colorDiff = smoothstep(_ColorThreshold.x, _ColorThreshold.y, colorDiff + jitter * _Jitter) * _ColorIntensity;
-        depthDiff = smoothstep(_DepthThreshold.x, _DepthThreshold.y, depthDiff * depthMask + jitter * _Jitter) * _DepthIntensity;
-        normalDiff = smoothstep(_NormalThreshold.x, _NormalThreshold.y, normalDiff + jitter * _Jitter) * _NormalIntensity;
+        depthDiff = smoothstep(_DepthThreshold.x, _DepthThreshold.y, depthDiff * depthMask) * _DepthIntensity;
+        normalDiff = smoothstep(_NormalThreshold.x, _NormalThreshold.y, normalDiff) * _NormalIntensity;
 
-        float DiffTotal = saturate(colorDiff + depthDiff + normalDiff);
-        return DiffTotal;
+        float DiffShadow;
+        #ifdef SSO_SHADOW_NONE
+            DiffShadow = 1.0;
+        #else
+            float4 shadowCoord = TransformWorldToShadowCoord(positionWS);
+            float  shadowMask  = SAMPLE_TEXTURE2D_SHADOW(_MainLightShadowmapTexture, sampler_MainLightShadowmapTexture, shadowCoord);
+            #ifdef SSO_SHADOW_HARD
+            DiffShadow = LowCostTriplanarProjectionTex(_MainTex, sampler_LinearClamp, normal, positionWS, _ShadowSharpness * 100, 1.0).r;
+            DiffShadow *= (1 - shadowMask) * _ShadowIntensity;
+            #elif defined(SSO_SHADOW_SOFT)
+            DiffShadow = HighCostTriplanarProjectionTex(_MainTex, sampler_LinearClamp, normal, positionWS, _ShadowSharpness * 100, 1.0).r;
+            DiffShadow *= (1 - shadowMask) * _ShadowIntensity;
+            #endif
+        #endif
+
+        float DiffTotal  = saturate(depthDiff + normalDiff);
+        float DiffFactor = dot(normal, litDir) * 0.5 + 0.5;
+        float4 Diff = float4(DiffTotal, DiffFactor, DiffShadow, 1);
+        return Diff;
+    }
+
+    half4 Frag_Composite(Varyings input) : SV_Target
+    {
+        half4 ssoColor = SampleCustomTexture(_SSODiffTex, sampler_LinearClamp, input.uv);
+        half4 sceneColor = SampleCustomTexture(_MainTex, sampler_LinearClamp, input.uv);
+        half3 outlineColor = lerp(sceneColor.rgb, _OutlineColor.rgb, _OutlineColor.a);
+        return half4(lerp(sceneColor, outlineColor * (ssoColor.g * 1.5 + 0.25), (ssoColor.r + ssoColor.b)), 1.0);
     }
     ENDHLSL
 
@@ -228,9 +276,19 @@ Shader "Custom/SSO"
         {
             Name "SSO"
             HLSLPROGRAM
-            #pragma multi_compile _ SSO_Basic SSO_Sobel
+            #pragma multi_compile _ SSO_Basic SSO_Sobel SSO_DDXY 
+            #pragma multi_compile _ SSO_SHADOW_NONE SSO_SHADOW_HARD SSO_SHADOW_SOFT
             #pragma vertex Vert
             #pragma fragment Frag_SSO
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Composite"
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Frag_Composite
             ENDHLSL
         }
     }

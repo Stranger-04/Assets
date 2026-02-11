@@ -45,9 +45,9 @@ Shader "Hidden/CelToon/SSL"
     }
 
     // Sample shadow map at given world position
-    float SampleShadow(float3 positionCS)
+    float SampleShadow(float3 positionWS)
     {
-        float4 shadowCoord = TransformWorldToShadowCoord(positionCS);
+        float4 shadowCoord = TransformWorldToShadowCoord(positionWS);
         return SAMPLE_TEXTURE2D_SHADOW(
             _MainLightShadowmapTexture, 
             sampler_MainLightShadowmapTexture, 
