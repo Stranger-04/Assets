@@ -267,7 +267,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 936499e87f5826348ad143299eddd983, type: 3}
   m_Name: SSOFeature
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   settings:
     ssoShader: {fileID: 4800000, guid: a2f57ac10d03f674caf4d7c2be4fbac5, type: 3}
     ssoType: 1

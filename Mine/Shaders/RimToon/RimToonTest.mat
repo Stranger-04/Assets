@@ -35,7 +35,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _ColorFix: 0
-    - _DepthRimPower: 0
+    - _DepthRimPower: 5
     - _EnableCelColor: 0
     - _EnableOutline: 0
     - _EnableStencil: 0
