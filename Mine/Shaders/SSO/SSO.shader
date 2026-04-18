@@ -43,7 +43,7 @@ Shader "Custom/SSO"
     float4 _OutlineColor;
 
     TEXTURE2D_X(_MainTex);
-    TEXTURE2D_X(_SSODiffTex);
+    TEXTURE2D_X(_SSOTex);
 
     static const float2 UVoffsetsDDXY[2] = {
         float2(-1, 0), float2(0, -1)
@@ -107,7 +107,7 @@ Shader "Custom/SSO"
 
     #ifndef SAMPLE_CUSTOM
     #define SAMPLE_CUSTOM(tex, sam, uv) \
-        ShadowLine(uv, _ShadowDensity, _ShadowThickness)
+        ShadowLine(uv, _ShadowDensity, _ShadowThickness * 0.1)
     #endif
     #include "Assets/Mine/Special/HLSL/ProjectionFunction.hlsl"
 
@@ -259,7 +259,7 @@ Shader "Custom/SSO"
 
     half4 Frag_Composite(Varyings input) : SV_Target
     {
-        half4 ssoColor = SampleCustomTexture(_SSODiffTex, sampler_LinearClamp, input.uv);
+        half4 ssoColor = SampleCustomTexture(_SSOTex, sampler_PointClamp, input.uv);
         half4 sceneColor = SampleCustomTexture(_MainTex, sampler_LinearClamp, input.uv);
         half3 outlineColor = lerp(sceneColor.rgb, _OutlineColor.rgb, _OutlineColor.a);
         return half4(lerp(sceneColor, outlineColor * (ssoColor.g * 1.5 + 0.25), (ssoColor.r + ssoColor.b)), 1.0);

@@ -10,7 +10,6 @@ Shader "Custom/PBRToon"
         _Roughness ("Roughness", Range(0.0, 1.0)) = 0.5
         _Metallic ("Metallic", Range(0.0, 1.0)) = 0.0
         _Anisotropy ("Anisotropy", Range(-1.0, 1.0)) = 0.0
-        _ToonRemap ("Toon Remap", Range(0.0, 1.0)) = 0.5
         _ToonSharpness ("Toon Sharpness", Range(0.0, 1.0)) = 1.0
         _ToonSmoothness ("Toon Smoothness", Range(0.0, 1.0)) = 1.0
         _RimRange ("Rim Range", Range(0.0, 1.0)) = 0.5
@@ -151,21 +150,23 @@ Shader "Custom/PBRToon"
         float  shadowAdd   = 1;
         float  shadowNdotL = NdotL;
         float  shadowMain  = mainLitShadowAtten;
+        float  shadowRemap = 0;
         #if defined(ENABLE_CELTOON)
-        shadowNdotL = lerp(dot(normalWS, -lightDirWS) * 0.5 + 0.5, NdotL, _ToonSharpness);
-        shadowNdotL = shadowNdotL * (1 - _ToonRemap) + _ToonRemap;
+        shadowNdotL = lerp(dot(normalWS, lightDirWS) * 0.5 + 0.5, NdotL, _ToonSharpness);
+        shadowRemap = _ToonSharpness / (1 + _ToonSharpness);
+        shadowNdotL = shadowNdotL * (1 - shadowRemap) + shadowRemap;
         shadowNdotL = smoothstep(0.5 - _ToonSmoothness * 0.5, 0.5 + _ToonSmoothness * 0.5, shadowNdotL);
-        shadowMain  = mainLitShadowAtten * NdotL * (1 - _ToonRemap) + _ToonRemap;
+        shadowMain  = mainLitShadowAtten * NdotL * (1 - shadowRemap) + shadowRemap;
         #endif
-        float  shadowArea  = shadowMain * shadowNdotL * shadowAO * shadowAdd;
+        float  shadowArea  = shadowMain * shadowNdotL * shadowAO * shadowAdd * (1 - shadowRemap) + shadowRemap;
         float3 radiance1 = mainLitColor * mainLitDistanceAtten * shadowArea;
         float3 radiance2 = mainLitColor * mainLitDistanceAtten * mainLitShadowAtten * NdotL;
         float3 F0 = lerp(0.04, baseColor.rgb, _Metallic);
         float3 F  = F_Fast(F0, VdotH);
 
         float3 Diffuse  = Diff_Lambert(baseColor.rgb) * PI * radiance1 * (1.0 - _Metallic) * (1.0 - F);
-        float3 Specular = BRDF_Spec_Unity(NdotH, LdotH, VdotH, TdotH, BdotH, roughness, _Anisotropy) * PI * radiance2 * F;
-        float3 Ambient  = BRDFEnv(baseColor.rgb, NdotV, normalWS, viewDirWS, roughness, _Metallic, unity_SpecCube0, samplerunity_SpecCube0);
+        float3 Specular = Spec_Unity(NdotH, LdotH, VdotH, TdotH, BdotH, roughness, _Anisotropy) * PI * radiance2 * F;
+        float3 Ambient  = BRDF_Env(baseColor.rgb, NdotV, normalWS, viewDirWS, roughness, _Metallic, unity_SpecCube0, samplerunity_SpecCube0);
 
         float2 screenUV    = GetNormalizedScreenSpaceUV(input.positionCS);
         float  rimLight    = RimLightDepth(normalWS, screenUV, _RimRange * 10);

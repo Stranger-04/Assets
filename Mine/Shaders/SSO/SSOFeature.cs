@@ -41,7 +41,7 @@ public class SSOFeature : ScriptableRendererFeature
             public ShadowType shadowType = ShadowType.Soft;
             [Range(0f, 1f)] public float Intensity = 0.5f;
             [Range(0f, 1f)] public float Sharpness = 1f;
-            [Range(0f, 0.1f)] public float Thickness = 0.01f;
+            [Range(0f, 1f)] public float Thickness = 0.1f;
             [Range(0f, 1f)] public float Density = 0.5f;
         }
         public ShadowParams shadowParams = new ShadowParams();
@@ -74,15 +74,15 @@ public class SSOFeature : ScriptableRendererFeature
     {
         private Material ssoMaterial;
         private Settings settings;
-        private RTHandle ssoDiffRT;
+        private RTHandle ssoRT;
         private RTHandle tempMainRT;
 
         public void ReleaseRT()
         {
-            ssoDiffRT?.Release();
+            ssoRT?.Release();
             tempMainRT?.Release();
 
-            ssoDiffRT = null;
+            ssoRT = null;
             tempMainRT = null;
         }
 
@@ -169,16 +169,16 @@ public class SSOFeature : ScriptableRendererFeature
             ssoMaterial.SetTexture("_MainTex", tempMainRT);
             desc.width  >>= settings.downsample;
             desc.height >>= settings.downsample;
-            RenderingUtils.ReAllocateIfNeeded(ref ssoDiffRT, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_SSODiffRT");
-            ssoMaterial.SetTexture("_SSODiffTex", ssoDiffRT);
+            RenderingUtils.ReAllocateIfNeeded(ref ssoRT, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_SSODiffRT");
+            ssoMaterial.SetTexture("_SSOTex", ssoRT);
 
             cmd.Blit(source, tempMainRT);
-            cmd.Blit(null, ssoDiffRT, ssoMaterial, 0);
+            cmd.Blit(null, ssoRT, ssoMaterial, 0);
             cmd.Blit(tempMainRT, renderer.cameraColorTargetHandle.nameID, ssoMaterial, 1);
 
             if (settings.SSOFeature)
             {    
-                cmd.Blit(ssoDiffRT, renderer.cameraColorTargetHandle.nameID);
+                cmd.Blit(ssoRT, renderer.cameraColorTargetHandle.nameID);
             }
         }
     }

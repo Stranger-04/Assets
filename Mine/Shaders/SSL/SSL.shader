@@ -35,10 +35,10 @@ Shader "Hidden/CelToon/SSL"
     float  _JitterScale;
 
     TEXTURE2D_X(_MainTex);
-    TEXTURE2D_X(_SSLResultTex);
+    TEXTURE2D_X(_SSLTex);
 
     // Reconstruct world position from depth
-    float3 ReconstructWorldPos(float2 uv, float3 CameraPos, float MaxDistance)
+    float3 ReconstructWorldPos(float2 uv)
     {
         float rawDepth = SampleSceneDepth(uv);
         return ComputeWorldSpacePosition(uv, rawDepth, UNITY_MATRIX_I_VP);
@@ -126,7 +126,7 @@ Shader "Hidden/CelToon/SSL"
         Light mainLight = GetMainLight();
         float3 lightDirWS  = mainLight.direction;
         float3 cameraPosWS = GetCameraPositionWS();
-        float3 positionWS  = ReconstructWorldPos(uv, cameraPosWS, _MaxDistance);
+        float3 positionWS  = ReconstructWorldPos(uv);
 
         float density = SSL(
             cameraPosWS,
@@ -164,7 +164,7 @@ Shader "Hidden/CelToon/SSL"
     half4 Frag_Mix(Varyings i) : SV_Target
     {
         half4 mainColor = SAMPLE_TEXTURE2D_X(_MainTex, sampler_LinearClamp, i.uv);
-        half4 lightColor = SAMPLE_TEXTURE2D_X(_SSLResultTex, sampler_LinearClamp, i.uv);
+        half4 lightColor = SAMPLE_TEXTURE2D_X(_SSLTex, sampler_LinearClamp, i.uv);
         return mainColor + lightColor;
     }
     ENDHLSL

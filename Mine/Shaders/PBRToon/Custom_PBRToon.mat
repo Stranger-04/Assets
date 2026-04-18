@@ -48,17 +48,18 @@ Material:
     - _EnableOutline: 1
     - _Metallic: 0
     - _OutlineColor: 0.3
-    - _OutlineScale: 0.3
+    - _OutlineScale: 0.5
     - _RimRange: 0.5
     - _RimStrength: 0.5
     - _Roughness: 1
-    - _ToonRemap: 0.5
+    - _ToonRemap: 0.42
     - _ToonRimRange: 0.2
     - _ToonRoughness: 0.75
-    - _ToonSmoothness: 0.05
+    - _ToonSharpness: 0.5
+    - _ToonSmoothness: 0.1
     - _ToonStep: 1.9
     m_Colors:
-    - _BaseColor: {r: 0.8773585, g: 0.41798684, b: 0.41798684, a: 1}
+    - _BaseColor: {r: 0.8784314, g: 0.42164707, b: 0.42164707, a: 1}
     - _FresnelColor: {r: 1, g: 1, b: 1, a: 1}
     - _ShadowColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

@@ -134,6 +134,7 @@ Material:
     - _ToonRemap: 0.7
     - _ToonRimRange: 0.5
     - _ToonRoughness: 1
+    - _ToonSharpness: 1
     - _ToonSmoothness: 1
     - _ToonStep: 2
     - _UVSec: 0

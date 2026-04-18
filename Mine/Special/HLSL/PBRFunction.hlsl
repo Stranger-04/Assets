@@ -72,7 +72,7 @@ real Diff_Burley(real NdotL, real NdotV, real LdotH, real roughness)
 }
 
 //CookTorrance BRDF function
-real BRDF_Spec_CK(real NdotH, real NdotV, real NdotL, real VdotH, real roughness)
+real Spec_CK(real NdotH, real NdotV, real NdotL, real VdotH, real roughness)
 {
     real alpha = roughness * roughness;
 
@@ -84,7 +84,7 @@ real BRDF_Spec_CK(real NdotH, real NdotV, real NdotL, real VdotH, real roughness
     return (D * G) / (4.0 * NdotV * NdotL + 1e-5);
 }
 
-real3 BRDF_Spec_Unity(real NdotH, real LdotH, real VdotH, real TdotH, real BdotH, real roughness, real anisotropy)
+real3 Spec_Unity(real NdotH, real LdotH, real VdotH, real TdotH, real BdotH, real roughness, real anisotropy)
 {
     real alpha = roughness * roughness;
     real aniso = saturate(abs(anisotropy));
@@ -97,34 +97,34 @@ real3 BRDF_Spec_Unity(real NdotH, real LdotH, real VdotH, real TdotH, real BdotH
     return (D * V) / ((4.0 + 1e-5) * (1.0 + 0.5 * alpha));
 }
 
-real3 BRDFClassic(real3 baseColor, real NdotL, real NdotV, real NdotH, real VdotH, real LdotH, real roughness, real metallic)
+real3 BRDF_Classic(real3 baseColor, real NdotL, real NdotV, real NdotH, real VdotH, real LdotH, real roughness, real metallic)
 {
     real3 F0 = lerp(0.04, baseColor, metallic);
     real3 F  = F_P5(F0, VdotH);
 
-    real3 specular = BRDF_Spec_CK(NdotH, NdotV, NdotL, VdotH, roughness) * F;
+    real3 specular = Spec_CK(NdotH, NdotV, NdotL, VdotH, roughness) * F;
     real3 diffuse  = Diff_Lambert(baseColor) * (1.0 - metallic) * (1.0 - F);
     return specular + diffuse;
 }
 
-real3 BRDFUnity(real3 baseColor, real NdotL, real NdotV, real NdotH, 
+real3 BRDF_Unity(real3 baseColor, real NdotL, real NdotV, real NdotH, 
                 real VdotH, real LdotH, real TdotH, real BdotH, 
                 real roughness, real metallic, real anisotropy)
 {
     real3 F0 = lerp(0.04, baseColor, metallic);
     real3 F  = F_Fast(F0, VdotH);
 
-    real3 specular = BRDF_Spec_Unity(NdotH, LdotH, VdotH, TdotH, BdotH, roughness, anisotropy) * F;
+    real3 specular = Spec_Unity(NdotH, LdotH, VdotH, TdotH, BdotH, roughness, anisotropy) * F;
     real3 diffuse  = Diff_Lambert(baseColor) * (1.0 - metallic) * (1.0 - F);
     return specular + diffuse;
 }
 
-real3 BRDFBurley(real3 baseColor, real NdotL, real NdotV, real NdotH, real VdotH, real LdotH, real roughness, real metallic)
+real3 BRDF_Burley(real3 baseColor, real NdotL, real NdotV, real NdotH, real VdotH, real LdotH, real roughness, real metallic)
 {
     real3 F0 = lerp(0.04, baseColor, metallic);
     real3 F  = F_P5(F0, VdotH);
 
-    real3 specular = BRDF_Spec_CK(NdotH, NdotV, NdotL, VdotH, roughness) * F;
+    real3 specular = Spec_CK(NdotH, NdotV, NdotL, VdotH, roughness) * F;
     real3 diffuse  = Diff_Burley(NdotL, NdotV, LdotH, roughness) * Diff_Lambert(baseColor) * (1.0 - metallic) * (1.0 - F);
     return specular + diffuse;
 }

@@ -124,7 +124,7 @@ public class SSLFeature : ScriptableRendererFeature
             }
 
             // Texture Output
-            cmd.SetGlobalTexture("_SSLResultTex", sslBlurRT1.id);
+            cmd.SetGlobalTexture("_SSLTex", sslBlurRT1.id);
 
             cmd.Blit(tempMainRT.id, renderer.cameraColorTargetHandle.nameID, sslMaterial, 3);
 

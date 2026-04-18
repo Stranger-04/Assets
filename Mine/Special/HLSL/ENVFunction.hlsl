@@ -11,7 +11,7 @@ real4 GenEnvFGDLut(real NdotV, real roughness, uint sampleCount)
 }
 #endif
 
-real3 BRDFEnvHD(real3 baseColor, real NdotV, real3 normalWS, real3 viewDirWS,
+real3 BRDF_Env_HD(real3 baseColor, real NdotV, real3 normalWS, real3 viewDirWS,
                 real roughness, real metallic,
                 TextureCube spec, SamplerState samSpec,
                 Texture2D lutTex, SamplerState samLut)
@@ -31,7 +31,7 @@ real3 BRDFEnvHD(real3 baseColor, real NdotV, real3 normalWS, real3 viewDirWS,
     return specular + diffuse;
 }
 
-real3 BRDFEnv(real3 baseColor, real NdotV, real3 normalWS, real3 viewDirWS,
+real3 BRDF_Env(real3 baseColor, real NdotV, real3 normalWS, real3 viewDirWS,
               real roughness, real metallic,
               TextureCube spec, SamplerState sam)
 {
