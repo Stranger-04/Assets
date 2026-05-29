@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Custom_Parallax_SimpleParallax
+  m_Shader: {fileID: 4800000, guid: 531a1381b4b434c03bde000ae9e3b8c9, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - _USESELFSHADOW_ON
+  - _USESILHOUETTECLIP_ON
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: 181a09cc1b636c0438e1cc6074f1fdf6, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _HeightMap:
+        m_Texture: {fileID: 2800000, guid: 181a09cc1b636c0438e1cc6074f1fdf6, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _CurvedSilhouetteRadius: 1
+    - _Cutoff: 0.5
+    - _DepthScale: 1
+    - _HeightScale: 0.25
+    - _HorizonClipStrength: 1
+    - _HorizonFalloffPower: 2
+    - _HorizonHeightBias: 0
+    - _HorizonSafeThreshold: 0.3
+    - _ParallaxMode: 2
+    - _SelfShadowStrength: 0.5
+    - _SilhouetteEnabled: 1
+    - _UseCurvedSilhouette: 0
+    - _UseSelfShadow: 1
+    - _UseSilhouetteClip: 1
+    m_Colors:
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _ClipUVMax: {r: 1, g: 1, b: 0, a: 0}
+    - _ClipUVMin: {r: 0, g: 0, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

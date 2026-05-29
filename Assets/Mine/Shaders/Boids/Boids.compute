@@ -1,0 +1,145 @@
+#pragma kernel CS_InstanceUpdate
+#pragma kernel CS_GroupUpdate
+#pragma kernel CS_CenterUpdate
+
+struct InstanceProperties
+{
+    float3 positionOG;
+    float3 positionWS;
+    float3 velocity;
+    float  anime;
+};
+
+struct GroupProperties
+{
+    float3 center;
+    float3 velocity;
+    float  state;
+};
+
+RWStructuredBuffer<InstanceProperties> _InstanceBuffer;
+RWStructuredBuffer<GroupProperties> _GroupBuffer;
+RWStructuredBuffer<float3> _CenterBuffer;
+AppendStructuredBuffer<uint> _ClipBuffer;
+
+float  _DepthClipThreshold;
+float  _MaxCenterSpeed;
+float  _AveInstanceSpeed;
+float  _PosDelayFactor;
+float  _RadiusFixFactor;
+
+float _InnerRadius;
+float _SpawnRadius;
+
+float  _DeltaTime;
+float  _CollisionRadius;
+float3 _CollisionTarget;
+float3 _PositionTarget;
+float4x4 _VP;
+
+int _InstanceCount;
+int _PartialCount;
+
+groupshared float3 _CenterSharedSum[64];
+
+[numthreads(64, 1, 1)]
+void CS_InstanceUpdate (uint3 id : SV_DispatchThreadID)
+{
+    uint i = id.x;
+    if (i >= _InstanceCount || _DeltaTime <= 0) return;
+
+    InstanceProperties instance = _InstanceBuffer[i];
+    GroupProperties group = _GroupBuffer[0];
+
+    // // Clipping Logic
+    // bool Clip = false;
+    // bool DepthClip = false;
+    // bool ViewClip = false;
+
+    float3 positionWS = instance.positionWS;
+    // float4 positionCS = mul(_VP, float4(positionWS,1));
+    // float3 ndc = positionCS.xyz / positionCS.w;
+    // float  treshold = 1.1;
+    // if (positionCS.w <= 0 || ndc.x < -treshold || ndc.x > treshold || ndc.y < -treshold || ndc.y > treshold)
+    //     ViewClip = true;
+    
+    // float depth = positionCS.w;
+    // if (depth > _DepthClipThreshold) 
+    //     DepthClip = true;
+
+    // if (ViewClip || DepthClip)
+    //     Clip = true;
+    // if (!Clip) _ClipBuffer.Append(i);
+    _ClipBuffer.Append(i);
+
+    // Boid Logic
+    float3 positionOG = instance.positionOG;
+    float radius = length(positionOG.xz);
+    float theta = instance.anime;
+    float omegaMin = _AveInstanceSpeed * 0.5;
+    float omegaMax = _AveInstanceSpeed * 1.5;
+    float random = frac(sin(i * 12.9898) * 43758.5453);
+    float omega = lerp(omegaMin, omegaMax, random);
+    theta += omega * _DeltaTime;
+
+    float3 newPositionOSA = float3(cos(theta), 0, sin(theta)) * radius * (1/_RadiusFixFactor) + float3(0, positionOG.y, 0);
+    float3 newPositionWSA = newPositionOSA + _PositionTarget;
+    float3 newPositionWSB = positionOG + _PositionTarget;
+
+    float distMin = 5;
+    float distMax = 20;
+    float dist    = length(group.center - _PositionTarget);
+    float mixFactor    = saturate((dist - distMin) / (distMax - distMin));
+    float3 newPosition = lerp(newPositionWSA, newPositionWSB, mixFactor);
+    float3 velocity = (newPosition - positionWS) / _DeltaTime;
+
+    instance.positionWS = lerp(positionWS, newPosition, _PosDelayFactor);
+    instance.velocity = velocity;
+    instance.anime = theta;
+    _InstanceBuffer[id.x] = instance;
+}
+
+[numthreads(64, 1, 1)]
+void CS_CenterUpdate (uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint groupIndex : SV_GroupIndex)
+{
+    uint i = id.x;
+    float3 pos = 0;
+    if (i < _InstanceCount)
+    {
+        InstanceProperties instance = _InstanceBuffer[i];
+        pos = instance.positionWS;
+    }
+
+    _CenterSharedSum[groupIndex] = pos;
+    GroupMemoryBarrierWithGroupSync();
+
+    for (uint stride = 32; stride > 0; stride >>= 1)
+    {
+        if (groupIndex < stride)
+        {
+            _CenterSharedSum[groupIndex] += _CenterSharedSum[groupIndex + stride];
+        }
+        GroupMemoryBarrierWithGroupSync();
+    }
+
+    if (groupIndex == 0 && groupId.x < _PartialCount)
+    {
+        _CenterBuffer[groupId.x] = _CenterSharedSum[0];
+    }
+}
+
+[numthreads(1, 1, 1)]
+void CS_GroupUpdate (uint3 id : SV_DispatchThreadID)
+{
+    if (id.x != 0 || _InstanceCount <= 0 || _PartialCount <= 0) return;
+    GroupProperties group = _GroupBuffer[0];
+
+    float3 sum = 0;
+    for (int i = 0; i < _PartialCount; i++)
+    {
+        sum += _CenterBuffer[i];
+    }
+
+    group.center = sum / _InstanceCount;
+    _GroupBuffer[0] = group;
+}
