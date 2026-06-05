@@ -1,49 +1,55 @@
-Shader "Custom/Kuwahara"
+Shader "Hidden/Kuwahara"
 {
     Properties
     {
-        _MainTex ("Base Color", 2D) = "white" {}
-        _Radius ("Radius", Range(1,10)) = 5
+        _Radius ("Radius", Range(1, 10)) = 5
+        _Sharpness ("Sharpness Q", Range(1.0, 18.0)) = 8.0
+        _Hardness ("Hardness", Range(1.0, 100.0)) = 8.0
+        _Alpha ("Alpha", Range(0.01, 2.0)) = 1.0
+        _WeightScale ("Weight Scale", Range(1.0, 2000.0)) = 1000
     }
 
     HLSLINCLUDE
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-    #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+    #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+    #include "../../Special/HLSL/BlurFunction.hlsl"
 
-    struct Attributes
+    // ── 共用参数 ──
+    int _Radius;
+    float _Q;          // Sharpness
+    float _Hardness;   // 方差惩罚
+    float _Alpha;      // Aniso 专用（各向异性敏感度）
+
+    // ── Aniso 专用 ──
+    TEXTURE2D_X(_TFM);
+    float _BlurScale;
+
+    #define _N 8
+    #define _ZERO_CROSS 0.58
+
+    // ── 权重公式（Generalized & Aniso 共用） ──
+    //   w = 1 / (1 + pow(var * H * Scale, Q * 0.5))
+    //   Scale 由 C# 按模式设定:
+    //     Generalized: 0.125 (H=8 → 1×, 匹配原版 1/(1+var))
+    //     Aniso:       1000  (恢复原版 Aniso 的敏感度)
+    float _WeightScale;
+    float KuwaharaWeight(float varianceSum)
     {
-        float4 positionOS : POSITION;
-        float2 uv         : TEXCOORD0;
-    };
-
-    struct Varyings
-    {
-        float4 positionCS : SV_POSITION;
-        float2 uv         : TEXCOORD0;
-    };
-
-    float _Radius;
-
-    TEXTURE2D_X(_MainTex);
-
-    Varyings Vert(Attributes input)
-    {
-        Varyings output;
-        output.positionCS = TransformObjectToHClip(input.positionOS);
-        output.uv = input.uv;
-        return output;
+        return 1.0 / (1.0 + pow(max(0, varianceSum) * _Hardness * _WeightScale, _Q * 0.5));
     }
 
-    half4 Frag_Kuwahara_Basic(Varyings input) : SV_Target
+    // ═══════════════════════════════════════════
+    //  Pass 0: Basic (4 象限硬选)
+    // ═══════════════════════════════════════════
+    half4 Frag_Basic(Varyings input) : SV_Target
     {
-        float2 uv = input.uv;
+        float2 uv = input.texcoord;
         float2 texelSize = 1.0 / _ScreenParams.xy;
         int radius = _Radius;
 
         float3 mean[4];
         float3 meanSq[4];
         int count[4];
-
         for (int i = 0; i < 4; i++)
         {
             mean[i] = float3(0,0,0);
@@ -51,31 +57,32 @@ Shader "Custom/Kuwahara"
             count[i] = 0;
         }
 
-        // Box region each
+        [loop]
         for (int y = -radius; y <= radius; y++)
         {
+            [loop]
             for (int x = -radius; x <= radius; x++)
             {
                 if (x * x + y * y > radius * radius) continue;
                 int region = 0;
                 float2 sampleUV = uv + float2(x, y) * texelSize;
-                float3 sampleColor = SAMPLE_TEXTURE2D_X(_MainTex, sampler_LinearClamp, sampleUV).rgb;
-                
+                float3 sampleColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, sampleUV).rgb;
+
                 if (x >= 0 && y >= 0) region = 0;
                 else if (x < 0 && y > 0) region = 1;
                 else if (x < 0 && y < 0) region = 2;
                 else region = 3;
-                
+
                 mean[region] += sampleColor;
                 meanSq[region] += sampleColor * sampleColor;
                 count[region]++;
             }
         }
 
-        // Color each region
         float3 finalColor = float3(0,0,0);
         float minVariance = 1e+10;
 
+        [unroll]
         for (int i = 0; i < 4; i++)
         {
             mean[i] /= count[i];
@@ -93,47 +100,49 @@ Shader "Custom/Kuwahara"
         return half4(finalColor, 1.0);
     }
 
-    half4 Frag_Kuwahara_Generalized(Varyings input) : SV_Target
+    // ═══════════════════════════════════════════
+    //  Pass 1: Generalized (8 区加权混合)
+    // ═══════════════════════════════════════════
+    half4 Frag_Generalized(Varyings input) : SV_Target
     {
-        float2 uv = input.uv;
+        float2 uv = input.texcoord;
         float2 texelSize = 1.0 / _ScreenParams.xy;
         int radius = _Radius;
 
         float3 mean[8];
         float3 meanSq[8];
         int count[8];
-
         for (int i = 0; i < 8; i++)
         {
             mean[i] = float3(0,0,0);
             meanSq[i] = float3(0,0,0);
             count[i] = 0;
         }
-        // Octagonal regions
+
+        [loop]
         for (int y = -radius; y <= radius; y++)
         {
+            [loop]
             for (int x = -radius; x <= radius; x++)
             {
                 int region = 0;
                 float2 sampleUV = uv + float2(x, y) * texelSize;
-                float3 sampleColor = SAMPLE_TEXTURE2D_X(_MainTex, sampler_LinearClamp, sampleUV).rgb;
-                
-                float angleUV = atan2((float)y, (float)x);
-                float angleRegion = (3.14159265 / 4.0);
+                float3 sampleColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, sampleUV).rgb;
 
+                float angleUV = atan2((float)y, (float)x);
+                float angleRegion = 3.14159265 / 4.0;
                 region = (int)floor((angleUV + 3.14159265) / angleRegion) % 8;
-                
+
                 mean[region] += sampleColor;
                 meanSq[region] += sampleColor * sampleColor;
                 count[region]++;
             }
         }
 
-        // Color each region
         float3 finalColor = float3(0,0,0);
         float weightSum = 0.0;
-        float3 colorSum = float3(0,0,0);
 
+        [unroll]
         for (int i = 0; i < 8; i++)
         {
             mean[i] /= count[i];
@@ -141,42 +150,221 @@ Shader "Custom/Kuwahara"
             float3 variance = meanSq[i] - mean[i] * mean[i];
             float varianceSum = variance.x + variance.y + variance.z;
 
-            float weight = 1.0 / (varianceSum + 1.0);
-            weightSum += weight;
-            colorSum += mean[i] * weight;
+            float w = KuwaharaWeight(varianceSum);
+            weightSum += w;
+            finalColor += mean[i] * w;
         }
-        finalColor = colorSum / weightSum;
+        finalColor /= weightSum;
 
         return half4(finalColor, 1.0);
     }
 
-    half4 Frag(Varyings input) : SV_Target
+    // ═══════════════════════════════════════════
+    //  Pass 2: Structure Tensor (ddx/ddy)
+    // ═══════════════════════════════════════════
+    half4 Frag_StructureTensor(Varyings input) : SV_Target
     {
-        #if defined(KUWAHARA_BASIC)
-            return Frag_Kuwahara_Basic(input);
-        #elif defined(KUWAHARA_GENERALIZED)
-            return Frag_Kuwahara_Generalized(input);
-        #endif
-        return Frag_Kuwahara_Basic(input); 
+        float2 uv = input.texcoord;
+        float3 color = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv).rgb;
+
+        float3 Gx = ddx(color);
+        float3 Gy = ddy(color);
+
+        float Sxx = dot(Gx, Gx);
+        float Syy = dot(Gy, Gy);
+        float Sxy = dot(Gx, Gy);
+
+        return half4(Sxx, Syy, Sxy, 1.0);
     }
 
+    // ═══════════════════════════════════════════
+    //  Pass 3: Blur Horizontal (BlurFunction)
+    // ═══════════════════════════════════════════
+    half4 Frag_BlurH(Varyings input) : SV_Target
+    {
+        float2 texelSize = 1.0 / _ScreenParams.xy;
+        return BlurHorizontal(input.texcoord, texelSize, _BlurScale, _BlitTexture, sampler_LinearClamp);
+    }
+
+    // ═══════════════════════════════════════════
+    //  Pass 4: Blur Vertical + Eigen Decomposition
+    // ═══════════════════════════════════════════
+    half4 Frag_EigenDecomp(Varyings input) : SV_Target
+    {
+        float2 texelSize = 1.0 / _ScreenParams.xy;
+
+        float4 tensor = BlurVertical(input.texcoord, texelSize, _BlurScale, _BlitTexture, sampler_LinearClamp);
+
+        float Sxx = tensor.x;
+        float Syy = tensor.y;
+        float Sxy = tensor.z;
+
+        float trace = Sxx + Syy;
+        float noiseFloor = 1e-4;
+
+        float sqrtTerm = sqrt(max(0.0, (Syy - Sxx) * (Syy - Sxx) + 4.0 * Sxy * Sxy));
+        float lambda1 = 0.5 * (trace + sqrtTerm);
+        float lambda2 = max(0.0, 0.5 * (trace - sqrtTerm));
+
+        float2 v = float2(lambda1 - Sxx, -Sxy);
+        float2 tDir = (trace > noiseFloor && length(v) > 0.0) ? normalize(v) : float2(1.0, 0.0);
+        float phi = -atan2(tDir.y, tDir.x);
+
+        float A = (trace > noiseFloor && lambda1 + lambda2 > 0.0)
+            ? (lambda1 - lambda2) / (lambda1 + lambda2)
+            : 0.0;
+
+        return half4(tDir.x, tDir.y, phi, A);
+    }
+
+    // ═══════════════════════════════════════════
+    //  Pass 5: Anisotropic Kuwahara Filter
+    // ═══════════════════════════════════════════
+    half4 Frag_AnisoFilter(Varyings input) : SV_Target
+    {
+        float4 t = SAMPLE_TEXTURE2D_X(_TFM, sampler_LinearClamp, input.texcoord);
+
+        int kernelRadius = _Radius;
+        float a = float(kernelRadius) * clamp((_Alpha + t.w) / _Alpha, 0.1, 2.0);
+        float b = float(kernelRadius) * clamp(_Alpha / (_Alpha + t.w), 0.1, 2.0);
+
+        float cos_phi = t.x;
+        float sin_phi = t.y;
+
+        float2x2 R = { cos_phi, -sin_phi,
+                       sin_phi,  cos_phi };
+        float2x2 S = { 0.5 / a, 0.0,
+                       0.0,     0.5 / b };
+        float2x2 SR = mul(S, R);
+
+        int max_x = int(sqrt(a * a * cos_phi * cos_phi + b * b * sin_phi * sin_phi));
+        int max_y = int(sqrt(a * a * sin_phi * sin_phi + b * b * cos_phi * cos_phi));
+
+        float2 texelSize = 1.0 / _ScreenParams.xy;
+
+        float zeta = 1.0 / _Radius;
+        float sinZeroCross = sin(_ZERO_CROSS);
+        float eta = (zeta + cos(_ZERO_CROSS)) / (sinZeroCross * sinZeroCross);
+
+        float4 m[_N];
+        float3 s[_N];
+        [unroll]
+        for (int k = 0; k < _N; ++k)
+        {
+            m[k] = 0.0;
+            s[k] = 0.0;
+        }
+
+        [loop]
+        for (int y = -max_y; y <= max_y; ++y)
+        {
+            [loop]
+            for (int x = -max_x; x <= max_x; ++x)
+            {
+                float2 v = mul(SR, float2(x, y));
+                if (dot(v, v) <= 0.25)
+                {
+                    float3 c = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp,
+                        input.texcoord + float2(x, y) * texelSize).rgb;
+                    c = saturate(c);
+
+                    float sum = 0;
+                    float w[_N];
+
+                    float vxx = zeta - eta * v.x * v.x;
+                    float vyy = zeta - eta * v.y * v.y;
+                    float z = max(0, v.y + vxx); w[0] = z * z; sum += w[0];
+                    z = max(0, -v.x + vyy); w[2] = z * z; sum += w[2];
+                    z = max(0, -v.y + vxx); w[4] = z * z; sum += w[4];
+                    z = max(0, v.x + vyy);  w[6] = z * z; sum += w[6];
+
+                    v = 0.70710678 * float2(v.x - v.y, v.x + v.y);
+                    vxx = zeta - eta * v.x * v.x;
+                    vyy = zeta - eta * v.y * v.y;
+                    z = max(0, v.y + vxx); w[1] = z * z; sum += w[1];
+                    z = max(0, -v.x + vyy); w[3] = z * z; sum += w[3];
+                    z = max(0, -v.y + vxx); w[5] = z * z; sum += w[5];
+                    z = max(0, v.x + vyy);  w[7] = z * z; sum += w[7];
+
+                    float g = exp(-3.125 * dot(v, v)) / sum;
+
+                    for (int k = 0; k < _N; ++k)
+                    {
+                        float wk = w[k] * g;
+                        m[k] += float4(c * wk, wk);
+                        s[k] += c * c * wk;
+                    }
+                }
+            }
+        }
+
+        float4 output = 0;
+        for (int k = 0; k < _N; ++k)
+        {
+            m[k].rgb /= m[k].w;
+            s[k] = abs(s[k] / m[k].w - m[k].rgb * m[k].rgb);
+
+            float sigma2 = s[k].r + s[k].g + s[k].b;
+            float w = KuwaharaWeight(sigma2);
+
+            output += float4(m[k].rgb * w, w);
+        }
+
+        return saturate(output / output.w);
+    }
     ENDHLSL
 
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
-        LOD 100
+        Tags { "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline" }
+        Cull Off ZWrite Off ZTest Always
 
         Pass
         {
-            Name "Kuwahara"
-
-            Blend One Zero
-
+            Name "Basic"
             HLSLPROGRAM
-            #pragma multi_compile _ KUWAHARA_BASIC KUWAHARA_GENERALIZED
             #pragma vertex Vert
-            #pragma fragment Frag
+            #pragma fragment Frag_Basic
+            ENDHLSL
+        }
+        Pass
+        {
+            Name "Generalized"
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Frag_Generalized
+            ENDHLSL
+        }
+        Pass
+        {
+            Name "StructureTensor"
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Frag_StructureTensor
+            ENDHLSL
+        }
+        Pass
+        {
+            Name "BlurHorizontal"
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Frag_BlurH
+            ENDHLSL
+        }
+        Pass
+        {
+            Name "EigenDecomp"
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Frag_EigenDecomp
+            ENDHLSL
+        }
+        Pass
+        {
+            Name "AnisoFilter"
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Frag_AnisoFilter
             ENDHLSL
         }
     }

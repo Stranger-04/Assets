@@ -111,7 +111,7 @@ float2 GetParallaxOffsetRelief(float2 heightUV, float3 viewDirTS, float heightSc
 float GetParallaxShadow(float2 parallaxUV, float3 lightDirTS, float heightScale, int layerCount)
 {
 	float layerDepth = 1.0 / layerCount;
-	float2 parallaxDir = (lightDirTS.xy / max(lightDirTS.z, 0.1)) * heightScale;
+	float2 parallaxDir = (lightDirTS.xy / max(lightDirTS.z, 0.001)) * heightScale;
 	float2 deltaUV = parallaxDir / layerCount;
 
 	float2 currentUV = parallaxUV;

@@ -128,4 +128,57 @@ real3 BRDF_Burley(real3 baseColor, real NdotL, real NdotV, real NdotH, real Vdot
     real3 diffuse  = Diff_Burley(NdotL, NdotV, LdotH, roughness) * Diff_Lambert(baseColor) * (1.0 - metallic) * (1.0 - F);
     return specular + diffuse;
 }
+
+// ====================================================================
+// Marschner Hair Model
+// 
+// Three light paths through a cylindrical fiber:
+//   R  (Reflection):       surface reflection — white, shifted primary highlight
+//   TT (Transmission):     light passes through fiber — colored, opposite side
+//   TRT (Transmission-Reflection-Transmission): internal bounce — colored, shifted secondary
+//
+// For real-time we simplify to two specular lobes (R + TRT).
+//
+// Input conventions:
+//   TdotH  = dot(fiberTangent, halfVector)
+//   NdotH  = dot(surfaceNormal, halfVector)
+//   TdotN  = dot(fiberTangent, surfaceNormal)   — 1.0 for shell fur (T=N)
+//   shift  = how far the lobe shifts along the normal  (-0.5 ~ 0.5)
+//   roughness  = 0 = mirror, 1 = fully diffuse  (maps to gloss via pow(sin))
+// ====================================================================
+
+// Shifted tangent dot half-vector:  T' = normalize(T + shift * N), returns dot(T', H)
+real Hair_ShiftedTdotH(real TdotH, real NdotH, real TdotN, real shift)
+{
+    real denom = sqrt(max(1.0 + 2.0 * shift * TdotN + shift * shift, 1e-7));
+    return (TdotH + shift * NdotH) / denom;
+}
+
+// Kajiya-Kay specular from (shifted) tangent and half-vector
+// roughness: 0 = sharpest, 1 = blurriest
+real Hair_Specular(real shiftedTdotH, real roughness)
+{
+    real sinTH2 = max(1.0 - shiftedTdotH * shiftedTdotH, 1e-7);
+    real specPower = lerp(256.0, 1.0, roughness * roughness);
+    return pow(sinTH2, specPower * 0.5);
+}
+
+// Single Marschner lobe (R or TRT)
+real3 Hair_Lobe(real TdotH, real NdotH, real TdotN, real shift,
+                real roughness, real3 color, real strength)
+{
+    real sTdotH = Hair_ShiftedTdotH(TdotH, NdotH, TdotN, shift);
+    real spec = Hair_Specular(sTdotH, roughness);
+    return color * strength * spec;
+}
+
+// Full Marschner specular combining R + TRT paths
+// Returns the specular contribution (add to diffuse output)
+real3 BRDF_Hair(real TdotH, real NdotH, real TdotN,
+                real primaryShift, real primaryRoughness, real3 primaryColor, real primaryStrength,
+                real secondaryShift, real secondaryRoughness, real3 secondaryColor, real secondaryStrength)
+{
+    return Hair_Lobe(TdotH, NdotH, TdotN, primaryShift, primaryRoughness, primaryColor, primaryStrength)
+         + Hair_Lobe(TdotH, NdotH, TdotN, secondaryShift, secondaryRoughness, secondaryColor, secondaryStrength);
+}
 #endif

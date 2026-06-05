@@ -13,6 +13,7 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords:
+  - _USECURVEDSILHOUETTE_ON
   - _USESELFSHADOW_ON
   - _USESILHOUETTECLIP_ON
   m_LightmapFlags: 4
@@ -26,27 +27,27 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 181a09cc1b636c0438e1cc6074f1fdf6, type: 3}
+        m_Texture: {fileID: 2800000, guid: ecaddf9dfe9f445a3b828a833d72ef4b, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _HeightMap:
-        m_Texture: {fileID: 2800000, guid: 181a09cc1b636c0438e1cc6074f1fdf6, type: 3}
+        m_Texture: {fileID: 2800000, guid: 7d6fd43fc127f48e5a1f99f035c5309a, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _CurvedSilhouetteRadius: 1
-    - _Cutoff: 0.5
+    - _Cutoff: 0.48
     - _DepthScale: 1
-    - _HeightScale: 0.25
-    - _HorizonClipStrength: 1
-    - _HorizonFalloffPower: 2
+    - _HeightScale: 0.2
+    - _HorizonClipStrength: 4
+    - _HorizonFalloffPower: 8
     - _HorizonHeightBias: 0
-    - _HorizonSafeThreshold: 0.3
+    - _HorizonSafeThreshold: 0.95
     - _ParallaxMode: 2
     - _SelfShadowStrength: 0.5
     - _SilhouetteEnabled: 1
-    - _UseCurvedSilhouette: 0
+    - _UseCurvedSilhouette: 1
     - _UseSelfShadow: 1
     - _UseSilhouetteClip: 1
     m_Colors:

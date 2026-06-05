@@ -131,10 +131,10 @@ Shader "Custom/Water"
         return edgeFoam;
     }
 
-    float3 ComputeCaustics(float3 positionWS, float3 mainLitDir, float3 scenePosWS, float sceneDepDf, float sceneNorWS)
+    float3 ComputeCaustics(float3 positionWS, float3 mainLitDir, float3 scenePosWS, float sceneDepDf, float3 sceneNorWS)
     {
         float3 AABB = float3(5, 2, 5);
-        float3 sceneNorDf = dot(mainLitDir, sceneNorWS) * 0.5 + 0.5;
+        float  sceneNorDf = dot(mainLitDir, sceneNorWS) * 0.5 + 0.5;
         float3 scenePosOS = TransformWorldToObject(scenePosWS);
         float  maskInside = all(step(abs(scenePosOS), AABB));
         float  mask = sceneDepDf * sceneNorDf;
@@ -244,7 +244,6 @@ Shader "Custom/Water"
         float  mainLitDistanceAtten;
         float  mainLitShadowAtten;
         MainLight(positionWS, mainLitDir, mainLitColor, mainLitDistanceAtten, mainLitShadowAtten);
-
         float4 positionSS1 = ComputePositionSS(positionWS, normalWS, _Distortion * 0.1);
         float4 positionSS2 = ComputePositionSS(positionWS, normalWS, 0);
         float4 positionSS  = ComparePositionSS(positionWS, positionSS1, positionSS2);
@@ -253,6 +252,7 @@ Shader "Custom/Water"
         float  sceneDepth = SampleSceneDepth(screenUV);
         float3 sceneNorWS = SampleSceneNormals(screenUV);
         float3 scenePosWS = ComputeWorldSpacePosition(screenUV, sceneDepth, UNITY_MATRIX_I_VP);
+
         float normalDiff = dot(normalWS, input.normalWS);
         float sceneDepDf = positionWS.y - scenePosWS.y;
         float3 baseColor = lerp(_baseColorA.rgb, _baseColorB.rgb, saturate(sceneDepDf));

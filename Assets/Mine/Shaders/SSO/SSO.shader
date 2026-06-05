@@ -201,7 +201,7 @@ Shader "Custom/SSO"
 
         float3 positionWS = ComputeWorldSpacePosition(uv, SampleSceneDepth(uv), UNITY_MATRIX_I_VP);
         float3 viewDir = normalize(positionWS - _WorldSpaceCameraPos);
-
+        return float4(positionWS, 1);
         float jitter = Hash21(uv).x;
         float depthDiff;
         float normalDiff;
