@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: RainDrops
+  m_Shader: {fileID: 4800000, guid: 9c5b9b1c773a54422a473d9c45f466a0, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - _DROPFACING_ON
+  - _SMALLDROPS_ON
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _NoiseTexture:
+        m_Texture: {fileID: 2800000, guid: 181a09cc1b636c0438e1cc6074f1fdf6, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Columns: 13
+    - _Coverage: 1
+    - _Darken: 0.2
+    - _Density: 30
+    - _Desaturate: 0.4
+    - _DropFacing: 1
+    - _DropLength: 0.873
+    - _DropMaxSize: 0.8
+    - _DropMinSize: 0.4
+    - _DropSize: 0.1
+    - _FlowSpeed: 0.5
+    - _FlowingWetness: 0.6
+    - _NormalTilt: 0
+    - _Refraction: 0.02
+    - _Roughness: 0
+    - _Rows: 2
+    - _SmallCoverage: 0.5
+    - _SmallDensity: 4.99
+    - _SmallDrops: 1
+    - _SmallSize: 0.1
+    - _Smoothness: 0
+    - _SpecIntensity: 5
+    - _SpecPosition: 0.7
+    - _SpecSize: 0.011
+    - _TrailLength: 0.5
+    - _TrailWidth: 0.1
+    - _Wiggle: 1
+    m_Colors: []
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

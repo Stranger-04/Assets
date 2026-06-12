@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Shells
-  m_Shader: {fileID: 4800000, guid: 0f9b5178bfbbf44e4bf6776bc809eb75, type: 3}
+  m_Name: Hidden_ShiningCard
+  m_Shader: {fileID: 4800000, guid: affe59e7d49ea4bee8add3af3a39c45a, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -24,18 +24,20 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: a94ccd95611dcc34892f64707b011e8f, type: 3}
+        m_Texture: {fileID: 2800000, guid: 487c84d6a84e5c54ab7f9ef909314463, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Cutoff: 0.5
-    - _MaxScale: 1
-    - _MinScale: 1
-    - _OffsetAmount: 0.96
-    - _RotateAmount: 1
-    - _Seed: 1
-    - _TileCount: 8
+    - _FlashHueShift: 0
+    - _FlashSaturation: 1
+    - _FlashSoftness: 0.5
+    - _FlashThreshold: 0.845
+    - _FlashValue: 1
+    - _GapWidth: 0.03
+    - _GridCount: 10
+    - _ViewDirStrength: 0.5
+    - _WaveSpeed: 0.08
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

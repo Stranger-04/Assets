@@ -6,7 +6,6 @@ Shader "Hidden/SSSM"
         _MaxDistance ("Max Distance", Range(1, 200)) = 50.0
         _StepCount ("Step Count", Range(4, 128)) = 32
         _Thickness ("Thickness", Range(0.001, 0.5)) = 0.05
-        _LightRayThickness ("Light Ray Thickness", Range(0.01, 5.0)) = 0.5
         _BlurScale ("Blur Scale", Range(0.0, 5.0)) = 1.0
     }
 
@@ -15,17 +14,18 @@ Shader "Hidden/SSSM"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+    #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareNormalsTexture.hlsl"
     #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
     #include "Assets/Mine/Special/HLSL/BlurFunction.hlsl"
 
     // ── 参数 ──
-    float _StepSize;
-    float _MaxDistance;
-    int   _StepCount;
-    float _Thickness;
-    float _LightRayThickness;
-    float _BlurScale;
-
+    CBUFFER_START(UnityPerMaterial)
+        float _StepSize;
+        float _MaxDistance;
+        int   _StepCount;
+        float _Thickness;
+        float _BlurScale;
+    CBUFFER_END
     // DDA 使用 Unity 内置矩阵（与 ComputeWorldSpacePosition / SampleSceneDepth 一致）
     // UNITY_MATRIX_V, UNITY_MATRIX_P — 自动匹配当前相机和图形 API
 
@@ -59,6 +59,10 @@ Shader "Hidden/SSSM"
         float3 startVS = mul(UNITY_MATRIX_V, float4(startWS, 1)).xyz;
         float3 endVS   = mul(UNITY_MATRIX_V, float4(endWS, 1)).xyz;
 
+        float  factor = min(1.0, -startVS.z / _MaxDistance);
+        endWS = lerp(startWS, endWS, factor);
+        endVS = lerp(startVS, endVS, factor);
+
         float4 startCS = mul(UNITY_MATRIX_P, float4(startVS, 1));
         float4 endCS   = mul(UNITY_MATRIX_P, float4(endVS, 1));
 
@@ -90,6 +94,7 @@ Shader "Hidden/SSSM"
         float shadow = 1.0;
         float occluderDepthSum = 0.0;
         int   blockerCount = 0;
+        float prevDepthDiff = 0.0;
 
         [loop]
         for (int i = 0; i < _StepCount; i++)
@@ -98,11 +103,9 @@ Shader "Hidden/SSSM"
             S += ds;
             V += dv;
 
-            // 光线穿过了近平面或摄像机后面 → 无遮挡信息，安全退出
             if (K <= 0.0)
                 break;
 
-            // 超出屏幕边界 → 无遮挡信息，假设无遮挡（optimistic）
             if (S.x < 0 || S.x > 1 || S.y < 0 || S.y > 1)
                 break;
 
@@ -111,20 +114,16 @@ Shader "Hidden/SSSM"
             float linearRayDepth =  - V.z / K;
             float depthDiff = linearRayDepth - sceneEyeDepth;
 
-            // ── 沿光源方向的深度比较 ──
-            // 重建光线点 + 场景点的世界坐标，沿光源方向比较深度
-            // sceneWS 比 rayWS 更靠近光源 → 场景表面在光线路径上 → 遮挡
-            float3 rayVS   = V / K;
-            float3 rayWS   = mul(UNITY_MATRIX_I_V, float4(rayVS, 1)).xyz;
-            float3 sceneWS = ComputeWorldSpacePosition(S, sceneRawDepth, UNITY_MATRIX_I_VP);
-            float  depthDiffAlongLight = dot(sceneWS - rayWS, lightDirWS);
-            if (depthDiff > _Thickness)
+            bool hitCond1 = (depthDiff > 0.0 && depthDiff < _Thickness);
+            bool hitCond2 = (prevDepthDiff < 0.0 && depthDiff > 0.0);
+            if (hitCond1)
             {
                 shadow = 0.0;
                 occluderDepthSum += depthDiff;
                 blockerCount++;
                 break;
             }
+            prevDepthDiff = depthDiff;
         }
 
         half4 result;
@@ -136,21 +135,19 @@ Shader "Hidden/SSSM"
     }
 
     // ════════════════════════════════════════════════════════════
-    //  Pass 1: 水平模糊（BlurFunction 封装的 5-tap Gaussian）
+    //  双边保边模糊 — 调用 BlurFunction.hlsl，关键字控制强度与法线
     // ════════════════════════════════════════════════════════════
+
     half4 Frag_BlurH(Varyings input) : SV_Target
     {
         float2 texelSize = 1.0 / _ScreenParams.xy;
-        return BlurHorizontal(input.texcoord, texelSize, _BlurScale, _BlitTexture, sampler_LinearClamp);
+        return BilateralBlurHorizontal(input.texcoord, texelSize, _BlurScale, _BlitTexture, sampler_LinearClamp);
     }
 
-    // ════════════════════════════════════════════════════════════
-    //  Pass 2: 垂直模糊
-    // ════════════════════════════════════════════════════════════
     half4 Frag_BlurV(Varyings input) : SV_Target
     {
         float2 texelSize = 1.0 / _ScreenParams.xy;
-        return BlurVertical(input.texcoord, texelSize, _BlurScale, _BlitTexture, sampler_LinearClamp);
+        return BilateralBlurVertical(input.texcoord, texelSize, _BlurScale, _BlitTexture, sampler_LinearClamp);
     }
     ENDHLSL
 
@@ -173,6 +170,8 @@ Shader "Hidden/SSSM"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment Frag_BlurH
+            #pragma shader_feature _ BLUR_BILATERAL_LOW BLUR_BILATERAL_MEDIUM BLUR_BILATERAL_HIGH
+            #pragma shader_feature _ BLUR_BILATERAL_NORMAL
             ENDHLSL
         }
         Pass
@@ -181,6 +180,8 @@ Shader "Hidden/SSSM"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment Frag_BlurV
+            #pragma shader_feature _ BLUR_BILATERAL_LOW BLUR_BILATERAL_MEDIUM BLUR_BILATERAL_HIGH
+            #pragma shader_feature _ BLUR_BILATERAL_NORMAL
             ENDHLSL
         }
     }

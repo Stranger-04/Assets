@@ -5,6 +5,8 @@ using UnityEngine.Rendering.RenderGraphModule;
 
 public class SSSMFeature : ScriptableRendererFeature
 {
+    public enum BilateralIntensity { Low, Medium, High }
+
     [System.Serializable]
     public class Settings
     {
@@ -15,11 +17,12 @@ public class SSSMFeature : ScriptableRendererFeature
         [Range(1f, 200f)]    public float maxDistance   = 50.0f;
         [Range(4, 128)]      public int   stepCount     = 32;
         [Range(0.001f, 0.5f)] public float thickness    = 0.05f;
-        [Range(0.01f, 5.0f)]  public float lightRayThickness = 0.5f;
 
         [Header("Blur")]
-        public bool           enableBlur = false;
-        [Range(0.0f, 5.0f)]  public float blurScale    = 1.0f;
+        public bool                enableBlur         = false;
+        [Range(0.0f, 5.0f)]       public float blurScale           = 1.0f;
+        public BilateralIntensity  bilateralIntensity = BilateralIntensity.Medium;
+        public bool                bilateralNormal    = false;
 
         [Header("Debug")]
         public bool SSSMFeature = true;
@@ -28,7 +31,6 @@ public class SSSMFeature : ScriptableRendererFeature
         internal static readonly int MaxDistanceID   = Shader.PropertyToID("_MaxDistance");
         internal static readonly int StepCountID     = Shader.PropertyToID("_StepCount");
         internal static readonly int ThicknessID        = Shader.PropertyToID("_Thickness");
-        internal static readonly int LightRayThicknessID = Shader.PropertyToID("_LightRayThickness");
         internal static readonly int BlurScaleID     = Shader.PropertyToID("_BlurScale");
         internal static readonly int ShadowMaskTexID = Shader.PropertyToID("_SSSMTexture");
     }
@@ -54,7 +56,7 @@ public class SSSMFeature : ScriptableRendererFeature
             if (shader != null)
                 material = CoreUtils.CreateEngineMaterial(shader);
             renderPassEvent = RenderPassEvent.AfterRenderingTransparents;
-            ConfigureInput(ScriptableRenderPassInput.Color | ScriptableRenderPassInput.Depth);
+            ConfigureInput(ScriptableRenderPassInput.Color | ScriptableRenderPassInput.Depth | ScriptableRenderPassInput.Normal);
         }
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
@@ -70,8 +72,22 @@ public class SSSMFeature : ScriptableRendererFeature
             material.SetFloat(Settings.MaxDistanceID,   settings.maxDistance);
             material.SetInt(Settings.StepCountID,       settings.stepCount);
             material.SetFloat(Settings.ThicknessID,        settings.thickness);
-            material.SetFloat(Settings.LightRayThicknessID, settings.lightRayThickness);
             material.SetFloat(Settings.BlurScaleID,     settings.blurScale);
+
+            // ── 双边模糊关键字 ──
+            material.DisableKeyword("BLUR_BILATERAL_LOW");
+            material.DisableKeyword("BLUR_BILATERAL_MEDIUM");
+            material.DisableKeyword("BLUR_BILATERAL_HIGH");
+            switch (settings.bilateralIntensity)
+            {
+                case BilateralIntensity.Low:  material.EnableKeyword("BLUR_BILATERAL_LOW");    break;
+                case BilateralIntensity.High: material.EnableKeyword("BLUR_BILATERAL_HIGH");   break;
+                default:                      material.EnableKeyword("BLUR_BILATERAL_MEDIUM"); break;
+            }
+            if (settings.bilateralNormal)
+                material.EnableKeyword("BLUR_BILATERAL_NORMAL");
+            else
+                material.DisableKeyword("BLUR_BILATERAL_NORMAL");
 
             // ── 创建 RT ──
             RenderTextureDescriptor desc = cameraData.cameraTargetDescriptor;
