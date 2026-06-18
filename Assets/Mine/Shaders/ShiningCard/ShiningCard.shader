@@ -9,19 +9,25 @@ Shader "Mine/ShiningCard"
         [Header(Grid)]
         [Space]
         _GridCount        ("Grid Count", Float) = 10
-        _GapWidth         ("Gap Width", Range(0.0, 0.3)) = 0.03
+        _GapWidth         ("Gap Width", Range(0.0, 0.2)) = 0.02
+        _GapSoftness      ("Gap Softness", Range(0.0, 0.3)) = 0.03
 
-        [Header(Wave)]
+        [Header(Flash)]
         [Space]
         _ViewDirStrength  ("View Dir Strength", Range(0.0, 2.0)) = 0.5
+        _DiagonalWidth    ("Diagonal Width", Range(0.05, 0.5)) = 0.2
 
-        [Header(Flash Color)]
+        [Header(Dark Flash)]
         [Space]
-        _FlashThreshold   ("Flash Threshold", Range(0.0, 1.0)) = 0.3
-        _FlashSoftness    ("Flash Softness", Range(0.0, 0.5)) = 0.1
-        _FlashHueShift    ("Flash Hue Shift", Range(-1.0, 1.0)) = 0.3
-        _FlashSaturation  ("Flash Saturation", Range(0.0, 2.0)) = 1.2
-        _FlashValue       ("Flash Value", Range(0.0, 2.0)) = 1.2
+        _DarkHueShift     ("Dark Hue Shift", Range(-1.0, 1.0)) = 0.05
+        _DarkSaturation   ("Dark Saturation", Range(0.0, 2.0)) = 0.8
+        _DarkValue        ("Dark Value", Range(0.0, 2.0)) = 1.0
+
+        [Header(Bright Flash)]
+        [Space]
+        _BrightHueShift   ("Bright Hue Shift", Range(-1.0, 1.0)) = 0.35
+        _BrightSaturation ("Bright Saturation", Range(0.0, 2.0)) = 1.5
+        _BrightValue      ("Bright Value", Range(0.0, 2.0)) = 1.3
     }
 
     HLSLINCLUDE
@@ -38,12 +44,15 @@ Shader "Mine/ShiningCard"
         float4 _BaseColor;
         float  _GridCount;
         float  _GapWidth;
+        float  _GapSoftness;
         float  _ViewDirStrength;
-        float  _FlashThreshold;
-        float  _FlashSoftness;
-        float  _FlashHueShift;
-        float  _FlashSaturation;
-        float  _FlashValue;
+        float  _DiagonalWidth;
+        float  _DarkHueShift;
+        float  _DarkSaturation;
+        float  _DarkValue;
+        float  _BrightHueShift;
+        float  _BrightSaturation;
+        float  _BrightValue;
     CBUFFER_END
 
     // ── 顶点输入 ──
@@ -103,7 +112,7 @@ Shader "Mine/ShiningCard"
     // ════════════════════════════════════════════════════════════
     //  TriangleGridMask — 静态三角格子遮罩（不随视角移动）
     // ════════════════════════════════════════════════════════════
-    float TriangleGridMask(float2 uv, float gridCount, float gapWidth)
+    float TriangleGridMask(float2 uv, float gridCount, float gapWidth, float gapSoftness)
     {
         float2 p = uv * gridCount;
         const float sqrt3_2 = 0.8660254;
@@ -121,18 +130,18 @@ Shader "Mine/ShiningCard"
         float d2 = min(f2, 1.0 - f2);
 
         float minEdge = min(min(d0, d1), d2);
-        return smoothstep(0.0, gapWidth, minEdge);
+        return smoothstep(gapWidth, gapWidth + gapSoftness, minEdge);
     }
 
     // ════════════════════════════════════════════════════════════
     //  DiagonalFlash — 对角渐变闪光，shift 控制视角偏移
     // ════════════════════════════════════════════════════════════
-    float DiagonalFlash(float2 uv, float2 shift)
+    float DiagonalFlash(float2 uv, float2 shift, float width)
     {
         float2 p = uv + shift;
         float d = dot(p, float2(1.2, 1.0));
         float flash = frac(d);
-        return smoothstep(0.0, 0.2, flash) * smoothstep(1.0, 0.8, flash);
+        return smoothstep(0.0, width, flash) * smoothstep(1.0, width, flash);
     }
 
     // ════════════════════════════════════════════════════════════
@@ -143,94 +152,45 @@ Shader "Mine/ShiningCard"
     {
         float3 hsv = RGBtoHSV(baseColor.rgb);
         hsv.x = frac(hsv.x + hueShift * flashAmount);
-        hsv.y = lerp(hsv.y, saturation, flashAmount);
-        hsv.z = lerp(hsv.z, value, flashAmount);
+        hsv.y = hsv.y * lerp(1.0, saturation, flashAmount);
+        hsv.z = hsv.z * lerp(1.0, value, flashAmount);
         return half4(HSVtoRGB(hsv), baseColor.a);
     }
 
     // ════════════════════════════════════════════════════════════
     //  Frag — 闪卡管线
     //
-    //  viewDir → 对角闪光偏移  ×  静态三角遮罩  → 阈值 → HSV
+    //  viewDir → 对角闪光 → 暗/亮两套 HSV 参数插值  ×  三角遮罩
+    //  遮罩直接相乘（无阈值），间隙不闪、三角内闪光
     // ════════════════════════════════════════════════════════════
     half4 Frag(Varyings input) : SV_Target
     {
-        // ── Layer 1-2: 视线 → 网格偏移 ──
+        // ── Layer 1-2: 视线 → 闪光偏移 ──
         float3 normalWS  = normalize(input.normalWS);
         float3 tangentWS = normalize(input.tangentWS);
         float3 viewDirTS = GetViewDirTS(input.positionWS, normalWS, tangentWS, input.tangentSign);
         float2 gridShift = viewDirTS.xy * _ViewDirStrength;
 
-        // ── Layer 3: 对角闪光 × 静态三角遮罩 ──
-        float triMask    = TriangleGridMask(input.uv, _GridCount, _GapWidth);
-        float flashVal   = DiagonalFlash(input.uv, gridShift);
-        float flashMask  = flashVal * triMask;
-        float flashAmount = smoothstep(_FlashThreshold, _FlashThreshold + _FlashSoftness, flashMask);
+        // ── Layer 3: 对角闪光 + 三角遮罩 ──
+        float flashVal = DiagonalFlash(input.uv, gridShift, _DiagonalWidth);
+        float triMask  = TriangleGridMask(input.uv, _GridCount, _GapWidth, _GapSoftness);
+        float mask     = flashVal * triMask;
+        // ── Layer 4: 对角渐变插值暗/亮 HSV 参数 ──
+        float hueShift = lerp(_DarkHueShift,   _BrightHueShift,   mask);
+        float sat      = lerp(_DarkSaturation, _BrightSaturation, mask);
+        float val      = lerp(_DarkValue,      _BrightValue,      mask);
 
-        // ── Layer 5: HSV 颜色调制 ──
+        // ── Layer 5: 遮罩直接调制闪光强度 → HSV 偏移 ──
         half4 baseColor = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor;
-        return ApplyFlashColor(baseColor, flashAmount, _FlashHueShift, _FlashSaturation, _FlashValue);
+        return ApplyFlashColor(baseColor, mask, hueShift, sat, val);
     }
 
-    // ════════════════════════════════════════════════════════════
-    //  ShadowCaster / DepthOnly / DepthNormals — 标准 URP 深度 Pass
-    // ════════════════════════════════════════════════════════════
-
-    #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
-
-    float3 _LightDirection;
-    float3 _LightPosition;
-
-    float4 GetShadowPositionHClip(Attributes input)
-    {
-        float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
-        float3 normalWS   = TransformObjectToWorldNormal(float3(0, 0, 1));
-        float4 positionCS = TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, _LightDirection));
-    #if UNITY_REVERSED_Z
-        positionCS.z = min(positionCS.z, UNITY_NEAR_CLIP_VALUE);
-    #else
-        positionCS.z = max(positionCS.z, UNITY_NEAR_CLIP_VALUE);
-    #endif
-        return positionCS;
-    }
-
-    Varyings Vert_Shadow(Attributes input)
-    {
-        Varyings output;
-        output.positionCS = GetShadowPositionHClip(input);
-        output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
-        return output;
-    }
-
-    Varyings Vert_Depth(Attributes input)
-    {
-        Varyings output;
-        output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
-        output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
-        return output;
-    }
-
-    half4 Frag_Shadow(Varyings input) : SV_Target
-    {
-        return 0;
-    }
-
-    half4 Frag_Depth(Varyings input) : SV_Target
-    {
-        return 0;
-    }
-
-    half4 Frag_DepthNormals(Varyings input) : SV_Target
-    {
-        return half4(0, 0, 0, 1);
-    }
     ENDHLSL
 
     SubShader
     {
         Tags { "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline" }
 
-        // ────── Forward Pass ──────
         Pass
         {
             Name "FORWARD"
@@ -240,59 +200,16 @@ Shader "Mine/ShiningCard"
             ZWrite On
             ZTest LEqual
 
+            Stencil
+            {
+                Ref 1
+                Comp Always
+                Pass Replace
+            }
+
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment Frag
-            ENDHLSL
-        }
-
-        // ────── ShadowCaster ──────
-        Pass
-        {
-            Name "ShadowCaster"
-            Tags { "LightMode" = "ShadowCaster" }
-
-            Cull Back
-            ZWrite On
-            ZTest LEqual
-            ColorMask 0
-
-            HLSLPROGRAM
-            #pragma vertex Vert_Shadow
-            #pragma fragment Frag_Shadow
-            ENDHLSL
-        }
-
-        // ────── DepthOnly ──────
-        Pass
-        {
-            Name "DepthOnly"
-            Tags { "LightMode" = "DepthOnly" }
-
-            Cull Back
-            ZWrite On
-            ZTest LEqual
-            ColorMask R
-
-            HLSLPROGRAM
-            #pragma vertex Vert_Depth
-            #pragma fragment Frag_Depth
-            ENDHLSL
-        }
-
-        // ────── DepthNormals ──────
-        Pass
-        {
-            Name "DepthNormals"
-            Tags { "LightMode" = "DepthNormals" }
-
-            Cull Back
-            ZWrite On
-            ZTest LEqual
-
-            HLSLPROGRAM
-            #pragma vertex Vert_Depth
-            #pragma fragment Frag_DepthNormals
             ENDHLSL
         }
     }

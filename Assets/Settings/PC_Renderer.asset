@@ -16,6 +16,34 @@ MonoBehaviour:
   settings:
     snnShader: {fileID: 0}
     Radius: 3
+--- !u!114 &-4968987183116551271
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94d7a248b160a4f348535d4395df6eea, type: 3}
+  m_Name: PickerFeature
+  m_EditorClassIdentifier: Assembly-CSharp::Mine.Chosen.PickerFeature
+  m_Active: 1
+  m_DebugView: 0
+--- !u!114 &-4316052137097848494
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4237868ab7ff94201863c10f7115d746, type: 3}
+  m_Name: OutlineFeature
+  m_EditorClassIdentifier: Assembly-CSharp::Mine.Chosen.OutlineFeature
+  m_Active: 1
+  m_DebugShowMask: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -46,7 +74,9 @@ MonoBehaviour:
   - {fileID: 1555521513852043146}
   - {fileID: -5353301855436579036}
   - {fileID: 7179606399280309669}
-  m_RendererFeatureMap: ad6b866f10d7b46c4e0b6440883d7d1d8affa04993529615245f43535340b5b5a5653920fb15a363
+  - {fileID: 2669520963029075480}
+  - {fileID: 4655793570601728598}
+  m_RendererFeatureMap: ad6b866f10d7b46c4e0b6440883d7d1d8affa04993529615245f43535340b5b5a5653920fb15a363000000000000000000000000000000000000000000000000
   m_UseNativeRenderPass: 1
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
@@ -131,6 +161,34 @@ MonoBehaviour:
     downsample: 0
     OutlineColor: {r: 0.6509434, g: 0.6509434, b: 0.6509434, a: 1}
     SSOFeature: 0
+--- !u!114 &2669520963029075480
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94d7a248b160a4f348535d4395df6eea, type: 3}
+  m_Name: Picker
+  m_EditorClassIdentifier: Assembly-CSharp::Mine.Picker.PickerFeature
+  m_Active: 1
+  m_DebugView: 0
+--- !u!114 &4655793570601728598
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4237868ab7ff94201863c10f7115d746, type: 3}
+  m_Name: Outline
+  m_EditorClassIdentifier: Assembly-CSharp::Mine.Picker.OutlineFeature
+  m_Active: 1
+  m_DebugShowMask: 0
 --- !u!114 &7179606399280309669
 MonoBehaviour:
   m_ObjectHideFlags: 0

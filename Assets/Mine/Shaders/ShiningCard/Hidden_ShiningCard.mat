@@ -24,19 +24,27 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 487c84d6a84e5c54ab7f9ef909314463, type: 3}
+        m_Texture: {fileID: 2800000, guid: 5294e4ad6e119d949a79eaa150da4b45, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _BrightHueShift: 0.5
+    - _BrightSaturation: 1
+    - _BrightValue: 2
+    - _DarkHueShift: 0
+    - _DarkSaturation: 1
+    - _DarkValue: 1
+    - _DiagonalWidth: 0.5
     - _FlashHueShift: 0
     - _FlashSaturation: 1
     - _FlashSoftness: 0.5
     - _FlashThreshold: 0.845
     - _FlashValue: 1
-    - _GapWidth: 0.03
+    - _GapSoftness: 0.3
+    - _GapWidth: 0
     - _GridCount: 10
-    - _ViewDirStrength: 0.5
+    - _ViewDirStrength: 2
     - _WaveSpeed: 0.08
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
