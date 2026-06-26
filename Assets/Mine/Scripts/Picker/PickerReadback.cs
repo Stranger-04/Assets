@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
-using UnityEngine.Rendering.Universal;
 
 namespace Mine.Picker
 {
@@ -33,8 +32,8 @@ namespace Mine.Picker
         private void Update()
         {
             // 每帧刷新 RT 引用（PickerPass 可能在分辨率变化时重建 RT）
-            m_ObjIDRT     = PickerFeature.RegisteredPass?.ObjIDRenderTexture;
-            m_OutlinePass = OutlineFeature.RegisteredPass;
+            m_ObjIDRT     = PickerFeature.Picker?.ObjIDRenderTexture;
+            m_OutlinePass = PickerFeature.Outline;
 
             if (!m_Initialized)
             {

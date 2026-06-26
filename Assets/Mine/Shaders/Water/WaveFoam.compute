@@ -1,0 +1,60 @@
+// WaveFoam.compute
+// 预计算世界空间泡沫遮罩到 RenderTexture，供 Water.shader 采样。
+// 将原 ComputeWaveFoam 的 4 层 octave 采样从 per-fragment 迁移到 per-texel，
+// fragment 阶段只需 1 次纹理采样即可获取泡沫值。
+
+#pragma kernel CSMain
+
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+
+// ── 输入纹理 ──
+Texture2D<float4> _FoamTex;
+SamplerState sampler_FoamTex;
+
+// ── 输出 ──
+RWTexture2D<float> _Result;
+
+// ── 参数（与 Water.shader Properties 对应）──
+float _FoamScale;
+float _FoamSpeed;
+float _FoamIntensity;
+float _Time;
+
+// ── 纹理空间参数 ──
+float _WorldTexSize;     // 单 tile 世界空间覆盖范围（米）
+uint  _Resolution;       // 纹理分辨率（正方形）
+
+// ════════════════════════════════════════════════════════════
+//  CSMain — 每 texel 计算世界空间泡沫值
+//  等价于 Water.shader 的 ComputeWaveFoam，使用 SampleLevel 替代 Sample
+// ════════════════════════════════════════════════════════════
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= _Resolution || id.y >= _Resolution)
+        return;
+
+    // 将 texel 坐标映射到世界空间 XZ
+    float2 worldXZ = (id.xy + 0.5) / _Resolution * _WorldTexSize;
+
+    // ── 4 层 octave 泡沫采样（与原始 ComputeWaveFoam 逻辑等价）──
+    float2 baseUV = worldXZ * _FoamScale + _Time * _FoamSpeed * 0.05;
+    baseUV *= 0.5;
+
+    float timeSpeed = _Time * _FoamSpeed;
+
+    float foam0 = 1.0 - _FoamTex.SampleLevel(sampler_FoamTex, baseUV, 0).g;
+    float foam1 = 1.0 - _FoamTex.SampleLevel(sampler_FoamTex, baseUV * 2.0 + float2(0.13, 0.27) * timeSpeed, 0).g;
+    float foam2 = 1.0 - _FoamTex.SampleLevel(sampler_FoamTex, baseUV * 4.0 + float2(-0.31, 0.19) * timeSpeed, 0).g;
+    float foam3 = 1.0 - _FoamTex.SampleLevel(sampler_FoamTex, baseUV * 8.0 + float2(0.23, -0.17) * timeSpeed, 0).g;
+
+    // ── 多层混合 ──
+    float layer1 = lerp(foam0, foam1, 0.5);
+    float layer2 = lerp(foam2, layer1, 0.5);
+    float layer3 = lerp(foam3, layer2, 0.5);
+
+    float waveFoam = foam0 * 0.5 + layer1 * 0.25 + layer2 * 0.25 + layer3 * 0.125;
+    waveFoam = smoothstep(0.4, 1.0, waveFoam * _FoamIntensity);
+
+    _Result[id.xy] = waveFoam;
+}

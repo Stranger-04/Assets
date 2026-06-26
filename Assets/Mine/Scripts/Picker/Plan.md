@@ -1,10 +1,10 @@
-# Chosen — GPU Picker + Screen‑Space Outline 计划
+# Picker — GPU Picker + Screen‑Space Outline 计划
 
 ## 概览
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Chosen 系统                               │
+│                        Picker 系统                               │
 │                                                                  │
 │   Part A: GPU Picker              Part B: Outline Drawer         │
 │   ┌──────────────────┐            ┌──────────────────┐          │
@@ -65,7 +65,7 @@
 
 | 文件 | 作用 |
 |---|---|
-| `Chosen.shader` | MRT 输出 Shader（包含 ObjectID / Depth / Normal 三个 Pass，或一个 MRT Pass） |
+| `Picker.shader` | MRT 输出 Shader（包含 ObjectID / Depth / Normal 三个 Pass，或一个 MRT Pass） |
 | `PickerPass.cs` | RenderGraph RenderPass，负责 MRT 绘制 |
 | `PickerFeature.cs` | URP RendererFeature，注册 PickerPass |
 | `PickerReadback.cs` | MonoBehaviour，处理鼠标输入 + AsyncGPUReadback 读回 ID |
@@ -186,7 +186,7 @@ selectedObjectID (来自 Part A)
 
 ```
 Phase 1: GPU Picker
-  ├── 1.1 创建 Chosen.shader（MRT Pass）
+  ├── 1.1 创建 Picker.shader（MRT Pass）
   ├── 1.2 创建 PickerPass.cs + PickerFeature.cs
   ├── 1.3 创建 PickerReadback.cs（鼠标输入 + AsyncGPUReadback）
   └── 1.4 测试：点击物体能在 Console 输出 ID

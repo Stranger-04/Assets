@@ -1,0 +1,113 @@
+#pragma kernel CS_FishUpdate
+
+struct Particle
+{
+    float3 position;
+    float  curveT;
+    float  radialAngle;
+    float  radialDist;
+};
+
+RWStructuredBuffer<Particle> _ParticleBuffer;
+StructuredBuffer<float4>    _CurveBuffer;       // xyz=position, w=normalizedT
+
+float _DeltaTime;
+float _CurveSpeed;
+float _TubeRadius;
+float _TotalLength;
+float _SpeedVariation;      // 0=none, 1=max: inner particles faster, outer slower
+float _PositionSmooth;      // lerp factor per frame: 0=no smoothing (snap), 1=full smoothing
+int   _InstanceCount;
+int   _CurveSampleCount;
+int   _CurveLoop;
+
+float FishRand(uint seed, uint offset)
+{
+    uint n = seed * 110045u + offset * 12345u;
+    n = (n << 13) ^ n;
+    n = n * (n * n * 15731u + 789221u) + 1376312589u;
+    return float(n & 0x7fffffffu) / float(0x7fffffffu);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  Sample curve position at normalized t
+// ════════════════════════════════════════════════════════════════
+float3 SampleCurve(float t)
+{
+    if (_CurveSampleCount < 2) return float3(0, 0, 0);
+    t = clamp(t, 0.0, 1.0);
+    float idx = t * (_CurveSampleCount - 1);
+    int   i0  = (int)idx;
+    int   i1  = min(i0 + 1, _CurveSampleCount - 1);
+    float frac = idx - (float)i0;
+    return lerp(_CurveBuffer[i0].xyz, _CurveBuffer[i1].xyz, frac);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  Build local frame at curve point (right, up from tangent)
+// ════════════════════════════════════════════════════════════════
+void CurveFrame(float3 curvePos, float t, out float3 right, out float3 up)
+{
+    float dt = 0.001;
+    float3 t0 = SampleCurve(t - dt);
+    float3 t1 = SampleCurve(t + dt);
+    float3 tangent = normalize(t1 - t0);
+
+    float3 worldUp = float3(0, 1, 0);
+    if (abs(dot(tangent, worldUp)) > 0.999) worldUp = float3(1, 0, 0);
+    right = normalize(cross(tangent, worldUp));
+    up    = normalize(cross(right, tangent));
+}
+
+// ════════════════════════════════════════════════════════════════
+//  Respawn particle at a random point along the curve
+// ════════════════════════════════════════════════════════════════
+void RespawnParticle(uint seed, inout Particle p)
+{
+    p.curveT      = FishRand(seed, 0);
+    p.radialAngle = FishRand(seed, 1) * 6.283185;
+    p.radialDist  = FishRand(seed, 2) * _TubeRadius;
+
+    float3 curvePos = SampleCurve(p.curveT);
+    float3 right, up;
+    CurveFrame(curvePos, p.curveT, right, up);
+    p.position = curvePos + right * cos(p.radialAngle) * p.radialDist + up * sin(p.radialAngle) * p.radialDist;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  CS_FishUpdate — speed variation by radial distance + smoothing
+// ════════════════════════════════════════════════════════════════
+[numthreads(64, 1, 1)]
+void CS_FishUpdate(uint3 id : SV_DispatchThreadID)
+{
+    uint i = id.x;
+    if (i >= (uint)_InstanceCount || _DeltaTime <= 0.0 || _TotalLength <= 0.0) return;
+
+    Particle p = _ParticleBuffer[i];
+
+    // Inner particles faster, outer slower
+    float radialNorm = _TubeRadius > 0.001 ? p.radialDist / _TubeRadius : 0.0;
+    float speedFactor = 1.0 - radialNorm * _SpeedVariation;
+    p.curveT += (_CurveSpeed * _DeltaTime * speedFactor) / _TotalLength;
+
+    if (_CurveLoop)
+        p.curveT = frac(p.curveT);
+    else if (p.curveT >= 1.0)
+    {
+        RespawnParticle(i * 5u + 777u, p);
+        _ParticleBuffer[i] = p;
+        return;
+    }
+
+    float3 curvePos = SampleCurve(p.curveT);
+    float3 right, up;
+    CurveFrame(curvePos, p.curveT, right, up);
+    float3 targetPos = curvePos
+        + right * cos(p.radialAngle) * p.radialDist
+        + up    * sin(p.radialAngle) * p.radialDist;
+
+    float smooth = saturate(_PositionSmooth * _DeltaTime * 30.0);
+    p.position = lerp(p.position, targetPos, smooth);
+
+    _ParticleBuffer[i] = p;
+}
