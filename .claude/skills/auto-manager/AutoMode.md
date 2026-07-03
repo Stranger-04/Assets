@@ -106,6 +106,40 @@ unityctl bridge start              # 若未启动，后台拉起 bridge
 
 ### 各阶段详解
 
+#### [2] 方案设计
+
+设计阶段输出修改计划，明确涉及的文件和接口。若 Feature 内存在需要外部资源引用的接口（如 `Material.SetShader`、`ComputeShader` 字段、`RenderTexture` 引用等），**设计阶段可直接将接口指向项目中已有的资源地址**，便于后续编译和运行时验证。
+
+**调试期接口指向规则：**
+
+| 场景 | 示例 |
+|------|------|
+| Shader 字段 | `public Shader targetShader;` → Inspector 指向 `Assets/Mine/Shaders/PCSS/PCSS.shader` |
+| Material 引用 | `public Material debugMat;` → 指向已有的 `Assets/.../SomeMaterial.mat` |
+| ComputeShader | `public ComputeShader cs;` → 指向 `Assets/.../SomeKernel.compute` |
+| RenderTexture | 直接指定已有的 RT 资产路径 |
+| 其他 Unity Object | Texture2D、Mesh、ScriptableObject 等均可直接指向已有资产 |
+
+**流程：**
+
+```
+[2] 方案设计
+  │
+  ├── [2a] 分析接口依赖 ─── 列出 Feature 中需要外部引用的字段
+  │
+  ├── [2b] 指向已有资源 ─── 将接口字段直接指向目标资产地址（如 Shader 路径）
+  │     └── 目的：跳过"先创建空资源再回填引用"的步骤，加快调试迭代
+  │
+  └── [2c] 标记调试接口 ─── 用注释标记为调试期指向
+        └── 格式：`// DEBUG_REF: 设计完成后清空此引用`
+```
+
+**设计结束后（进入 [8] 退出前或轻清理时）：**
+
+- 清空所有调试期指定的接口引用（恢复为空字段或 ScriptableObject 配置方式）
+- 移除 `DEBUG_REF` 标记注释
+- 若该引用为运行时必需的正式配置，改为通过代码加载或 ScriptableObject 统一管理
+
 #### [4] 编译验证
 
 ```bash

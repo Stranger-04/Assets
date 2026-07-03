@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Mine_VanGogh_TheStarryNight
+  m_Shader: {fileID: 4800000, guid: c708503fb7a9749e99123957327dee62, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _Random: 0.181
+    - _RingCount: 125
+    - _RingSoftness: 0.1
+    - _SectorCount: 0.5
+    - _SectorSoftness: 0.01
+    - _Smoothness: 1
+    - _Speed: 0.2
+    - _sectorOffset: 0
+    m_Colors:
+    - _BaseColorSkyA: {r: 1, g: 0.77900684, b: 0.28773582, a: 1}
+    - _BaseColorSkyB: {r: 0, g: 0.54901963, b: 0.50668496, a: 1}
+    - _BaseColorSkyC: {r: 0.06848522, g: 0.26182607, b: 0.5377358, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

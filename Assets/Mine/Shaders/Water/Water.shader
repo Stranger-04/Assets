@@ -107,7 +107,7 @@ Shader "Custom/Water"
         float  ndoth = dot(normalWS, halfVec) * 0.5 + 0.5;
         float  ndotv = dot(normalWS, viewDirWS) * 0.5 + 0.5;
         ndoth = smoothstep(0.8, 1.0, ndoth);
-        ndotv = smoothstep(0.4, 0.6, ndotv);
+        // ndotv = smoothstep(0.4, 0.6, ndotv);
 
         float  shadowArea = mainLitShadowAtten * 0.5 + 0.5;
         float3 radiance = mainLitColor * mainLitDistanceAtten * shadowArea;

@@ -1,5 +1,19 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-5783582282054158162
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e32e72b6a3f58a24c9033e2b9275eea0, type: 3}
+  m_Name: ScreenSpaceShadows
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.ScreenSpaceShadows
+  m_Active: 0
+  m_Shader: {fileID: 4800000, guid: 0f854b35a0cf61a429bd5dcfea30eddd, type: 3}
 --- !u!114 &-5353301855436579036
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -81,7 +95,9 @@ MonoBehaviour:
   - {fileID: -5353301855436579036}
   - {fileID: 7179606399280309669}
   - {fileID: 5712145892818296517}
-  m_RendererFeatureMap: ad6b866f10d7b46c4e0b6440883d7d1d8affa04993529615245f43535340b5b5a5653920fb15a363c51ea4de6c9e454f0000000000000000f37194e887f87008
+  - {fileID: -5783582282054158162}
+  - {fileID: 1638112148524511906}
+  m_RendererFeatureMap: ad6b866f10d7b46c4e0b6440883d7d1d8affa04993529615245f43535340b5b5a5653920fb15a363c51ea4de6c9e454f000000000000000035d5931b4e01ca40a2320eeb51bebb16
   m_UseNativeRenderPass: 1
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
@@ -132,6 +148,27 @@ MonoBehaviour:
     alpha: 1
     downsampleLevel: 3
     kuwaharaType: 2
+--- !u!114 &1638112148524511906
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e44cd816713c94142bc6db9ab56a25f9, type: 3}
+  m_Name: PCSSFeature
+  m_EditorClassIdentifier: Assembly-CSharp::PCSSFeature
+  m_Active: 1
+  settings:
+    pcssShader: {fileID: 4800000, guid: 3f4d7eb4163eb4cf283ad9b11656dcc1, type: 3}
+    lightSize: 1
+    blockerSamples: 16
+    blockerSearchRadius: 8
+    pcfSamples: 16
+    softness: 1
+    showShadow: 1
 --- !u!114 &2124922254593887054
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -212,7 +249,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4fd967d01d2b3464db071bc44f1c22a0, type: 3}
   m_Name: PickerFeature
   m_EditorClassIdentifier: Assembly-CSharp::Mine.Picker.ChosenFeature
-  m_Active: 1
+  m_Active: 0
   _pickerShader: {fileID: 0}
   _outlineMaskShader: {fileID: 0}
   _outlineCompositeShader: {fileID: 0}
@@ -254,7 +291,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f62c9c65cf3354c93be831c8bc075510, type: 3}
   m_Name: ScreenSpaceAmbientOcclusion
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   m_Settings:
     AOMethod: 0
     Downsample: 0
