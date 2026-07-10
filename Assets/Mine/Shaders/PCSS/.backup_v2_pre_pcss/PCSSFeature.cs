@@ -20,19 +20,12 @@ public class PCSSFeature : ScriptableRendererFeature
         [Range(0f, 1f)] public float pssmLambda = 0.75f;
         [Range(10f, 200f)] public float shadowDistance = 50f;
 
-        [Header("PCSS")]
-        [Range(8, 64)] public int blockerSamples = 32;
-        [Range(4, 64)] public int pcfSamples = 32;
-        [Range(0.1f, 5f)] public float lightSize = 1.0f;
-        [Range(0.1f, 2f)] public float softness = 1.0f;
-
         [Header("Shadow Bias")]
         [Range(0f, 2f)] public float depthBias  = 0.5f;
         [Range(0f, 2f)] public float normalBias = 0.4f;
 
         [Header("Debug")]
         public bool showShadowMap = true;
-        [Range(0, 5)] public int debugMode = 0;
 
         internal static readonly int ShadowCacheTexID = Shader.PropertyToID("_PCSS_ShadowCacheTex");
         internal static readonly int LightViewID       = Shader.PropertyToID("_PCSS_LightView");
@@ -44,13 +37,6 @@ public class PCSSFeature : ScriptableRendererFeature
         internal static readonly int CascadeSplitsID   = Shader.PropertyToID("_CascadeSplits");
         internal static readonly int CascadeLightVPID  = Shader.PropertyToID("_CascadeLightVP");
         internal static readonly int CascadeOffsetID   = Shader.PropertyToID("_CascadeAtlasOffset");
-        internal static readonly int CascadeHalfWID    = Shader.PropertyToID("_CascadeHalfWidth");
-        internal static readonly int CascadeZDistID    = Shader.PropertyToID("_CascadeZDistance");
-        internal static readonly int BlockerSamplesID  = Shader.PropertyToID("_PCSS_BlockerSamples");
-        internal static readonly int PCFSamplesID      = Shader.PropertyToID("_PCSS_PCFSamples");
-        internal static readonly int LightSizeID       = Shader.PropertyToID("_PCSS_LightSize");
-        internal static readonly int SoftnessID        = Shader.PropertyToID("_PCSS_Softness");
-        internal static readonly int DebugModeID       = Shader.PropertyToID("_PCSS_DebugMode");
     }
 
     // ════════════════════════════════════════════════════════════
@@ -68,8 +54,6 @@ public class PCSSFeature : ScriptableRendererFeature
         // 级联数据（供 PCSSPass 读取）
         public Matrix4x4[] CascadeViewProj;
         public Vector4     CascadeSplits;
-        public Vector4     CascadeHalfWidths;
-        public Vector4     CascadeZDistances;
         public Vector4[]   CascadeOffsets;
         public int         CascadeCount;
         public RTHandle    shadowHandle => m_ShadowHandle;
@@ -262,8 +246,6 @@ public class PCSSFeature : ScriptableRendererFeature
             var cascadeView  = new Matrix4x4[cascadeCount];
             var cascadeProj  = new Matrix4x4[cascadeCount];
             var cascadeCamPos = new Vector3[cascadeCount];
-            var cascadeHalfW  = new float[cascadeCount];
-            var cascadeZDist  = new float[cascadeCount];
             float maxHalfW = 0f, maxHalfH = 0f;
             int widestCascade = 0;
 
@@ -313,23 +295,6 @@ public class PCSSFeature : ScriptableRendererFeature
                 CascadeOffsets[ci] = new Vector4(
                     col * 0.5f, row * 0.5f, 0.5f, 0f);
             }
-            // 从投影矩阵提取 halfW 和 zDistance
-            for (int ci = 0; ci < cascadeCount; ci++)
-            {
-                cascadeHalfW[ci] = 1f / cascadeProj[ci].m00;
-                cascadeZDist[ci] = -2f / cascadeProj[ci].m22;
-            }
-            CascadeHalfWidths = new Vector4(
-                cascadeHalfW.Length > 0 ? cascadeHalfW[0] : 0,
-                cascadeHalfW.Length > 1 ? cascadeHalfW[1] : 0,
-                cascadeHalfW.Length > 2 ? cascadeHalfW[2] : 0,
-                cascadeHalfW.Length > 3 ? cascadeHalfW[3] : 0);
-            CascadeZDistances = new Vector4(
-                cascadeZDist.Length > 0 ? cascadeZDist[0] : 0,
-                cascadeZDist.Length > 1 ? cascadeZDist[1] : 0,
-                cascadeZDist.Length > 2 ? cascadeZDist[2] : 0,
-                cascadeZDist.Length > 3 ? cascadeZDist[3] : 0);
-
             CascadeSplits = new Vector4(
                 cascadeCount > 0 ? splits[0] : 0f,
                 cascadeCount > 1 ? splits[1] : 0f,
@@ -495,14 +460,6 @@ public class PCSSFeature : ScriptableRendererFeature
                     data.material.SetTexture(Settings.ShadowCacheTexID, m_Caster.shadowRT);
                     data.material.SetInt(Settings.CascadeCountID, data.cascadeCount);
                     data.material.SetVector(Settings.CascadeSplitsID, data.splits);
-                    data.material.SetVector(Settings.CascadeHalfWID, m_Caster.CascadeHalfWidths);
-                    data.material.SetVector(Settings.CascadeZDistID, m_Caster.CascadeZDistances);
-                    data.material.SetInt(Settings.BlockerSamplesID, m_S.blockerSamples);
-                    data.material.SetInt(Settings.PCFSamplesID, m_S.pcfSamples);
-                    data.material.SetFloat(Settings.LightSizeID, m_S.lightSize);
-                    data.material.SetFloat(Settings.SoftnessID, m_S.softness);
-                    data.material.SetInt(Settings.DebugModeID, m_S.debugMode);
-                    data.material.SetVector(Settings.LightDirectionID, -RenderSettings.sun.transform.forward);
                     cmd.SetGlobalMatrixArray(Settings.CascadeLightVPID, data.cascadeVP);
                     // Pass atlas offsets as a combined vector array
                     var offArr = new Vector4[] { data.offsets0, data.offsets1, data.offsets2, data.offsets3 };
