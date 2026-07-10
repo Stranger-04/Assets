@@ -9,83 +9,53 @@ public class Script
     public static object Main()
     {
         var sb = new System.Text.StringBuilder();
-        string path = "Assets/Settings/PC_Renderer.asset";
+        var pipeline = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+        if (pipeline == null) return "Error: Not URP";
 
-        var rendererData = AssetDatabase.LoadAssetAtPath(path, typeof(ScriptableRendererData));
-        var so = new SerializedObject(rendererData);
-        var featuresProp = so.FindProperty("m_RendererFeatures");
-
-        for (int i = 0; i < featuresProp.arraySize; i++)
-        {
-            var elem = featuresProp.GetArrayElementAtIndex(i);
-            var obj = elem.objectReferenceValue; // The ScriptableRendererFeature
-            if (obj == null) continue;
-
-            string fname = obj.GetType().Name;
-
-            // Disable ScreenSpaceShadows permanently
-            if (fname == "ScreenSpaceShadows")
-            {
-                var objSO = new SerializedObject(obj);
-                var activeProp = objSO.FindProperty("m_Active");
-                if (activeProp != null)
-                {
-                    sb.AppendLine($"  [{i}] ScreenSpaceShadows: {activeProp.boolValue} → FALSE");
-                    activeProp.boolValue = false;
-                    objSO.ApplyModifiedProperties();
-                }
-                else sb.AppendLine($"  [{i}] ScreenSpaceShadows: m_Active not found");
-            }
-            sb.AppendLine($"  [{i}] {fname}");
-        }
-
-        // Save
-        AssetDatabase.SaveAssetIfDirty(rendererData);
-        AssetDatabase.SaveAssets();
-
-        // Verify
-        sb.AppendLine("\nAfter save:");
-        for (int i = 0; i < featuresProp.arraySize; i++)
-        {
-            var obj = featuresProp.GetArrayElementAtIndex(i).objectReferenceValue;
-            if (obj == null) continue;
-            var objSO = new SerializedObject(obj);
-            var ap = objSO.FindProperty("m_Active");
-            sb.AppendLine($"  [{i}] {obj.GetType().Name} m_Active={ap?.boolValue}");
-        }
-
-        // 加载 shader 和配置 PCSSFeature
-        var pcssShader = AssetDatabase.LoadAssetAtPath(
-            "Assets/Mine/Shaders/PCSS/PCSS.shader", typeof(Shader)) as Shader;
-        sb.AppendLine($"\nShader: {(pcssShader != null ? pcssShader.name : "NULL")}");
-
-        var ff = typeof(ScriptableRendererData).GetField("m_RendererFeatures",
+        var field = typeof(UniversalRenderPipelineAsset).GetField("m_DefaultRendererIndex",
             BindingFlags.NonPublic | BindingFlags.Instance);
-        var features = ff.GetValue(rendererData) as System.Collections.IList;
-        for (int i = 0; i < features.Count; i++)
+        int defaultIndex = field != null ? (int)field.GetValue(pipeline) : 0;
+
+        var listField = typeof(UniversalRenderPipelineAsset).GetField("m_RendererDataList",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        var renderers = listField?.GetValue(pipeline) as ScriptableRendererData[];
+        if (renderers == null || renderers.Length == 0 || defaultIndex >= renderers.Length)
+            return "Error: No renderer";
+
+        var rendererData = renderers[defaultIndex];
+        sb.AppendLine("Renderer: " + rendererData.name);
+
+        var casterShader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Mine/Shaders/PCSS/CustomShadowCaster.shader");
+        var pcssShader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Mine/Shaders/PCSS/PCSS.shader");
+        if (casterShader == null) return "Error: CustomShadowCaster.shader not found";
+        if (pcssShader == null) return "Error: PCSS.shader not found";
+
+        PCSSFeature existing = null;
+        foreach (var f in rendererData.rendererFeatures)
         {
-            if (features[i]?.GetType().Name == "PCSSFeature")
-            {
-                var f = features[i];
-                var sf = f.GetType().GetField("settings", BindingFlags.Public | BindingFlags.Instance);
-                var s = sf.GetValue(f);
-                var shf = s.GetType().GetField("pcssShader", BindingFlags.Public | BindingFlags.Instance);
-                shf.SetValue(s, pcssShader);
+            if (f is PCSSFeature pcss) { existing = pcss; break; }
+        }
 
-                // Clear material
-                var mf = f.GetType().GetField("m_Material", BindingFlags.NonPublic | BindingFlags.Instance);
-                mf.SetValue(f, null);
-
-                // Re-Create
-                var cm = f.GetType().BaseType.GetMethod("Create", BindingFlags.Public | BindingFlags.Instance);
-                cm.Invoke(f, null);
-
-                var mat = mf.GetValue(f) as Material;
-                sb.AppendLine($"PCSSFeature re-created: mat={(mat != null ? mat.shader.name : "NULL")}");
-            }
+        if (existing != null)
+        {
+            existing.settings.shadowCasterShader = casterShader;
+            existing.settings.pcssShader = pcssShader;
+            existing.Create();
+            sb.AppendLine("Updated PCSSFeature (both shaders)");
+        }
+        else
+        {
+            var feature = ScriptableObject.CreateInstance<PCSSFeature>();
+            feature.settings.shadowCasterShader = casterShader;
+            feature.settings.pcssShader = pcssShader;
+            feature.Create();
+            rendererData.rendererFeatures.Add(feature);
+            sb.AppendLine("Added PCSSFeature (both shaders)");
         }
 
         EditorUtility.SetDirty(rendererData);
+        AssetDatabase.SaveAssets();
+        sb.AppendLine("Done.");
         return sb.ToString();
     }
 }
