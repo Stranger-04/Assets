@@ -1,94 +1,57 @@
 ---
-name: smart-task
+name: autoagent
 description: >-
-  Adaptive model router — analyze task complexity and delegate to the
-  right subagent model. Triggered when the user asks to build a feature,
-  fix a bug, refactor code, review changes, debug an issue, design
-  architecture, optimize performance, write tests, explain complex code,
-  or any development task beyond a trivial one-liner. Routes simple
-  mechanical tasks to haiku (fast), medium tasks to sonnet (balanced),
-  and complex/hard tasks to opus (deep reasoning). Always report routing
-  decision with a one-line summary.
+  Adaptive mode router for ALL Unity project tasks. PROACTIVELY invoke this
+  skill when the user asks to modify any file, write any code, edit any shader,
+  organize any assets, refactor any class, or debug any issue in a Unity
+  project. Routes to Research Mode (exploratory) or Production Mode
+  (systematic). Always loads project knowledge base first. When Unity Editor is
+  running, extends pipeline with compile → run → cleanup.
+  Non-negotiable: file changes in a Unity project = this skill activates.
 user-invocable: true
 argument-hint: "<task description>"
 model: opus
 ---
 
-# Smart Task — Adaptive Model Router
+# AutoAgent
 
-Route user tasks to the most appropriate model based on complexity analysis.
+> Unity 开发任务自适应路由器。覆盖所有开发任务，Editor 可用时自动扩展为完整流水线。
 
-## When This Skill Activates
+## CRITICAL — 触发后立即执行
 
-This skill auto-triggers on most substantive development requests. It may also be
-invoked explicitly via `/smart-task <description>`.
+**This skill body loads on trigger. You MUST immediately:**
 
-## Routing Logic
+1. `Read` [AutoMode.md](AutoMode.md) — 获取 Constitution、模式对比表、选择逻辑
+2. `Read` [capabilities/knowledge.md](capabilities/knowledge.md) — 加载项目知识库（代码风格、命名规范、文件结构）
+3. `bash: unityctl status` — 检查 Editor 是否在运行
+4. 根据 AutoMode.md 的选择逻辑判断 Research vs Production
+5. `Read` 对应的 mode 文件（[modes/research.md](modes/research.md) 或 [modes/production.md](modes/production.md)）
+6. 按 mode 文件的 Process 段逐步执行。Editor 不可用时自动跳过编译/运行步骤。
 
-### Step 1 — Assess Task Complexity
+**报告格式：**
+- Editor 可用：`🏭 AutoAgent → Production Mode（全流水线：编译 + 运行）`
+- Editor 不可用：`🏭 AutoAgent → Production Mode（仅代码：Editor 未运行，跳过编译验证）`
+- Research：`🔬 AutoAgent → Research Mode（Shader 效果调试，需要人工观测）`
 
-Analyze the user's request against these criteria. Score complexity as one of:
+---
 
-| Level | Criteria | Examples |
-|-------|----------|----------|
-| **simple** | Single-file, mechanical change. No design decisions. Obvious solution. < 5 lines of logic. | Fix a typo, add a log line, rename a variable, format code, simple config change, answer a factual question |
-| **medium** | Multi-step but well-understood. Within a few files. Clear patterns exist. Some design judgment needed. | Add a CRUD endpoint, moderate refactoring, fix a bug with known root cause, add tests for existing code, implement a standard UI component |
-| **complex** | Cross-cutting concern. Multiple files/modules. Architectural implications. Ambiguous requirements. Performance critical. | Design a new system component, refactor across services, implement a complex algorithm, debug a race condition, security audit, data migration |
-| **hard** | Greenfield architecture. Deep domain expertise. Novel problem. High stakes (data loss, security). Requires extensive exploration first. | Design a distributed system from scratch, multi-service auth flow, novel ML pipeline, protocol design |
+## 激活条件
 
-**Tie-breaking rules:**
-- If unsure between two levels, pick the higher one
-- Tasks involving **data safety, security, or production impact** → bump up one level
-- Tasks the user explicitly marked as **urgent or critical** → bump up one level
-- User explicitly asked for a specific model → respect that choice
+| 条件 | 说明 |
+|------|------|
+| 用户发出开发任务 | 创建/修改代码、Shader、文件整理、重构、调试、文档 |
+| 非纯对话/咨询 | 涉及文件写入或项目操作 |
 
-### Step 2 — Select Model
+**Editor 不是激活前提。** Editor 是否可用只影响流水线中编译/运行步骤是否执行。
 
-| Complexity | Model | Effort | Reasoning |
-|------------|-------|--------|-----------|
-| simple | `haiku` | `low` | Fast, cheap. No deep reasoning needed. |
-| medium | `sonnet` | `medium` | Good balance of speed and capability. |
-| complex | `opus` | `high` | Deep reasoning for architectural decisions. |
-| hard | `opus` | `max` | Maximum reasoning budget for greenfield design. |
-
-**Adapt to your environment:** Check whether `sonnet` and `opus` resolve to
-different models in the user's `settings.json`. If they map to the same model,
-skip `sonnet` and route medium tasks to `opus` with `medium` effort.
-
-### Step 3 — Spawn Subagent
-
-Use the `Agent` tool with the selected `model` and `effort`:
+## 路由速查
 
 ```
-Agent({
-  description: "short 3-5 word summary",
-  prompt: "<the full task>",
-  model: "<haiku|sonnet|opus>",
-  effort: "<low|medium|high|xhigh|max>"
-})
+用户指令
+  │
+  ├── Shader / 渲染 / 调参 / 效果验证 → 🔬 Research Mode
+  ├── 功能开发 / Bug修复 / 重构 / 文件整理 → 🏭 Production Mode
+  └── 纯咨询 / 闲聊                  → 不激活
 ```
 
-### Step 4 — Report Routing Decision
-
-Before returning results, state the routing decision in one line:
-
-> 🧠 Routed to `opus` (high effort) — cross-cutting architecture change across 5 files
-
-Keep it concise. No need to explain the framework — just report what happened.
-
-## Important Rules
-
-1. **Only route delegable tasks.** Conversations, preference questions, and
-   interactive back-and-forth stay in the main session.
-2. **Don't route trivial tasks.** One-line answers, factual lookups, and
-   simple file reads don't need a subagent.
-3. **Respect explicit model requests.** If the user says "use haiku", use haiku.
-4. **Don't overthink.** Spend at most a sentence or two assessing complexity.
-5. **Transparency always.** Always report which model was chosen and why.
-
-## Edge Cases
-
-- **Subagent fails or times out:** Retry once with a higher-tier model. Report both attempts.
-- **Task is too vague to assess:** Ask one clarifying question, then route.
-- **User follows up on subagent's work:** Handle the follow-up yourself — don't
-  spawn another subagent for a quick question about the result.
+完整选择逻辑和边界情况见 [AutoMode.md](AutoMode.md)。

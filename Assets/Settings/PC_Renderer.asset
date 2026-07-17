@@ -70,11 +70,14 @@ MonoBehaviour:
     shadowDistance: 50
     blockerSamples: 32
     pcfSamples: 32
-    lightSize: 5
-    softness: 1
-    depthBias: 0.2
+    lightSize: 4
+    softness: 2
+    depthBias: 0.05
     normalBias: 0
-    showShadowMap: 0
+    enableBlur: 1
+    blurScale: 1
+    showShadowMap: 1
+    debugMode: 6
 --- !u!114 &-4316052137097848494
 MonoBehaviour:
   m_ObjectHideFlags: 0

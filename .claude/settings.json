@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v3_rotation_independent /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v4_no_slope_bias)",
+      "Bash(mkdir -p /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v3_stable_pcss)",
+      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSS.shader /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v3_stable_pcss/)",
+      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSSFeature.cs /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v3_stable_pcss/)",
+      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/CustomShadowCaster.shader /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v3_stable_pcss/)",
+      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v2_pre_pcss/PCSS.shader /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSS.shader)",
+      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v2_pre_pcss/PCSSFeature.cs /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSSFeature.cs)",
+      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v3_stable_pcss/PCSS.shader /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSS.shader)",
+      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v3_stable_pcss/PCSSFeature.cs /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSSFeature.cs)"
+    ]
+  }
+}

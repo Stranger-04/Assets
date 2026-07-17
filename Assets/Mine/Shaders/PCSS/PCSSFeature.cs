@@ -3,6 +3,10 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Rendering.RenderGraphModule;
 
+/// <summary>
+/// PCSS 软阴影渲染管线：4 级联 PSSM Atlas + Blocker Search + Penumbra 估算 + 变核 PCF + 双边模糊。
+/// 在 URP Renderer 的 Renderer Features 中添加，配合 CustomShadowCaster.shader 和 PCSS.shader 使用。
+/// </summary>
 public class PCSSFeature : ScriptableRendererFeature
 {
     [System.Serializable]
@@ -30,9 +34,13 @@ public class PCSSFeature : ScriptableRendererFeature
         [Range(0f, 2f)] public float depthBias  = 0.5f;
         [Range(0f, 2f)] public float normalBias = 0.4f;
 
+        [Header("Blur")]
+        public bool enableBlur = true;
+        [Range(0f, 5f)] public float blurScale = 1.0f;
+
         [Header("Debug")]
         public bool showShadowMap = true;
-        [Range(0, 5)] public int debugMode = 0;
+        [Range(0, 6)] public int debugMode = 0;
 
         internal static readonly int ShadowCacheTexID = Shader.PropertyToID("_PCSS_ShadowCacheTex");
         internal static readonly int LightViewID       = Shader.PropertyToID("_PCSS_LightView");
@@ -169,50 +177,28 @@ public class PCSSFeature : ScriptableRendererFeature
                 minD = Mathf.Min(minD, d); maxD = Mathf.Max(maxD, d);
             }
 
-            float midD = (minD + maxD) * 0.5f;
-            // 固定包围盒半径作为最小 half-extent（旋转不变，仅在跨 split 或改 FOV 时变）
-            float halfW = Mathf.Max(halfExtent, maxExtR + 1f);
-            float halfH = Mathf.Max(halfExtent, maxExtU + 1f);
-            Vector3 rawCenter = lightRgt * camR + lightUp * camU + lightDir * midD;
-
-            float depthRange = Mathf.Max(maxD - minD, 1f);
-            float backDist = depthRange * 8f;
-            float zNear = Mathf.Max(0.1f, backDist - depthRange * 8f);
-            float zFar  = backDist + depthRange * 8f;
-
-            // ── 第 1 步：构造未 snapping 的 view/proj ──
-            Vector3 rawCamPos = rawCenter - lightDir * backDist;
+            float midD     = (minD + maxD) * 0.5f;  // frustom 几何中心（含所有可见物体）
+            float backDist = cascadeFar * 8f;
+            float zNear    = 0.1f;
+            float zFar     = backDist * 2f;
+            float halfW    = halfExtent;
+            float halfH    = halfExtent;
+            // ── 量化整个正交投影边界（texel-aligned ortho bounds）──
+            // Floor 左边界、Ceil 右边界 → 向外扩 → 确保原范围被包含。
             Vector3 vX = -lightRgt, vY = lightUp, vZ = -lightDir;
-            Matrix4x4 rawView = new Matrix4x4(
-                new Vector4(vX.x, vY.x, vZ.x, 0),
-                new Vector4(vX.y, vY.y, vZ.y, 0),
-                new Vector4(vX.z, vY.z, vZ.z, 0),
-                new Vector4(-Vector3.Dot(vX, rawCamPos), -Vector3.Dot(vY, rawCamPos), -Vector3.Dot(vZ, rawCamPos), 1));
-            Matrix4x4 rawProj = Matrix4x4.Ortho(-halfW, halfW, -halfH, halfH, zNear, zFar);
+            float worldPerTexel = halfW * 2f / tileRes;
+            // 光空间 R 轴
+            float bl = camR - halfW, br = camR + halfW;
+            bl = Mathf.Floor(bl / worldPerTexel) * worldPerTexel;
+            br = Mathf.Ceil (br / worldPerTexel) * worldPerTexel;
+            float snapR = (bl + br) * 0.5f, snapHW = Mathf.Max((br - bl) * 0.5f, halfW);
+            // 光空间 U 轴
+            float bb = camU - halfH, bt = camU + halfH;
+            bb = Mathf.Floor(bb / worldPerTexel) * worldPerTexel;
+            bt = Mathf.Ceil (bt / worldPerTexel) * worldPerTexel;
+            float snapU = (bb + bt) * 0.5f, snapHH = Mathf.Max((bt - bb) * 0.5f, halfH);
+            Vector3 center = lightRgt * snapR + lightUp * snapU + lightDir * midD;
 
-            // ── 第 2 步：Shadow Map UV 空间 snapping ──
-            // 参考 Common Techniques to Improve Shadow Depth Maps：
-            // 在 shadow map 像素空间直接量化参考点，再反算世界空间偏移量。
-            // 这保证参考点始终映射到同一 shadow map 像素——独立于所有坐标系的伸缩。
-            Matrix4x4 rawVP = rawProj * rawView;
-            Vector3 refWS = rawCenter;
-            Vector4 refCS = rawVP * new Vector4(refWS.x, refWS.y, refWS.z, 1);
-            float invW = 1f / refCS.w;
-            float ndcX = refCS.x * invW;
-            float ndcY = refCS.y * invW;
-            // NDC [-1,1] → 像素坐标 [0,tileRes] → 量化 → 回到 NDC
-            float pixelX = (ndcX * 0.5f + 0.5f) * tileRes;
-            float pixelY = (ndcY * 0.5f + 0.5f) * tileRes;
-            pixelX = Mathf.Round(pixelX);
-            pixelY = Mathf.Round(pixelY);
-            float snapNdcX = (pixelX / tileRes - 0.5f) * 2f;
-            float snapNdcY = (pixelY / tileRes - 0.5f) * 2f;
-            // NDC 偏移 → 世界空间偏移
-            float offsetR = (snapNdcX - ndcX) * halfW;
-            float offsetU = (snapNdcY - ndcY) * halfH;
-            Vector3 center = rawCenter + lightRgt * offsetR + lightUp * offsetU;
-
-            // ── 第 3 步：用 snapped 中心重建 view ──
             Vector3 shadowCamPos = center - lightDir * backDist;
             camPos = shadowCamPos;
             viewMatrix = new Matrix4x4(
@@ -220,8 +206,10 @@ public class PCSSFeature : ScriptableRendererFeature
                 new Vector4(vX.y, vY.y, vZ.y, 0),
                 new Vector4(vX.z, vY.z, vZ.z, 0),
                 new Vector4(-Vector3.Dot(vX, shadowCamPos), -Vector3.Dot(vY, shadowCamPos), -Vector3.Dot(vZ, shadowCamPos), 1));
-            projMatrix = rawProj;
+            projMatrix = Matrix4x4.Ortho(-snapHW, snapHW, -snapHH, snapHH, zNear, zFar);
         }
+
+        static int s_DbgFrame = 0;
 
         // ── PSSM Split ──
         float[] ComputePSSMSplits(float nearP, float farP, int count, float lambda)
@@ -313,10 +301,13 @@ public class PCSSFeature : ScriptableRendererFeature
                 CascadeOffsets[ci] = new Vector4(
                     col * 0.5f, row * 0.5f, 0.5f, 0f);
             }
-            // 从投影矩阵提取 halfW 和 zDistance
+            // halfW 用固定参照（参考文章 _CascadeShadowSplitSpheres[i].w）
+            // zDist 从投影矩阵提取（与旋转基本无关）
+            float fovHalf = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            float diagFactor = Mathf.Sqrt(fovHalf * fovHalf * (1f + cam.aspect * cam.aspect));
             for (int ci = 0; ci < cascadeCount; ci++)
             {
-                cascadeHalfW[ci] = 1f / cascadeProj[ci].m00;
+                cascadeHalfW[ci] = splits[ci] * diagFactor + 1f;
                 cascadeZDist[ci] = -2f / cascadeProj[ci].m22;
             }
             CascadeHalfWidths = new Vector4(
@@ -335,6 +326,13 @@ public class PCSSFeature : ScriptableRendererFeature
                 cascadeCount > 1 ? splits[1] : 0f,
                 cascadeCount > 2 ? splits[2] : 0f,
                 cascadeCount > 3 ? splits[3] : 0f);
+
+#if UNITY_EDITOR
+            if (++s_DbgFrame % 30 == 0)
+                Debug.Log($"[PCSS] C0 halfW={cascadeHalfW[0]:F3} zDist={cascadeZDist[0]:F1} " +
+                          $"camR={Vector3.Dot(cam.transform.position, mainLight.transform.right):F3} " +
+                          $"midD={Vector3.Dot(cam.transform.position, mainLight.transform.forward):F3}");
+#endif
 
             // ── 设置阴影偏移 ──
             m_Mat.SetVector(Settings.LightDirectionID, mainLight.transform.forward);
@@ -435,7 +433,7 @@ public class PCSSFeature : ScriptableRendererFeature
         class PassData
         {
             public Material material;
-            public TextureHandle source, dest;
+            public TextureHandle source, dest, blurRT;
             public Matrix4x4[] cascadeVP;
             public Vector4 splits, offsets0, offsets1, offsets2, offsets3;
             public int cascadeCount;
@@ -446,7 +444,7 @@ public class PCSSFeature : ScriptableRendererFeature
             m_S = s; m_Mat = mat; m_Caster = caster;
             renderPassEvent = RenderPassEvent.AfterRenderingTransparents;
             profilingSampler = new ProfilingSampler("PCSS Screen Shadow");
-            ConfigureInput(ScriptableRenderPassInput.Depth);
+            ConfigureInput(ScriptableRenderPassInput.Depth | ScriptableRenderPassInput.Normal);
         }
 
         public override void RecordRenderGraph(RenderGraph graph, ContextContainer frameData)
@@ -466,6 +464,8 @@ public class PCSSFeature : ScriptableRendererFeature
 
             TextureHandle dest = UniversalRenderer.CreateRenderGraphTexture(
                 graph, desc, "_PCSS_SoftShadow", false);
+            TextureHandle blurRT = UniversalRenderer.CreateRenderGraphTexture(
+                graph, desc, "_PCSS_BlurTemp", false);
             TextureHandle shadowTH = graph.ImportTexture(m_Caster.shadowHandle);
 
             using (var builder = graph.AddUnsafePass<PassData>("PCSS", out var pd, profilingSampler))
@@ -473,6 +473,7 @@ public class PCSSFeature : ScriptableRendererFeature
                 pd.material  = m_Mat;
                 pd.source    = source;
                 pd.dest      = dest;
+                pd.blurRT    = blurRT;
                 pd.cascadeVP   = m_Caster.CascadeViewProj;
                 pd.splits      = m_Caster.CascadeSplits;
                 pd.cascadeCount = m_Caster.CascadeCount;
@@ -484,7 +485,8 @@ public class PCSSFeature : ScriptableRendererFeature
                 pd.offsets3 = off.Length > 3 ? off[3] : Vector4.zero;
 
                 builder.UseTexture(source,   AccessFlags.ReadWrite);
-                builder.UseTexture(dest,     AccessFlags.Write);
+                builder.UseTexture(dest,     AccessFlags.ReadWrite);
+                builder.UseTexture(blurRT,   AccessFlags.ReadWrite);
                 builder.UseTexture(shadowTH, AccessFlags.Read);
                 builder.AllowPassCulling(false);
 
@@ -508,7 +510,16 @@ public class PCSSFeature : ScriptableRendererFeature
                     var offArr = new Vector4[] { data.offsets0, data.offsets1, data.offsets2, data.offsets3 };
                     cmd.SetGlobalVectorArray(Settings.CascadeOffsetID, offArr);
 
+                    // Pass 0: PCSS
                     Blitter.BlitCameraTexture(cmd, data.source, data.dest, data.material, 0);
+
+                    // Pass 1 & 2: 双边保边模糊
+                    if (m_S.enableBlur)
+                    {
+                        data.material.SetFloat("_BlurScale", m_S.blurScale);
+                        Blitter.BlitCameraTexture(cmd, data.dest, data.blurRT, data.material, 1);
+                        Blitter.BlitCameraTexture(cmd, data.blurRT, data.dest, data.material, 2);
+                    }
 
                     if (m_S.showShadowMap)
                         Blitter.BlitCameraTexture(cmd, data.dest, data.source);

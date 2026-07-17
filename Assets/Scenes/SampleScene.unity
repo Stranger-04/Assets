@@ -817,7 +817,7 @@ MonoBehaviour:
   _yawPivot: {fileID: 0}
   _pitchPivot: {fileID: 0}
   _mouseSensitivity: 2
-  _rotationLerp: 12
+  _rotationLerp: 20
   _pitchMin: -89
   _pitchMax: 89
   _focusOffset: {x: 0, y: 1.5, z: 0}

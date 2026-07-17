@@ -1,726 +1,165 @@
-# AutoMode — 自动化流程文档
+# AutoMode
 
-> Claude Code + unityctl 自动化操作 Unity Editor 的标准流程。默认开启，遇到关键节点自动暂停等待人工介入。
-
----
-
-## 知识库预加载（AutoMode 激活时自动执行）
-
-AutoMode 激活后，**在分析用户指令之前**，自动读取 `Assets/MarkDowns/` 文件夹下的所有 `.md` 文件，作为项目知识库注入上下文。
-
-### 预加载逻辑
-
-```
-AutoMode 激活
-  │
-  ├── [0.1] 扫描 Assets/MarkDowns/*.md
-  │     └── ls Assets/MarkDowns/*.md
-  │
-  ├── [0.2] 按优先级读取
-  │     ├── 高优先级（必读）：结构规范类 → ScriptStructure.md, ShaderStructure.md
-  │     ├── 中优先级（按需）：模板类 → ScriptDocTemplate.md, ShaderDocTemplate.md
-  │     └── 低优先级（相关时读）：领域知识类 → Unity 6 全屏后处理 Shader 差异.md 等
-  │
-  └── [0.3] 提取关键约束
-        ├── 代码风格规范（命名、注释格式、文件结构）
-        ├── Shader 语法差异（Unity 6 vs 旧版本的 API 变化）
-        └── 模板要求（新建文件时应遵循的文档格式）
-```
-
-### 读取策略
-
-| 条件 | 行为 |
-|------|------|
-| MarkDowns 文件夹不存在 | 跳过，不报错 |
-| 文件已在当前会话中读过 | 跳过（避免重复消耗 context） |
-| 文件 > 500 行 | 先读前 100 行确认内容，再决定是否全读 |
-| 用户指令明确涉及 Shader | 必读 ShaderStructure.md + ShaderDocTemplate.md |
-| 用户指令明确涉及 C# 脚本 | 必读 ScriptStructure.md + ScriptDocTemplate.md |
-| 用户指令涉及全屏后处理 | 必读 Unity 6 全屏后处理 Shader 差异.md |
-
-### 约束应用
-
-读取完毕后，后续所有代码生成和修改必须遵循 MarkDowns 中定义的规范：
-
-1. **脚本结构**：遵循 `ScriptStructure.md` 中的文件组织方式
-2. **Shader 结构**：遵循 `ShaderStructure.md` 中的语法和 API 用法（特别注意 Unity 6 差异）
-3. **文档模板**：新增文件时按 `ScriptDocTemplate.md` / `ShaderDocTemplate.md` 格式添加头部注释
+> Unity 开发任务自适应系统的唯一真相源（Single Source of Truth）。
+> 定义模式选择逻辑、项目最高原则、Editor 可用性策略、以及完整文件索引。
 
 ---
 
-## 执行条件（默认开启）
+## Constitution（项目宪法）
 
-AutoMode 在以下条件**全部满足**时自动激活：
+以下原则优先级最高。任何 capability、rule、mode 与宪法冲突时，**宪法优先**。
 
-| 条件 | 说明 |
-|------|------|
-| Unity Editor 已在运行 | `unityctl status` 返回 connected |
-| bridge 已启动 | `unityctl bridge start` 已在后台运行 |
-| 项目路径正确 | 当前目录下存在 `.unityctl/bridge.json` |
-| 用户发出可自动化指令 | 如"创建物体测试"、"编译并运行"、"验证效果" |
-
-### 前置检查命令
-
-```bash
-unityctl status                    # 一键检查 Editor + bridge 状态
-unityctl bridge start              # 若未启动，后台拉起 bridge
-```
-
-### 默认行为
-
-- 修改 `.cs` 后 → **自动** `asset refresh` 编译
-- 编译报错 → **自动** 读取错误、定位文件、修复、重新编译
-- 编译通过 → **自动** 执行配置脚本、进入 Play Mode
-- 运行报错 → **自动** 读取日志、分析原因、修复、重新进入 Play Mode
-- 零错误 → **自动** 截图、退出、报告结果
+| # | 原则 | 说明 |
+|---|------|------|
+| **C1** | 安全优先于速度 | `git stash --all` 永久禁止。任何删除操作必须先列清单、人工确认、再执行。 |
+| **C2** | 不碰用户代码 | 清理/自动修复只作用于 `tmp/`、`Screenshots/`、场景测试物体。绝不动 `Assets/Mine/` 下的功能代码。 |
+| **C3** | 渐进式自动化 | 先轻后重。轻操作可自动，重操作（删除文件、修改架构）必须人工确认。 |
+| **C4** | 证据驱动 | 不凭"看起来对"下结论。编译通过看日志，运行效果看日志和返回值，错误诊断看堆栈。 |
+| **C5** | 可回退 | 重大改动前必须备份。任何不可逆操作前必须留回退路径。 |
+| **C6** | 模式优先 | 先判断 Research vs Production，再按模式规则执行。不在 Research 模式做 Production 的事（反之亦然）。 |
+| **C7** | 知识优先 | 任何写代码的任务必须先加载知识库（capabilities/knowledge.md），确保代码风格、命名、文件结构符合项目规范。 |
 
 ---
 
-## 自动化流程
+## Editor 可用性策略
+
+Editor 是否在运行**只影响流水线步骤，不影响 skill 是否激活**。
+
+| Editor 状态 | 流水线行为 |
+|------------|----------|
+| ✅ 在运行 | 完整流水线：知识 → 代码 → 编译 → 运行 → 清理 |
+| ❌ 未运行 | 精简流水线：知识 → 代码。跳过编译/运行/清理。报告末尾注明"Editor 未运行，未执行编译验证"。 |
+
+检查命令：`unityctl status`
+
+---
+
+## 模式对比
+
+| 维度 | 🔬 Research | 🏭 Production |
+|------|------------|-------------|
+| **场景** | Shader 调试、参数调优、效果验证、假设验证 | 功能开发、Bug 修复、重构、发版准备 |
+| **关键词** | 调试、看看、试试、验证、排查、效果 | 实现、开发、添加、修复、重构 |
+| **备份** | ❌ | ✅ 重大改动时 |
+| **知识预加载** | 按需 | 全量 |
+| **方案设计** | ❌ | ✅ 输出修改计划 |
+| **编译** | 快速，报错即停 | 完整，自动修复循环 |
+| **场景配置** | 手动/按需 | 自动 Roslyn |
+| **观测** | 🔴 每步暂停 | 🟢 仅异常暂停 |
+| **循环** | ✅ 无限循环 | ❌ 一次性 |
+| **清理** | ❌ | ✅ 轻清理提示 |
+
+---
+
+## 选择逻辑
 
 ```
 用户指令
   │
-  ├── [0] 重大改动前备份 ─── git commit 当前状态 + 实体备份到 .backup_xxx/
+  ├── [Research 信号] 任一满足 → Research Mode
+  │     ├── Shader / 渲染 / 视觉效果
+  │     ├── GPU / Compute Shader
+  │     ├── 参数调优（无确定目标值）
+  │     └── 关键词：调试、看看、试试、验证假设、排查
   │
-  ├── [1] 定位 & 分析 ─── 读取相关文件，理解现有结构
-  │
-  ├── [2] 方案设计 ─── 输出计划（新建/修改哪些文件）
-  │
-  ├── [3] 代码生成 ─── Write/Edit 生成全部文件
-  │
-  ├── [4] 编译验证 ─── unityctl asset refresh
-  │     ├── 编译失败 → 读错误 → 修复 → 回到 [4]
-  │     └── 编译通过 → 继续
-  │
-  ├── [5] 场景配置 ─── unityctl script execute 自动创建物体、挂载脚本、配参
-  │     ├── 脚本执行失败 → 读错误 → 修复 → 回到 [4]
-  │     └── 成功 → 继续
-  │
-  ├── [6] 运行时验证 ─── unityctl play enter → sleep Ns → unityctl logs
-  │     ├── 运行时错误 → 分析 → 修复 → 回到 [4]
-  │     └── 零错误 → 继续
-  │
-  ├── [7] 截图留档 ─── unityctl screenshot capture
-  │
-  └── [8] 退出 Play Mode ─── unityctl play exit → 报告结果
+  └── [Production 信号] 任一满足 → Production Mode
+        ├── 明确的输入→输出需求
+        ├── 功能增删改 / Bug 修复 / 重构
+        └── 关键词：实现、开发、添加、修复、重构
 ```
 
-### 各阶段详解
-
-#### [0] 重大改动前备份
-
-满足以下任一条件时，**必须先备份再动手**：
-
-| 触发条件 | 示例 |
-|----------|------|
-| 架构级改动 | 单级联→多级联、Shader→Compute Shader、Feature 重构 |
-| 同一文件修改超过 50 行 | 重写 RecordRenderGraph、替换投影算法 |
-| 用户明确要求备份 | "先备份再改" |
-| 文件从未被 git 提交过 | `git status` 显示 `??` 的资产文件 |
-
-**备份流程：**
-
-```
-重大改动触发
-  │
-  ├── [0a] 实体备份（方便对比检查）
-  │     ├── mkdir Assets/path/to/feature/.backup_v1_<描述>/
-  │     ├── cp 所有相关文件到备份目录
-  │     ├── echo ".gitignore" > .backup_v1_xxx/.gitignore  （Unity 自动忽略 . 开头目录）
-  │     └── echo "备份说明" > .backup_v1_xxx/README.txt
-  │
-  └── [0b] Git 备份（方便回退）
-        ├── git add <改动文件>
-        └── git commit -m "<Feature>: <改动简述>（备份基准）"
-```
-
-**备份目录命名规范：**
-- 格式：`.backup_v<序号>_<简短描述>/`
-- 示例：`.backup_v1_single_cascade/`、`.backup_v2_before_compute/`
-- Unity 自动忽略 `.` 开头的目录，不会被导入为资产
-
-**回退方式：**
-
-```bash
-# 实体对比：直接 diff 两个目录
-diff Assets/xxx/.backup_v1_xxx/CurrentFile.cs Assets/xxx/CurrentFile.cs
-
-# Git 回退：找到备份 commit 的 hash
-git log --oneline -10
-git checkout <commit_hash> -- Assets/xxx/File.cs
-```
-
-#### [2] 方案设计
-
-设计阶段输出修改计划，明确涉及的文件和接口。若 Feature 内存在需要外部资源引用的接口（如 `Material.SetShader`、`ComputeShader` 字段、`RenderTexture` 引用等），**设计阶段可直接将接口指向项目中已有的资源地址**，便于后续编译和运行时验证。
-
-**调试期接口指向规则：**
-
-| 场景 | 示例 |
-|------|------|
-| Shader 字段 | `public Shader targetShader;` → Inspector 指向 `Assets/Mine/Shaders/PCSS/PCSS.shader` |
-| Material 引用 | `public Material debugMat;` → 指向已有的 `Assets/.../SomeMaterial.mat` |
-| ComputeShader | `public ComputeShader cs;` → 指向 `Assets/.../SomeKernel.compute` |
-| RenderTexture | 直接指定已有的 RT 资产路径 |
-| 其他 Unity Object | Texture2D、Mesh、ScriptableObject 等均可直接指向已有资产 |
-
-**流程：**
-
-```
-[2] 方案设计
-  │
-  ├── [2a] 分析接口依赖 ─── 列出 Feature 中需要外部引用的字段
-  │
-  ├── [2b] 指向已有资源 ─── 将接口字段直接指向目标资产地址（如 Shader 路径）
-  │     └── 目的：跳过"先创建空资源再回填引用"的步骤，加快调试迭代
-  │
-  └── [2c] 标记调试接口 ─── 用注释标记为调试期指向
-        └── 格式：`// DEBUG_REF: 设计完成后清空此引用`
-```
-
-**设计结束后（进入 [8] 退出前或轻清理时）：**
-
-- 清空所有调试期指定的接口引用（恢复为空字段或 ScriptableObject 配置方式）
-- 移除 `DEBUG_REF` 标记注释
-- 若该引用为运行时必需的正式配置，改为通过代码加载或 ScriptableObject 统一管理
-
-#### [4] 编译验证
-
-```bash
-unityctl asset refresh
-# 输出：compilation succeeded / compilation failed
-# 失败时会列出具体错误文件、行号、错误码
-```
-
-#### [5] 场景配置
-
-通过 Roslyn 脚本直接在 Editor 中执行 C#：
-
-```bash
-unityctl script execute -f tmp/setup_xxx.cs
-```
-
-脚本模板：
-
-```csharp
-using UnityEngine;
-
-public class Script
-{
-    public static object Main()
-    {
-        // 创建物体
-        var go = new GameObject("TestObj");
-        
-        // 添加组件
-        var comp = go.AddComponent<SomeComponent>();
-        
-        // 通过 AssetDatabase 加载资源
-        var shader = UnityEditor.AssetDatabase.LoadAssetAtPath<ComputeShader>(
-            "Assets/Path/To/Shader.compute");
-        comp.someField = shader;
-        
-        // 调用初始化
-        comp.Init();
-        
-        return "OK: 描述结果";
-    }
-}
-```
-
-**适用场景：**
-- 创建/删除 GameObject
-- 添加/移除 Component
-- 修改 Inspector 中的公开字段
-- 调用 public 方法（如 `InitInstances()`）
-- 读取组件状态进行调试
-
-#### [6] 运行时验证
-
-```bash
-unityctl play enter            # 进入 Play Mode
-sleep 3                         # 等待模拟运行几帧
-unityctl logs -n 20             # 检查日志
-```
-
-**自动诊断规则：**
-
-| 日志模式 | 自动处理 |
-|---------|---------|
-| `NullReferenceException` | 定位空引用 → 检查序列化/域重载 → 修复 |
-| `Thread group size must be above zero` | 检查 kernel index 是否有效 → 打印调试信息 |
-| `error CSxxxx` | 编译错误 → 读文件 → 修复语法 |
-| 无日志输出 | 属性缺少 `[SerializeField]` 或初始化守卫错误 |
-
-#### [7] 截图留档
-
-```bash
-unityctl screenshot capture
-# 输出：Screenshots/screenshot_YYYY-MM-DD_HH-MM-SS.png
-```
+**边界：** 同时涉及两类 → 询问确认。先调试后发版 → 先 Research 再切换。用户要求全自动 → 强制 Production。
 
 ---
 
-## 退出条件
+## 模式入口
 
-以下情况 AutoMode **自动暂停**，请求人工介入：
-
-### 1. 需要人工观测
-
-| 场景 | 说明 |
-|------|------|
-| 渲染效果验证 | 截图无法判定的画面质量（如颜色、透明度、动画流畅度） |
-| 交互行为测试 | 需要鼠标点击、键盘输入的交互（如 Picker 选物体） |
-| 性能评估 | 需要查看 Profiler、Frame Debugger 的数据 |
-
-### 2. 需要人工决策
-
-| 场景 | 说明 |
-|------|------|
-| 架构选择 | 多种实现方案各有优劣（如接口 vs 抽象类） |
-| 参数调优 | 视觉效果参数（如雨滴速度、颜色、透明度） |
-| Shader 逻辑 | 涉及 GPU 调试、渲染管线选择 |
-| 破坏性操作 | 删除文件、修改 .meta、变更 SerializedReference |
-
-### 3. 抵达关键节点
-
-| 节点 | 说明 |
-|------|------|
-| 编译通过 | "零错误，是否进入 Play Mode 验证？" |
-| Play Mode 通过 | "零运行时错误，请确认画面效果是否符合预期" |
-| 测试完毕 | "全部验证通过，是否提交代码？" |
-| 新功能就绪 | "框架已可用，是否需要添加更多模拟类型？" |
-
-### 4. 兜底退出
-
-| 条件 | 说明 |
-|------|------|
-| 同一错误连续 3 次 | 自动修复无效，需要人工分析 |
-| 操作超时 60s | Editor 无响应或卡死 |
-| bridge 断开 | `unityctl status` 返回 disconnected |
+- **Research Mode**：[modes/research.md](modes/research.md) — 组合 capabilities/，共用 rules/
+- **Production Mode**：[modes/production.md](modes/production.md) — 组合 capabilities/，共用 rules/
 
 ---
 
-## 调试技巧
+## 扩展指南
 
-### 运行时检查组件状态
+新内容加入时，按以下决策树确定归属：
 
-```bash
-# 快速检查某个 GameObject 上的组件和字段值
-unityctl script execute -f tmp/debug_state.cs
+```
+新内容
+  │
+  ├── 它是"怎么做一件事"的指令？
+  │     ├── 单一操作、无分支逻辑 → capabilities/
+  │     │     └── 例：编译、进入 Play Mode
+  │     │
+  │     └── 多步骤组合、有分支/条件 → modes/
+  │           └── 例：研发流水线、生产流水线
+  │
+  ├── 它是"对不对/停不停"的判断标准？
+  │     └── rules/
+  │           └── 例：错误模式匹配表、退出条件、安全红线
+  │
+  └── 它是"查一下"的参考资料？
+        └── references/
+              └── 例：命令速查、Roslyn 食谱
 ```
 
-```csharp
-using UnityEngine;
+### 各文件夹准入标准
 
-public class Script
-{
-    public static object Main()
-    {
-        var go = GameObject.Find("TargetName");
-        if (go == null) return "NOT FOUND";
-        
-        var comp = go.GetComponent<SomeComponent>();
-        var sb = new System.Text.StringBuilder();
-        sb.AppendLine($"fieldA: {comp?.fieldA}");
-        sb.AppendLine($"fieldB: {comp?.fieldB}");
-        return sb.ToString();
-    }
-}
-```
+| 文件夹 | 准入条件 | 反例（不应放入） |
+|--------|---------|----------------|
+| **capabilities/** | 单一工具，<150行，被至少一个 mode 引用 | 多步骤流程、纯参考文档 |
+| **rules/** | 判断标准或约束规则，被至少一个 capability/mode 引用 | 操作步骤、代码模板 |
+| **modes/** | 编排多个 capability，有明确流程和退出条件 | 单一工具、纯规则 |
+| **references/** | 不参与自动化流程，仅供查阅 | 任何会被 mode 直接调用的内容 |
 
-### 运行时执行方法
+### 冲突裁决
 
-```csharp
-// 调用任意 public 方法
-go.GetComponent<SomeComponent>().SomePublicMethod();
-```
+1. 同时满足多个条件 → 按优先级：**modes > rules > capabilities > references**
+2. 超过 150 行 → 考虑拆分，不要强行塞入
+3. 无法明确分类 → 先放入 `capabilities/`，标记 `// TODO: classify`，后续整理时重新分类
+4. 改动涉及 Constitution → 必须先更新本文 Constitution 段
+
+### 新增文件 Checklist
+
+- [ ] 按决策树确定了归属文件夹
+- [ ] 若是 mode 文件，遵循统一 anatomy（When to Use / Process / Rationalizations / Red Flags / Verification）
+- [ ] 在本文文件索引表中注册
+- [ ] 所有引用文件的路径正确（相对路径）
+- [ ] 检查是否与已有文件重复（先 grep 关键词）
 
 ---
 
-## 快速命令速查
+## 文件索引
 
-```bash
-# 状态检查
-unityctl status
+### capabilities/ — 原子能力
 
-# 编译
-unityctl asset refresh
+| 文件 | 职责 | 被哪些 mode 使用 |
+|------|------|-----------------|
+| [compile.md](capabilities/compile.md) | 编译验证 + 自动修复 | Research, Production |
+| [runtime.md](capabilities/runtime.md) | Play Mode 进入/退出/日志 | Research, Production |
+| [screenshot.md](capabilities/screenshot.md) | 截图留档（按需手动触发） | — |
+| [scene-setup.md](capabilities/scene-setup.md) | Roslyn 场景配置 | Production |
+| [backup.md](capabilities/backup.md) | 重大改动前备份 | Production |
+| [knowledge.md](capabilities/knowledge.md) | MarkDowns 知识预加载 | Research, Production |
+| [cleanup.md](capabilities/cleanup.md) | 轻/重清理系统 | Production |
 
-# Play Mode
-unityctl play enter
-unityctl play exit
+### rules/ — 验证规则（所有 mode 共用）
 
-# 日志（进入 Play Mode 后自动清除，所以只显示当前会话日志）
-unityctl logs -n 30
-unityctl logs --stack       # 带堆栈
-
-# 场景
-unityctl scene list
-unityctl scene load Assets/Scenes/xxx.unity
-
-# 截图
-unityctl screenshot capture
-
-# 执行脚本
-unityctl script execute -f path/to/script.cs
-```
-
----
-
-## 清理模式
-
-AutoMode 提供两级清理模式，按任务阶段选择性执行。
-
-### 清理模式对比
-
-| 维度 | 🧹 轻清理 (Light Cleanup) | 🧹🧹 重清理 (Deep Cleanup) |
-|------|--------------------------|---------------------------|
-| **触发时机** | 任意阶段性功能设计/调试完成后 | 全部任务确认完成后 |
-| **执行条件** | 可随时执行，无需确认 | 必须人工确认后才执行 |
-| **影响范围** | 临时文件、调试产物 | 临时代码、冗余代码、场景结构、文件组织 |
-| **可逆性** | 可逆（仅清理明确标记的临时内容） | 部分不可逆（删除冗余文件和代码） |
-| **触发命令** | `/clean light` 或自动触发 | `/clean deep`（需二次确认） |
-
-### 触发方式
-
-轻清理可在以下任一节点自动提示执行：
-
-```
-[4] 编译验证通过 → "编译通过，是否需要轻清理？"
-[6] 运行时验证通过 → "运行时零错误，是否需要轻清理？"
-[7] 截图留档完成 → "截图已保存，是否需要轻清理？"
-```
-
-重清理仅在任务全部完成后，由用户主动触发。
-
----
-
-### 🧹 轻清理 (Light Cleanup)
-
-适用于阶段性完成后的快速整理，只清理明确标记的临时内容。
-
-#### 清理清单
-
-| 类别 | 目标 | 操作 | 自动化 |
-|------|------|------|--------|
-| **临时脚本** | `tmp/*.cs` | 删除所有临时脚本（**保留 `tmp/.reusable/` 目录**） | ✅ 全自动 |
-| **调试日志** | `Debug.Log` / `print()` | 搜索并移除无条件的调试输出 | ⚠️ 列出后人工确认 |
-| **截图缓存** | `Screenshots/*.png` | 清理本次会话产生的截图 | ✅ 全自动 |
-| **注释标记** | `// TODO` / `// FIXME` / `// HACK` | 列出并提醒处理 | ❌ 仅报告 |
-| **临时 GameObject** | Hierarchy 中以 `_Temp` / `_Debug` 开头的物体 | 列出并询问是否删除 | ⚠️ 列出后人工确认 |
-| **未引用的临时资源** | Assets 中以 `Temp_` / `_Test` 命名的文件 | 列出并询问是否删除 | ⚠️ 列出后人工确认 |
-
-#### 轻清理流程
-
-```
-轻清理触发
-  │
-  ├── [L1] 扫描 tmp/ 目录 → 删除 .cs 文件（跳过 tmp/.reusable/）
-  │     └── tmp/.reusable/ 下的脚本永久保留，不纳入清理
-  │
-  ├── [L2] 扫描 Screenshots/ → 删除本次会话截图
-  │     └── 识别方式：文件创建时间在本次会话范围内
-  │
-  ├── [L3] 搜索项目中的调试日志
-  │     └── grep -rn "Debug\.Log\|print(" Assets/Mine/ --include="*.cs"
-  │     └── 列出文件+行号，询问是否移除
-  │
-  ├── [L4] 搜索临时 GameObject
-  │     └── unityctl script execute 扫描 Hierarchy
-  │     └── 列出 _Temp / _Debug 前缀的物体
-  │
-  └── [L5] 报告清理结果
-        └── "轻清理完成：删除 X 个临时脚本、Y 张截图、发现 Z 个待处理项"
-```
-
-### 可复用临时脚本 (tmp/.reusable/)
-
-`tmp/` 根目录下的 `.cs` 文件为一次性测试脚本，轻清理时全部删除。
-**`tmp/.reusable/` 目录下的脚本永久保留**，轻清理和重清理都不动它。
-
-#### 存放标准
-
-| 保留（.reusable/） | 清理（tmp/ 根目录） |
+| 文件 | 职责 |
 |------|------|
-| 纯工具脚本：场景查询、组件检查、环境诊断 | 功能绑定脚本：setup_xxx、debug_xxx、tune_xxx |
-| 不依赖具体类名/资源路径 | 硬编码了具体功能路径（如 `FishSimulation`、`Rain.compute`） |
-| 可跨项目复用 | 仅对当前功能有效 |
+| [error-patterns.md](rules/error-patterns.md) | 编译/运行时错误诊断表 |
+| [exit-conditions.md](rules/exit-conditions.md) | 4 类退出条件 |
+| [safety.md](rules/safety.md) | 安全红线 + 经验教训 |
+| [completeness-gate.md](rules/completeness-gate.md) | 规范符合度检查清单（P2 强制门禁） |
 
-| 保留示例 | 清理示例 |
+### modes/ — 工作模式
+
+| 文件 | 职责 |
 |------|------|
-| `query_scene.cs` — 通用场景层级查询 | `setup_fish.cs` — 绑定 FishSimulation |
-| `organize_scene.cs` — 通用测试物体归类 | `setup_rain.cs` — 绑定 RainSimulation |
-| `check_renderer.cs` — 通用管线检查 | `debug_trajectory.cs` — 绑定 Trajectory 功能 |
-| | `tune_fishforce.cs` — 绑定 FishForce 参数调试 |
+| [research.md](modes/research.md) | 研发流水线（快速试错 + 频繁暂停） |
+| [production.md](modes/production.md) | 生产流水线（全自动 + 自动修复） |
 
-#### 命名规范
+### references/ — 参考手册（不参与流程，按需查阅）
 
-- 文件名用 `snake_case`，描述功能：`query_xxx.cs`、`setup_xxx.cs`、`check_xxx.cs`
-- 前缀表示类型：`query_` = 只读查询，`setup_` = 场景配置，`check_` = 状态检查
-
----
-
-#### 轻清理 Roslyn 脚本
-
-```csharp
-using UnityEngine;
-using UnityEditor;
-using System.IO;
-
-public class Script
-{
-    public static object Main()
-    {
-        var sb = new System.Text.StringBuilder();
-        
-        // 扫描临时 GameObject
-        var allObjects = Object.FindObjectsOfType<GameObject>(true);
-        var tempObjs = new System.Collections.Generic.List<string>();
-        foreach (var go in allObjects)
-        {
-            if (go.name.StartsWith("_Temp") || go.name.StartsWith("_Debug") || 
-                go.name.StartsWith("Temp_") || go.name.StartsWith("Test_"))
-            {
-                tempObjs.Add($"{go.name} (root: {go.transform.root.name})");
-            }
-        }
-        
-        sb.AppendLine($"=== 临时物体: {tempObjs.Count} 个 ===");
-        foreach (var name in tempObjs)
-            sb.AppendLine($"  - {name}");
-        
-        return sb.ToString();
-    }
-}
-```
-
----
-
-### 🧹🧹 重清理 (Deep Cleanup)
-
-仅在任务**全部完成并确认**后执行。需要用户二次确认。
-
-#### 清理清单
-
-| 类别 | 目标 | 操作 | 自动化 |
-|------|------|------|--------|
-| **临时代码** | 不会被复用的实验性功能 | 删除标注为临时的类/方法 | ⚠️ 分析后列出，人工确认 |
-| **冗余代码** | 重复逻辑、未使用的 using、死代码 | 扫描并移除 | ⚠️ 列出后人工确认 |
-| **冗余文件** | 功能文件夹中的 `Plan.md`、`TODO.md` 等过程文档 | 删除 | ⚠️ 列出后人工确认 |
-| **场景整理** | Hierarchy 中散落的测试物体 | 归类到统一空物体下 | ✅ 全自动 |
-| **未使用资源** | 未被任何场景/预制体引用的资源 | 列出并询问 | ⚠️ 仅列出 |
-| **空文件夹** | 无有效内容的目录 | 删除（含 .meta） | ✅ 全自动 |
-| **注释代码** | 被注释掉的代码块 | 删除（保留有说明意义的注释） | ⚠️ 列出后人工确认 |
-| **序列化冗余** | 无效的 SerializedField 引用 | 检查并报告 | ❌ 仅报告 |
-
-#### 重清理流程
-
-```
-重清理触发（需二次确认）
-  │
-  ├── [D1] 代码检查
-  │     ├── 搜索未使用的 using 指令
-  │     ├── 搜索被注释掉的代码块（连续 3 行以上 //）
-  │     ├── 搜索标记为临时的类/方法（[Temp]、// TEMP、Experimental）
-  │     └── 生成清理列表，等待人工确认
-  │
-  ├── [D2] 文件检查
-  │     ├── 扫描功能文件夹下的 Plan.md / TODO.md / Design.md
-  │     ├── 检查 Assets/ 下的空文件夹
-  │     ├── 检查 .meta 孤立文件（对应源文件已删除）
-  │     └── 生成清理列表，等待人工确认
-  │
-  ├── [D3] 场景整理
-  │     ├── unityctl script execute 收集所有测试物体
-  │     ├── 按功能创建父容器（如 `InstanceManager` 挂 FishTest + RainTest）
-  │     ├── 将所有测试/调试物体移动到对应容器下
-  │     └── 按功能分组（如 __RainTest__、__PickerTest__）
-  │
-  ├── [D4] 资源引用检查
-  │     └── 扫描 Assets/Mine/ 下未被引用的资源
-  │
-  └── [D5] 最终报告
-        └── "重清理完成：清理代码 X 处、删除文件 Y 个、整理物体 Z 个"
-```
-
-#### 场景整理 Roslyn 脚本
-
-```csharp
-using UnityEngine;
-using UnityEditor;
-using UnityEditor.SceneManagement;
-
-public class Script
-{
-    // 匹配规则：名称中包含这些关键词的物体会被归类
-    static string[] TestPatterns = { "Test", "Temp", "Debug", "Debug_", "_Test", "_Temp", "_Debug" };
-    
-    public static object Main()
-    {
-        var sb = new System.Text.StringBuilder();
-        var testObjects = new System.Collections.Generic.List<GameObject>();
-        
-        // 扫描根物体及子物体
-        var allRoots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
-        
-        foreach (var root in allRoots)
-        {
-            CollectTestObjects(root, testObjects);
-        }
-        
-        if (testObjects.Count == 0)
-        {
-            return "未发现测试物体，场景无需整理。";
-        }
-        
-        // 创建容器
-        var container = GameObject.Find("__TestObjects__");
-        if (container == null)
-        {
-            container = new GameObject("__TestObjects__");
-            Undo.RegisterCreatedObjectUndo(container, "Create Test Container");
-        }
-        
-        // 按功能分组
-        var groups = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<GameObject>>();
-        foreach (var go in testObjects)
-        {
-            var group = CategorizeObject(go.name);
-            if (!groups.ContainsKey(group))
-                groups[group] = new System.Collections.Generic.List<GameObject>();
-            groups[group].Add(go);
-        }
-        
-        int movedCount = 0;
-        foreach (var kvp in groups)
-        {
-            var groupGo = new GameObject($"__{kvp.Key}__");
-            groupGo.transform.SetParent(container.transform);
-            Undo.RegisterCreatedObjectUndo(groupGo, "Create Group");
-            
-            foreach (var go in kvp.Value)
-            {
-                Undo.SetTransformParent(go.transform, groupGo.transform, "Move Test Object");
-                movedCount++;
-            }
-            sb.AppendLine($"  [{kvp.Key}] {kvp.Value.Count} 个物体");
-        }
-        
-        EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
-        
-        sb.Insert(0, $"场景整理完成：归类 {movedCount} 个测试物体到 __TestObjects__ 下\n分组详情:\n");
-        return sb.ToString();
-    }
-    
-    static void CollectTestObjects(GameObject go, System.Collections.Generic.List<GameObject> list)
-    {
-        foreach (Transform child in go.transform)
-        {
-            CollectTestObjects(child.gameObject, list);
-        }
-        
-        foreach (var pattern in TestPatterns)
-        {
-            if (go.name.IndexOf(pattern, System.StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                list.Add(go);
-                break;
-            }
-        }
-    }
-    
-    static string CategorizeObject(string name)
-    {
-        // 提取功能前缀用于分组
-        var lower = name.ToLower();
-        if (lower.Contains("rain")) return "RainTest";
-        if (lower.Contains("picker")) return "PickerTest";
-        if (lower.Contains("boid")) return "BoidsTest";
-        if (lower.Contains("noise")) return "NoiseTest";
-        if (lower.Contains("ik") || lower.Contains("ragdoll")) return "IKTest";
-        if (lower.Contains("shader") || lower.Contains("card")) return "ShaderTest";
-        return "OtherTests";
-    }
-}
-```
-
----
-
-### 清理模式流程总图
-
-```
-任意阶段完成
-  │
-  ├── 用户主动 /clean light ──→ 轻清理流程 [L1-L5]
-  │
-  └── AutoMode 自动提示（编译通过 / 运行通过 / 截图完成）
-        └── "是否执行轻清理？[Y/N]"
-              ├── Y → 轻清理流程 [L1-L5]
-              └── N → 跳过
-
-全部任务完成
-  │
-  └── 用户主动 /clean deep
-        └── "重清理将删除文件和代码，不可完全撤销，确认？[Y/N]"
-              ├── Y → 重清理流程 [D1-D5]
-              │     └── 每个步骤列出变更 → 再次确认 → 执行
-              └── N → 取消
-```
-
-### 清理安全原则
-
-1. **渐进式清理**：先轻后重，轻清理可在任何阶段执行，重清理仅在最终确认后
-2. **先列后删**：任何涉及删除的操作，必须先列出完整清单，经人工确认后再执行
-3. **禁用 `--all`**：`git stash --all` 会同时暂存并**删除**未跟踪的新文件，包括 `Assets/` 下的已完成代码。只能用 `git stash push -- <paths>` 指定精确路径
-4. **备份范围**：轻清理只备份 `tmp/` + `Screenshots/`；重清理只备份 `tmp/` + 待修改的特定文件
-5. **不碰 Assets/ 下的已完成代码**：清理只针对 `tmp/`、`Screenshots/`、场景测试物体。绝不删除 `Assets/Mine/` 下的功能代码、Shader、Compute、ScriptableObject
-6. **不可逆标记**：重清理的每一步在执行前都标注 `⚠️ 不可逆`
-7. **跳过 .meta 关联**：删除资源文件时同步删除对应 `.meta` 文件，避免残留孤立 meta
-8. **保留用户代码**：仅清理明确标记为临时/测试的内容，不动用户手写的正式代码
-
-### 清理前自动保护
-
-```bash
-# 轻清理前：仅备份要清理的目录
-git stash push -m "cleanup-light-$(date +%Y%m%d-%H%M%S)" -- tmp/ Screenshots/
-
-# 重清理前：仅备份待修改的文件列表，不用 --all
-git stash push -m "cleanup-deep-$(date +%Y%m%d-%H%M%S)" -- tmp/ Screenshots/ Assets/Scenes/
-```
-
-### 场景功能测试/整理要点
-
-同一框架的测试物体统一挂在功能父容器下，不散落在场景根级。
-
-```
-场景层级结构：
-  InstanceManager/                    ← 框架名（空物体，无组件）
-  ├── FishTest                        ← FishSimulation + UniversalInstanceManager
-  └── RainTest                        ← RainSimulation + UniversalInstanceManager
-
-  __TestObjects__/                    ← 其他散落测试物体（重清理时归类）
-  └── __Picker__/...
-```
-
-| 规则 | 说明 |
+| 文件 | 职责 |
 |------|------|
-| **父容器按框架命名** | 如 `InstanceManager`、`Boids`，不是 `__TestObjects__` |
-| **子物体按功能命名** | `FishTest`、`RainTest`，清晰表示正在测试哪个功能 |
-| **根级不散落** | 任何含 `Test`/`Temp`/`Debug` 的物体都应在容器下 |
-| **创建时即归类** | 新测试物体直接在父容器下创建，而非先创建再移动 |
-
----
-
-### 经验教训
-
-| 教训 | 说明 |
-|------|------|
-| **禁止 `git stash --all`** | 会删除所有未跟踪文件（包括 `Assets/Mine/Scripts/InstanceManager/` 等新创建的代码），恢复时可能因冲突失败 |
-| **备份必须精确** | `git stash push -- tmp/ Screenshots/` 只备份临时文件，不动 `Assets/` |
-| **清理前先 `ls` 确认** | 删除任何东西前先列出完整清单，人工确认后再执行 |
-| **场景物体用脚本清理** | 不直接 `rm`，通过 `unityctl script execute` 在 Editor 中 `DestroyImmediate` |
-| **重清理不删 Plan.md 等** | 功能文件夹下的 `Plan.md` 是设计文档，属于项目资产，不应删除 |
-| **可复用脚本存 .reusable/** | 场景查询、管线检查等通用功能脚本放入 `tmp/.reusable/`，清理时跳过该目录 |
-| **测试物体按框架下挂** | 同一框架的测试物体挂到对应父容器下（如 `InstanceManager/FishTest`、`InstanceManager/RainTest`），不散落在根级 |
+| [roslyn-recipes.md](references/roslyn-recipes.md) | Roslyn 脚本食谱 + 命令速查 |
