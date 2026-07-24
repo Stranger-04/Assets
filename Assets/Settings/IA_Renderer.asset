@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a3e01f7c6d5b4e2a9f1c4d7b0e3a6f8, type: 3}
+  m_Name: IA_Renderer
+  m_EditorClassIdentifier: Assembly-CSharp::CustomRendererData
+  debugShaders:
+    debugReplacementPS: {fileID: 0}
+    hdrDebugViewPS: {fileID: 0}
+    probeVolumeSamplingDebugComputeShader: {fileID: 0}
+  probeVolumeResources:
+    probeVolumeDebugShader: {fileID: 0}
+    probeVolumeFragmentationDebugShader: {fileID: 0}
+    probeVolumeOffsetDebugShader: {fileID: 0}
+    probeVolumeSamplingDebugShader: {fileID: 0}
+    probeSamplingDebugMesh: {fileID: 0}
+    probeSamplingDebugTexture: {fileID: 0}
+    probeVolumeBlendStatesCS: {fileID: 0}
+  m_RendererFeatures: []
+  m_RendererFeatureMap: 
+  m_UseNativeRenderPass: 0
+  m_OpaqueLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_TransparentLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_DepthLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ColorLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_NormalLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CopyDepth: 1
+  m_CopyColor: 1
+  m_CopyNormal: 0
+  m_TransparentMode: 0

@@ -9,6 +9,7 @@ using UnityEngine.Rendering.Universal.Internal;
 
 using UnityEngine.Experimental.Rendering;
 
+[System.Obsolete("Use Mine.CustomRenderer from Assets/Mine/Scripts/CustomRenderer/ instead.")]
 public class PreparationRenderer : ScriptableRenderer
 {
     DepthOnlyPass DepthPrepass;

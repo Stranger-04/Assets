@@ -9,7 +9,16 @@
       "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v2_pre_pcss/PCSS.shader /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSS.shader)",
       "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v2_pre_pcss/PCSSFeature.cs /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSSFeature.cs)",
       "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v3_stable_pcss/PCSS.shader /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSS.shader)",
-      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v3_stable_pcss/PCSSFeature.cs /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSSFeature.cs)"
+      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v3_stable_pcss/PCSSFeature.cs /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSSFeature.cs)",
+      "Bash(python3 -c ' *)",
+      "Bash(rm -rf /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_*)",
+      "Bash(mkdir -p /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup)",
+      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSS.shader /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup/)",
+      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSSFeature.cs /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup/)",
+      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/CustomShadowCaster.shader /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup/)",
+      "Bash(unityctl compile *)",
+      "Bash(unityctl log *)",
+      "Bash(unityctl execute-csharp *)"
     ]
   }
 }

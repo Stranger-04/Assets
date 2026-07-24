@@ -1,35 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-5783582282054158162
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e32e72b6a3f58a24c9033e2b9275eea0, type: 3}
-  m_Name: ScreenSpaceShadows
-  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.ScreenSpaceShadows
-  m_Active: 0
-  m_Shader: {fileID: 4800000, guid: 0f854b35a0cf61a429bd5dcfea30eddd, type: 3}
---- !u!114 &-5353301855436579036
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c1ee3ee184c99f24884c764a42088423, type: 3}
-  m_Name: SNNFeature
-  m_EditorClassIdentifier: Assembly-CSharp::SNNFeature
-  m_Active: 0
-  settings:
-    snnShader: {fileID: 0}
-    Radius: 3
 --- !u!114 &-4968987183116551271
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -48,36 +18,6 @@ MonoBehaviour:
   m_OutlineMaskShader: {fileID: 0}
   m_OutlineCompositeShader: {fileID: 0}
   m_DebugShowMask: 0
---- !u!114 &-4520889223278341307
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 560a7aad0eafe4abf856044a53b8d2de, type: 3}
-  m_Name: PCSSFeature
-  m_EditorClassIdentifier: Assembly-CSharp::PCSSFeature
-  m_Active: 1
-  settings:
-    shadowCasterShader: {fileID: 4800000, guid: 7f9df2d642a9b416cbb66563c47532df, type: 3}
-    pcssShader: {fileID: 4800000, guid: 97d5574dfcd6e40c8bcd94b29a9f2b8d, type: 3}
-    shadowMapResolution: 2048
-    cascadeCount: 4
-    pssmLambda: 0.25
-    shadowDistance: 50
-    blockerSamples: 32
-    pcfSamples: 32
-    lightSize: 4
-    softness: 2
-    depthBias: 0.05
-    normalBias: 0
-    enableBlur: 1
-    blurScale: 1
-    showShadowMap: 1
-    debugMode: 6
 --- !u!114 &-4316052137097848494
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -120,14 +60,7 @@ MonoBehaviour:
     probeVolumeBlendStatesCS: {fileID: 7200000, guid: b9a23f869c4fd45f19c5ada54dd82176, type: 3}
   m_RendererFeatures:
   - {fileID: 7833122117494664109}
-  - {fileID: 2124922254593887054}
-  - {fileID: 1555521513852043146}
-  - {fileID: -5353301855436579036}
-  - {fileID: 7179606399280309669}
-  - {fileID: 5712145892818296517}
-  - {fileID: -5783582282054158162}
-  - {fileID: -4520889223278341307}
-  m_RendererFeatureMap: ad6b866f10d7b46c4e0b6440883d7d1d8affa04993529615245f43535340b5b5a5653920fb15a363c51ea4de6c9e454fae38eba48e96bcaf45539a41349342c1
+  m_RendererFeatureMap: ad6b866f10d7b46c
   m_UseNativeRenderPass: 1
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
@@ -137,10 +70,10 @@ MonoBehaviour:
     m_Bits: 4294967295
   m_OpaqueLayerMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 119
   m_TransparentLayerMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 119
   m_DefaultStencilState:
     overrideStencilState: 0
     stencilReference: 1
@@ -156,62 +89,6 @@ MonoBehaviour:
   m_DepthTextureFormat: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 0
---- !u!114 &1555521513852043146
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c4fac0415525e9e4fb663d7d954e54c1, type: 3}
-  m_Name: KuwaharaFeature
-  m_EditorClassIdentifier: Assembly-CSharp::KuwaharaFeature
-  m_Active: 0
-  settings:
-    kuwaharaShader: {fileID: 4800000, guid: 40f2c5ca2cdf8c8409bdbda1a28fe4a9, type: 3}
-    Radius: 4
-    sharpness: 18
-    hardness: 8
-    weightScale: 1000
-    alpha: 1
-    downsampleLevel: 3
-    kuwaharaType: 2
---- !u!114 &2124922254593887054
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 936499e87f5826348ad143299eddd983, type: 3}
-  m_Name: SSOFeature
-  m_EditorClassIdentifier: Assembly-CSharp::SSOFeature
-  m_Active: 0
-  settings:
-    ssoShader: {fileID: 4800000, guid: a2f57ac10d03f674caf4d7c2be4fbac5, type: 3}
-    ssoType: 1
-    depthParams:
-      intensity: 1
-      thickness: 1
-      threshold: {x: 0.1, y: 0.2}
-    normalParams:
-      intensity: 1
-      thickness: 1
-      threshold: {x: 0.1, y: 0.2}
-    shadowParams:
-      shadowType: 2
-      Intensity: 0.5
-      Sharpness: 1
-      Thickness: 0.1
-      Density: 0.5
-    jitter: 1
-    downsample: 0
-    OutlineColor: {r: 0.6509434, g: 0.6509434, b: 0.6509434, a: 1}
-    SSOFeature: 0
 --- !u!114 &2669520963029075480
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -246,48 +123,6 @@ MonoBehaviour:
   m_MaskShader: {fileID: 4800000, guid: 77dbc5093879244678321644aa36838a, type: 3}
   m_CompositeShader: {fileID: 4800000, guid: 3883a59e5182c4610a2e368619444f0c, type: 3}
   m_DebugShowMask: 0
---- !u!114 &5712145892818296517
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4fd967d01d2b3464db071bc44f1c22a0, type: 3}
-  m_Name: PickerFeature
-  m_EditorClassIdentifier: Assembly-CSharp::Mine.Picker.ChosenFeature
-  m_Active: 0
-  _pickerShader: {fileID: 0}
-  _outlineMaskShader: {fileID: 0}
-  _outlineCompositeShader: {fileID: 0}
-  _debugView: 0
-  _debugShowMask: 0
---- !u!114 &7179606399280309669
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 763abde0ee2d541499aa5d73919193e8, type: 3}
-  m_Name: SSSMFeature
-  m_EditorClassIdentifier: Assembly-CSharp::SSSMFeature
-  m_Active: 0
-  settings:
-    sssmShader: {fileID: 4800000, guid: ba628b93f44c048dbb2ed6d72ae7ca9a, type: 3}
-    stepSize: 1
-    maxDistance: 2.5
-    stepCount: 32
-    thickness: 0.5
-    enableBlur: 1
-    blurScale: 2
-    bilateralIntensity: 0
-    bilateralNormal: 0
-    SSSMFeature: 1
 --- !u!114 &7833122117494664109
 MonoBehaviour:
   m_ObjectHideFlags: 0

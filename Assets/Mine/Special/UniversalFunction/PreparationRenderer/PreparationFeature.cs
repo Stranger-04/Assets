@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
+[System.Obsolete("Use Mine.Interaction.InteractionManager + CustomRenderer from Assets/Mine/Scripts/InteractionManager/ instead.")]
 public class PreparationFeature : ScriptableRendererFeature
 {
     [System.Serializable]

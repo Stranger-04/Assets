@@ -12,6 +12,7 @@ using UnityEditor;
 using UnityEditor.ProjectWindowCallback;
 #endif
 
+[System.Obsolete("Use Mine.CustomRendererData from Assets/Mine/Scripts/CustomRenderer/ instead.")]
 [Serializable]
 public class PreparationRendererData : ScriptableRendererData
 {

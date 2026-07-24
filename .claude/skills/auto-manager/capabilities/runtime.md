@@ -36,5 +36,5 @@ unityctl logs --stack           # 带堆栈跟踪
 
 ## 引用
 
-- 错误诊断详情：[rules/error-patterns.md](../rules/error-patterns.md)
-- 退出条件：[rules/exit-conditions.md](../rules/exit-conditions.md)
+- 错误诊断详情：[../../learnings/error-patterns.md](../../learnings/error-patterns.md)
+- 退出条件：[../../agents/unity-developer.md](../../agents/unity-developer.md)

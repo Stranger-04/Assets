@@ -1,0 +1,66 @@
+// ════════════════════════════════════════════════════════════════
+//  WaterInteraction.compute — 水面交互处理
+//
+//  CSWater: 波纹扩散 + 指数时间衰减
+//  - 读取 _InteractionTex (当前帧正交相机渲染的原始交互)
+//  - 读取 _InteractionResultTex (上一帧处理结果)
+//  - 输出更新后的 _InteractionResultTex
+//
+//  线程组: 8×8
+// ════════════════════════════════════════════════════════════════
+
+#pragma kernel CSWater
+
+Texture2D<float>   _InteractionTex;
+RWTexture2D<float> _InteractionResultTex;
+
+float _DeltaTime;
+uint  _Resolution;
+
+// ── 4 邻域偏移 ──────────────────────────────────────────────
+
+static const int2 Offsets[4] =
+{
+    int2( 1,  0),
+    int2(-1,  0),
+    int2( 0,  1),
+    int2( 0, -1),
+};
+
+// ════════════════════════════════════════════════════════════
+//  CSWater — 水面波纹模拟
+//  - 衰减: 上一帧值按指数衰减
+//  - 扩散: 与 4 邻域平均值混合
+//  - 取 max(当前输入, 衰减+扩散结果) 保证新触碰不被旧值覆盖
+// ════════════════════════════════════════════════════════════
+
+[numthreads(8, 8, 1)]
+void CSWater(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= _Resolution || id.y >= _Resolution)
+        return;
+
+    float current  = _InteractionTex[id.xy];
+    float previous = _InteractionResultTex[id.xy];
+
+    // 时间衰减
+    float decay = exp(-_DeltaTime * 3.0);
+
+    // 4 邻域平均
+    float neighborSum = 0.0;
+    for (int i = 0; i < 4; i++)
+    {
+        int2 nPos = int2(id.xy) + Offsets[i];
+        if (nPos.x >= 0 && nPos.x < (int)_Resolution && nPos.y >= 0 && nPos.y < (int)_Resolution)
+            neighborSum += _InteractionResultTex[nPos];
+    }
+    float neighborAvg = neighborSum * 0.25;
+
+    // 混合: 保留部分上帧值 + 邻居扩散
+    float smoothed = previous * decay + neighborAvg * (1.0 - decay);
+
+    // 最终 = max(新触碰, 平滑旧值)
+    float result = max(current, smoothed);
+
+    _InteractionResultTex[id.xy] = result;
+}
