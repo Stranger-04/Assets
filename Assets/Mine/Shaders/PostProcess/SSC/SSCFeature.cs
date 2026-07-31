@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.Rendering.RenderGraphModule;
 
 public class SSCFeature : ScriptableRendererFeature
 {
@@ -37,7 +38,7 @@ public class SSCFeature : ScriptableRendererFeature
         public Vector3 size = new Vector3(100, 100, 10);
 
         [Range(0f, 1f)] public float jitter = 1.0f;
-        [Range(0 , 4 )] public int downsample = 0;
+        [Range(0, 4)] public int downsample = 0;
         public bool SSCFeature = true;
 
         internal static readonly int BaseColorAID = Shader.PropertyToID("_BaseColorA");
@@ -53,33 +54,34 @@ public class SSCFeature : ScriptableRendererFeature
     {
         private Material sscMaterial;
         private Settings settings;
-        private RTHandle sscRT;
-        private RTHandle tempMainRT;
 
-        public void ReleaseRT()
+        class PassData
         {
-            sscRT?.Release();
-            tempMainRT?.Release();
-
-            sscRT = null;
-            tempMainRT = null;
+            public Material material;
+            public TextureHandle source;
+            public TextureHandle sscRT;
+            public TextureHandle tempMainRT;
+            public bool showSSC;
         }
 
         public SSCRenderPass(Shader shader, Settings s)
         {
             settings = s;
-            sscMaterial = CoreUtils.CreateEngineMaterial(shader);
+            if (shader != null)
+                sscMaterial = CoreUtils.CreateEngineMaterial(shader);
             renderPassEvent = RenderPassEvent.AfterRenderingTransparents;
             ConfigureInput(ScriptableRenderPassInput.Color);
         }
 
-        [System.Obsolete]
-        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
-            if (sscMaterial == null) return;
-            var cmd = CommandBufferPool.Get("SSC");
-            var cameraData = renderingData.cameraData;
+            UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
+            UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
 
+            TextureHandle source = resourceData.activeColorTexture;
+            if (!source.IsValid() || sscMaterial == null) return;
+
+            // ── 材质参数 ──
             sscMaterial.SetColor(Settings.BaseColorAID, settings.baseColorA);
             sscMaterial.SetColor(Settings.BaseColorBID, settings.baseColorB);
             sscMaterial.SetTexture(Settings.MainTex2DID, settings.mainTex2D);
@@ -88,65 +90,75 @@ public class SSCFeature : ScriptableRendererFeature
             sscMaterial.SetVector(Settings.ParamBID, new Vector4(settings.size.x, settings.size.y, settings.size.z, settings.thickness));
             sscMaterial.SetFloat(Settings.JitterID, settings.jitter);
 
+            // ── 关键字 ──
             sscMaterial.DisableKeyword("SSC_NOISE_TEX2DR");
             sscMaterial.DisableKeyword("SSC_NOISE_TEX2DRG");
             sscMaterial.DisableKeyword("SSC_NOISE_TEX3DXYZ");
             sscMaterial.DisableKeyword("SSC_RAY_COUNT_64");
             sscMaterial.DisableKeyword("SSC_RAY_COUNT_128");
             sscMaterial.DisableKeyword("SSC_RAY_COUNT_256");
-            
-            if (settings.noiseTex == Settings.NoiseTex.TEX2DR)
+
+            switch (settings.noiseTex)
             {
-                sscMaterial.EnableKeyword("SSC_NOISE_TEX2DR");
+                case Settings.NoiseTex.TEX2DR: sscMaterial.EnableKeyword("SSC_NOISE_TEX2DR"); break;
+                case Settings.NoiseTex.TEX2DRG: sscMaterial.EnableKeyword("SSC_NOISE_TEX2DRG"); break;
+                case Settings.NoiseTex.TEX3DXYZ: sscMaterial.EnableKeyword("SSC_NOISE_TEX3DXYZ"); break;
             }
-            else if (settings.noiseTex == Settings.NoiseTex.TEX2DRG)
+            switch (settings.rayCount)
             {
-                sscMaterial.EnableKeyword("SSC_NOISE_TEX2DRG");
-            }
-            else if (settings.noiseTex == Settings.NoiseTex.TEX3DXYZ)
-            {
-                sscMaterial.EnableKeyword("SSC_NOISE_TEX3DXYZ");
+                case Settings.RayCount.COUNT64: sscMaterial.EnableKeyword("SSC_RAY_COUNT_64"); break;
+                case Settings.RayCount.COUNT128: sscMaterial.EnableKeyword("SSC_RAY_COUNT_128"); break;
+                case Settings.RayCount.COUNT256: sscMaterial.EnableKeyword("SSC_RAY_COUNT_256"); break;
             }
 
-            if (settings.rayCount == Settings.RayCount.COUNT64)
-            {
-                sscMaterial.EnableKeyword("SSC_RAY_COUNT_64");
-            }
-            else if (settings.rayCount == Settings.RayCount.COUNT128)
-            {
-                sscMaterial.EnableKeyword("SSC_RAY_COUNT_128");
-            }
-            else if (settings.rayCount == Settings.RayCount.COUNT256)
-            {
-                sscMaterial.EnableKeyword("SSC_RAY_COUNT_256");
-            }
-
-            Render(cmd, ref renderingData);
-            context.ExecuteCommandBuffer(cmd);
-            CommandBufferPool.Release(cmd);
-        }
-
-        void Render(CommandBuffer cmd, ref RenderingData renderingData)
-        {
-            var renderer = renderingData.cameraData.renderer;
-            var source = renderer.cameraColorTargetHandle;
-            var desc = renderingData.cameraData.cameraTargetDescriptor;
+            // ── RT ──
+            RenderTextureDescriptor desc = cameraData.cameraTargetDescriptor;
             desc.depthBufferBits = 0;
 
-            RenderingUtils.ReAllocateHandleIfNeeded(ref tempMainRT, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_SSCTempMainRT");
-            sscMaterial.SetTexture("_MainTex", tempMainRT);
-            desc.width  >>= settings.downsample;
+            TextureHandle tempMainRT = UniversalRenderer.CreateRenderGraphTexture(
+                renderGraph, desc, "_SSCTempMainRT", false);
+
+            desc.width >>= settings.downsample;
             desc.height >>= settings.downsample;
-            RenderingUtils.ReAllocateHandleIfNeeded(ref sscRT, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_SSCResultRT");
+            TextureHandle sscRT = UniversalRenderer.CreateRenderGraphTexture(
+                renderGraph, desc, "_SSCResultRT", false);
+
+            // ── 设置 _MainTex（shader 直接采样）──
+            sscMaterial.SetTexture("_MainTex", tempMainRT);
             sscMaterial.SetTexture("_SSCTex", sscRT);
 
-            cmd.Blit(source, tempMainRT);
-            cmd.Blit(null, sscRT, sscMaterial, 0);
-            cmd.Blit(tempMainRT, renderer.cameraColorTargetHandle.nameID, sscMaterial, 1);
+            using (var builder = renderGraph.AddUnsafePass<PassData>("SSC", out var passData))
+            {
+                passData.material = sscMaterial;
+                passData.source = source;
+                passData.sscRT = sscRT;
+                passData.tempMainRT = tempMainRT;
+                passData.showSSC = settings.SSCFeature;
 
-            if (settings.SSCFeature)
-            {    
-                cmd.Blit(sscRT, renderer.cameraColorTargetHandle.nameID);
+                builder.UseTexture(source, AccessFlags.ReadWrite);
+                builder.UseTexture(sscRT, AccessFlags.ReadWrite);
+                builder.UseTexture(tempMainRT, AccessFlags.ReadWrite);
+                builder.AllowPassCulling(false);
+
+                builder.SetRenderFunc((PassData data, UnsafeGraphContext context) =>
+                {
+                    CommandBuffer cmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
+
+                    // Copy source → tempMain (uses cmd.SetGlobalTexture("_MainTex") below)
+                    Blitter.BlitCameraTexture(cmd, data.source, data.tempMainRT);
+
+                    // Pass 0: Ray march → sscRT
+                    Blitter.BlitCameraTexture(cmd, data.source, data.sscRT, data.material, 0);
+
+                    // Pass 1: Composite → screen
+                    Blitter.BlitCameraTexture(cmd, data.tempMainRT, data.source, data.material, 1);
+
+                    // Debug: show SSC result
+                    if (data.showSSC)
+                    {
+                        Blitter.BlitCameraTexture(cmd, data.sscRT, data.source);
+                    }
+                });
             }
         }
     }
@@ -156,24 +168,14 @@ public class SSCFeature : ScriptableRendererFeature
 
     public override void Create()
     {
-
-        if (sscPass != null)
-        {
-            sscPass.ReleaseRT();
-            sscPass = null;
-        }
-
+        sscPass = null;
         if (settings.sscShader != null)
-        {
             sscPass = new SSCRenderPass(settings.sscShader, settings);
-        }
     }
 
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
     {
         if (sscPass != null)
-        {
             renderer.EnqueuePass(sscPass);
-        }
     }
 }

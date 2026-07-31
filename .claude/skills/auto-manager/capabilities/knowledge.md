@@ -61,6 +61,54 @@ MarkDowns 规范文件头部可能声明了参考实现。**如果当前任务�
   └── 目的：规范是抽象规则，参考实现是具体范例。两者结合才能正确理解"好的代码应该长什么样"。
 ```
 
+## .claude/references/ — Harness 参考库
+
+> `.claude/references/` 是 Harness 的内置参考库。MD 文件为目录索引，实际内容（.hlsl / .shader / .compute / .cs）带有详细注释。
+> 所有 Shader / C# 开发必须优先查阅此目录。
+
+```
+写 Shader / Compute
+  │
+  ├── [R1] 先读 references/urp-shader-lib/README.md（索引）
+  │     ├── blit-fullscreen.md        → Unity 6 Blitter 全屏 Shader 模式
+  │     ├── hlsl-includes.md          → include + CBUFFER 速查
+  │     ├── blit-fullscreen.md         → Unity 6 vs 2022 差异
+  │     └── compute-shader.md          → Compute Shader + Metal
+  │
+  ├── [R2] 复制模板: templates/
+  │     ├── fullscreen-postprocess.shader  → 全屏后处理 (基于 Blit.hlsl)
+  │     ├── compute-template.compute       → Compute Shader
+  │     └── urp-renderpass.cs              → C# RenderGraph Pass
+  │
+  └── [R3] 抄 API: references/unity6-api/
+        ├── render-graph.md           → RecordRenderGraph 标准写法
+        ├── blitter-api.md            → Blitter.BlitTexture API
+        ├── compute-shader-api.md     → ComputeShader C# dispatch
+        ├── rthandle-api.md           → RTHandle 生命周期
+        └── volume-component.md       → VolumeComponent 参数定义
+```
+
+### 查阅策略
+
+| 条件 | 行为 |
+|------|------|
+| 写全屏后处理 Shader | 必读 `blit-fullscreen.md` + 复制模板 `fullscreen-postprocess.shader` |
+| 写 Compute Shader | 必读 `compute-shader.md` + 复制模板 `compute-template.compute` |
+| 写 C# RenderGraph Pass | 必读 `render-graph.md` + 复制模板 `urp-renderpass.cs` |
+| Metal 平台问题 | 查阅 `platform/metal-notes.md` |
+| API 签名不确定 | 查阅 `unity6-api/` 子目录，不凭记忆 |
+
+### references + templates vs assets/MarkDowns/
+
+| 维度 | references + templates (Harness 层) | MarkDowns/ (项目知识层) |
+|------|-------------------------------------|------------------------|
+| 维护者 | Harness (跟随引擎版本) | 用户 (项目策略) |
+| 内容 | 引擎 API 速查 + 平台差异 + 可运行模板 | 代码风格、命名规范、文档格式 |
+| 更新频率 | 引擎升级时 | 项目策略调整时 |
+| 确定性 | 高 — 这是"怎么写才对" | 中 — 这是"怎么写更好" |
+
+---
+
 ## 模式差异
 
 | 模式 | 知识加载策略 |

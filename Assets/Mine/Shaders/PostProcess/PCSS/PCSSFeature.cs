@@ -13,8 +13,6 @@ public class PCSSFeature : ScriptableRendererFeature
     public class Settings
     {
         [Header("Resources")]
-        public Shader shadowCasterShader;
-        public Shader pcssShader;
         public ComputeShader pcssComputeShader;
 
         [Header("Shadow Map")]
@@ -32,8 +30,8 @@ public class PCSSFeature : ScriptableRendererFeature
         public enum Quality { Low, Medium, High }
 
         [Header("Shadow Bias")]
-        [Range(0f, 2f)] public float depthBias  = 0.5f;
-        [Range(0f, 2f)] public float normalBias = 0.4f;
+        [Range(0f, 2f)] public float depthBias  = 0.1f;
+        [Range(0f, 2f)] public float normalBias = 0.0f;
 
         [Header("Blur")]
         public bool enableBlur = true;
@@ -54,7 +52,6 @@ public class PCSSFeature : ScriptableRendererFeature
     class CustomShadowCasterPass : ScriptableRenderPass
     {
         Settings m_S;
-        Material m_Mat;
 
         RenderTexture m_ShadowRT;
         RTHandle      m_ShadowHandle;
@@ -79,9 +76,9 @@ public class PCSSFeature : ScriptableRendererFeature
             public int tileRes;
         }
 
-        public CustomShadowCasterPass(Settings s, Material mat)
+        public CustomShadowCasterPass(Settings s)
         {
-            m_S = s; m_Mat = mat;
+            m_S = s;
             renderPassEvent = RenderPassEvent.AfterRenderingShadows;
             profilingSampler = new ProfilingSampler("PCSS Caster");
             CascadeViewProj = new Matrix4x4[8];
@@ -205,8 +202,6 @@ public class PCSSFeature : ScriptableRendererFeature
 
         public override void RecordRenderGraph(RenderGraph graph, ContextContainer frameData)
         {
-            if (m_Mat == null) return;
-
             Light mainLight = RenderSettings.sun;
             if (mainLight == null) return;
 
@@ -230,9 +225,6 @@ public class PCSSFeature : ScriptableRendererFeature
             var cascadeCamPos = new Vector3[cascadeCount];
             var cascadeHalfW  = new float[cascadeCount];
             var cascadeZDist  = new float[cascadeCount];
-            float maxHalfW = 0f, maxHalfH = 0f;
-            int widestCascade = 0;
-
             for (int ci = 0; ci < cascadeCount; ci++)
             {
                 float cn = ci == 0 ? cam.nearClipPlane : splits[ci - 1];
@@ -240,16 +232,6 @@ public class PCSSFeature : ScriptableRendererFeature
 
                 ComputeShadowProjection(cam, mainLight, cn, cf, tileRes,
                     out cascadeView[ci], out cascadeProj[ci], out cascadeCamPos[ci]);
-
-                // 记录最宽级联（用于全量 culling）
-                float extR = Mathf.Abs(1f / cascadeProj[ci].m00);
-                float extU = Mathf.Abs(1f / cascadeProj[ci].m11);
-                if (extR > maxHalfW || extU > maxHalfH)
-                {
-                    maxHalfW = Mathf.Max(maxHalfW, extR);
-                    maxHalfH = Mathf.Max(maxHalfH, extU);
-                    widestCascade = ci;
-                }
             }
 
             // ── 存储级联数据 ──
@@ -301,10 +283,10 @@ public class PCSSFeature : ScriptableRendererFeature
                 cascadeCount > 2 ? splits[2] : 0f,
                 cascadeCount > 3 ? splits[3] : 0f);
 
-            // ── 设置阴影偏移 ──
-            m_Mat.SetVector(Settings.LightDirectionID, mainLight.transform.forward);
-            m_Mat.SetFloat(Settings.DepthBiasID, m_S.depthBias);
-            m_Mat.SetFloat(Settings.NormalBiasID, m_S.normalBias);
+            // ── 设置阴影偏移（全局，两种模式通用）──
+            Shader.SetGlobalVector(Settings.LightDirectionID, mainLight.transform.forward);
+            Shader.SetGlobalFloat(Settings.DepthBiasID, m_S.depthBias);
+            Shader.SetGlobalFloat(Settings.NormalBiasID, m_S.normalBias);
 
             TextureHandle shadowTH = graph.ImportTexture(m_ShadowHandle);
 
@@ -313,29 +295,25 @@ public class PCSSFeature : ScriptableRendererFeature
             TextureHandle depthTH = UniversalRenderer.CreateRenderGraphTexture(
                 graph, depthDesc, "_PCSS_ShadowDepth", false);
 
-            // ── 光源视角 Culling（用最宽级联覆盖全场景） ──
+            // ── 光源视角逐级联 Culling ──
             CullContextData cullCtx = frameData.Get<CullContextData>();
-            cam.TryGetCullingParameters(false, out var cullParams);
-            cullParams.cullingMatrix = cascadeProj[widestCascade] * cascadeView[widestCascade];
-            cullParams.isOrthographic = true;
-            cullParams.origin = cascadeCamPos[widestCascade];
-            var lightPlanes = GeometryUtility.CalculateFrustumPlanes(cullParams.cullingMatrix);
-            int planeCount = Mathf.Min(lightPlanes.Length, ScriptableCullingParameters.maximumCullingPlaneCount);
-            for (int i = 0; i < planeCount; i++)
-                cullParams.SetCullingPlane(i, lightPlanes[i]);
-            cullParams.cullingPlaneCount = planeCount;
-            var lightCull = cullCtx.Cull(ref cullParams);
-
             var sorting = new SortingSettings(cam);
-            var drawSettings = new DrawingSettings(new ShaderTagId("ShadowCaster"), sorting);
-            drawSettings.overrideMaterial = m_Mat;
-            drawSettings.overrideMaterialPassIndex = 0;
+            // 原生 pass：物体 shader 需含 LightMode=CustomShadowCaster pass，SRP Batcher 有效
+            var drawSettings = new DrawingSettings(new ShaderTagId("CustomShadowCaster"), sorting);
             var filterSettings = new FilteringSettings(RenderQueueRange.opaque);
             var rlList = new RendererListHandle[cascadeCount];
             for (int ci = 0; ci < cascadeCount; ci++)
             {
-                var rlp = new RendererListParams(lightCull, drawSettings, filterSettings);
-                rlList[ci] = graph.CreateRendererList(rlp);
+                cam.TryGetCullingParameters(false, out var cp);
+                cp.cullingMatrix = cascadeProj[ci] * cascadeView[ci];
+                cp.isOrthographic = true;
+                cp.origin = cascadeCamPos[ci];
+                var planes = GeometryUtility.CalculateFrustumPlanes(cp.cullingMatrix);
+                int n = Mathf.Min(planes.Length, ScriptableCullingParameters.maximumCullingPlaneCount);
+                for (int i = 0; i < n; i++) cp.SetCullingPlane(i, planes[i]);
+                cp.cullingPlaneCount = n;
+                var lightCull = cullCtx.Cull(ref cp);
+                rlList[ci] = graph.CreateRendererList(new RendererListParams(lightCull, drawSettings, filterSettings));
             }
 
             Matrix4x4 camView = cam.worldToCameraMatrix;
@@ -394,9 +372,8 @@ public class PCSSFeature : ScriptableRendererFeature
     class PCSSPass : ScriptableRenderPass
     {
         Settings m_S;
-        Material m_BlurMat;
         ComputeShader m_CS;
-        int m_CSKernel;
+        int m_CSKernel, m_CSBlurHKernel, m_CSBlurVKernel;
         CustomShadowCasterPass m_Caster;
 
         RenderTexture m_SoftShadowRT;
@@ -408,9 +385,8 @@ public class PCSSFeature : ScriptableRendererFeature
         class PassData
         {
             public ComputeShader cs;
-            public int csKernel;
-            public Material blurMat;
-            public RenderTexture softShadowRT;
+            public int csKernel, csBlurHKernel, csBlurVKernel;
+            public RenderTexture softShadowRT, blurTempRT;
             public RenderTexture shadowCacheRT;
             public TextureHandle source, softShadowTH, blurTempTH;
             public Matrix4x4[] cascadeVP;
@@ -431,10 +407,15 @@ public class PCSSFeature : ScriptableRendererFeature
             public bool showShadowMap;
         }
 
-        public PCSSPass(Settings s, Material blurMat, ComputeShader cs, CustomShadowCasterPass caster)
+        public PCSSPass(Settings s, ComputeShader cs, CustomShadowCasterPass caster)
         {
-            m_S = s; m_BlurMat = blurMat; m_CS = cs; m_Caster = caster;
-            if (m_CS != null) m_CSKernel = m_CS.FindKernel("PCSS_Main");
+            m_S = s; m_CS = cs; m_Caster = caster;
+            if (m_CS != null)
+            {
+                m_CSKernel       = m_CS.FindKernel("PCSS_Main");
+                m_CSBlurHKernel  = m_CS.FindKernel("PCSS_BlurH");
+                m_CSBlurVKernel  = m_CS.FindKernel("PCSS_BlurV");
+            }
             renderPassEvent = RenderPassEvent.AfterRenderingTransparents;
             profilingSampler = new ProfilingSampler("PCSS Screen Shadow");
             ConfigureInput(ScriptableRenderPassInput.Depth | ScriptableRenderPassInput.Normal);
@@ -484,7 +465,7 @@ public class PCSSFeature : ScriptableRendererFeature
 
         public override void RecordRenderGraph(RenderGraph graph, ContextContainer frameData)
         {
-            if (m_CS == null || m_BlurMat == null) return;
+            if (m_CS == null) return;
 
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
             UniversalCameraData   cameraData   = frameData.Get<UniversalCameraData>();
@@ -504,8 +485,10 @@ public class PCSSFeature : ScriptableRendererFeature
             {
                 pd.cs              = m_CS;
                 pd.csKernel        = m_CSKernel;
-                pd.blurMat         = m_BlurMat;
+                pd.csBlurHKernel   = m_CSBlurHKernel;
+                pd.csBlurVKernel   = m_CSBlurVKernel;
                 pd.softShadowRT    = m_SoftShadowRT;
+                pd.blurTempRT      = m_BlurTempRT;
                 pd.shadowCacheRT   = m_Caster.shadowRT;
                 pd.source          = source;
                 pd.softShadowTH    = softShadowTH;
@@ -572,12 +555,22 @@ public class PCSSFeature : ScriptableRendererFeature
                     int tgY = (height + 7) / 8;
                     cmd.DispatchCompute(data.cs, kernel, tgX, tgY, 1);
 
-                    // ── 双边保边模糊（Blitter） ──
+                    // ── 双边保边模糊（Compute Shader，仅 penumbra 像素）──
                     if (data.enableBlur)
                     {
-                        data.blurMat.SetFloat("_BlurScale", data.blurScale);
-                        Blitter.BlitCameraTexture(cmd, data.softShadowTH, data.blurTempTH, data.blurMat, 0);
-                        Blitter.BlitCameraTexture(cmd, data.blurTempTH, data.softShadowTH, data.blurMat, 1);
+                        cmd.SetComputeFloatParam(data.cs, "_BlurScale", data.blurScale);
+                        cmd.SetComputeVectorParam(data.cs, "_ScreenSize", data.screenSize);
+                        cmd.SetComputeVectorParam(data.cs, "_ZBufferParams", data.zBufferParams);
+
+                        // BlurH: 读 softShadowRT → 写 blurTempRT
+                        cmd.SetComputeTextureParam(data.cs, data.csBlurHKernel, "_PCSS_BlurInput", data.softShadowRT);
+                        cmd.SetComputeTextureParam(data.cs, data.csBlurHKernel, "_PCSS_BlurOutput", data.blurTempRT);
+                        cmd.DispatchCompute(data.cs, data.csBlurHKernel, tgX, tgY, 1);
+
+                        // BlurV: 读 blurTempRT → 写 softShadowRT
+                        cmd.SetComputeTextureParam(data.cs, data.csBlurVKernel, "_PCSS_BlurInput", data.blurTempRT);
+                        cmd.SetComputeTextureParam(data.cs, data.csBlurVKernel, "_PCSS_BlurOutput", data.softShadowRT);
+                        cmd.DispatchCompute(data.cs, data.csBlurVKernel, tgX, tgY, 1);
                     }
 
                     // ── 叠加到屏幕 ──
@@ -593,53 +586,29 @@ public class PCSSFeature : ScriptableRendererFeature
     // ════════════════════════════════════════════════════════════
 
     public Settings settings = new();
-    CustomShadowCasterPass m_SceneCaster, m_GameCaster;
-    PCSSPass               m_ScenePCSS,   m_GamePCSS;
+    CustomShadowCasterPass m_CasterPass;
+    PCSSPass               m_PCSSPass;
 
     public override void Create()
     {
-        m_SceneCaster = null; m_GameCaster = null;
-        m_ScenePCSS   = null; m_GamePCSS   = null;
-
-        if (settings.shadowCasterShader != null)
-        {
-            var casterMat = CoreUtils.CreateEngineMaterial(settings.shadowCasterShader);
-            m_SceneCaster = new CustomShadowCasterPass(settings, casterMat);
-            m_GameCaster  = new CustomShadowCasterPass(settings, casterMat);
-        }
-
-        if (settings.pcssShader != null && m_SceneCaster != null)
-        {
-            var pcssMat = CoreUtils.CreateEngineMaterial(settings.pcssShader);
-            m_ScenePCSS = new PCSSPass(settings, pcssMat, settings.pcssComputeShader, m_SceneCaster);
-            m_GamePCSS  = new PCSSPass(settings, pcssMat, settings.pcssComputeShader, m_GameCaster);
-        }
+        m_CasterPass?.Release();
+        m_PCSSPass?.Release();
+        m_CasterPass = new CustomShadowCasterPass(settings);
+        m_PCSSPass   = new PCSSPass(settings, settings.pcssComputeShader, m_CasterPass);
     }
 
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
     {
-        CustomShadowCasterPass caster;
-        PCSSPass               pcss;
-
-        if (renderingData.cameraData.cameraType == CameraType.SceneView)
-        { caster = m_SceneCaster; pcss = m_ScenePCSS; }
-        else if (renderingData.cameraData.cameraType == CameraType.Game)
-        { caster = m_GameCaster;  pcss = m_GamePCSS; }
-        else return;
-
-        if (caster == null) return;
-
-        renderer.EnqueuePass(caster);
-
-        if (pcss != null)
-            renderer.EnqueuePass(pcss);
+        if (m_CasterPass == null) return;
+        renderer.EnqueuePass(m_CasterPass);
+        renderer.EnqueuePass(m_PCSSPass);
     }
 
     protected override void Dispose(bool disposing)
     {
-        m_ScenePCSS?.Release(); m_GamePCSS?.Release();
-        m_SceneCaster?.Release(); m_GameCaster?.Release();
-        m_SceneCaster = null; m_GameCaster = null;
-        m_ScenePCSS = null; m_GamePCSS = null;
+        m_PCSSPass?.Release();
+        m_CasterPass?.Release();
+        m_CasterPass = null;
+        m_PCSSPass = null;
     }
 }

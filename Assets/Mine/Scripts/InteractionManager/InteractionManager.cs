@@ -10,37 +10,28 @@ namespace Mine.Interaction
     /// <summary>
     /// 正交交互系统总控。
     ///
-    /// 正交相机使用 CustomRenderer（自定义管线）渲染到 _InteractionTex，
-    /// UniversalInteractionManager 管理 RT 生命周期 + Compute 处理调度 + 全局 Shader 属性。
-    ///
-    /// IUniversalInteractionProcessor 实现者挂载在同一 GameObject 上，
-    /// Manager 通过 GetComponent 自动发现，无需硬编码类型切换。
+    /// 正交相机使用 CustomRenderer（自定义管线）渲染到 _InteractionOriginTex，
+    /// Manager 管理共享的 originRT + 正交矩阵 + 全局 Shader 属性。
+    /// 输出 RT 由 IUniversalInteractionProcessor 自行管理。
     /// </summary>
-    ///
-    /// <remarks>
-    /// 设置步骤：
-    /// 1. 创建 CustomRendererData 资产 → 添加到 URP Renderer List
-    /// 2. 场景中创建正交相机子物体，挂载 UniversalAdditionalCameraData，Renderer 设为 CustomRenderer
-    /// 3. 拖入 _orthoCamera 字段
-    /// 4. 在同一 GameObject 上挂载 IUniversalInteractionProcessor 实现（如 WaterInteractionProcessor）
-    /// </remarks>
     [ExecuteAlways]
     public class UniversalInteractionManager : MonoBehaviour
     {
         [Header("正交相机")]
-        [SerializeField] private Camera _orthoCamera;
-        [SerializeField] private int    _rendererIndex = 1;
-        [SerializeField] private float  _areaSize      = 10f;
-        [SerializeField] private float  _orthoNear     = -10f;
-        [SerializeField] private float  _orthoFar      = 10f;
+        [SerializeField] private Camera    _orthoCamera;
+        [SerializeField] private Transform _followTarget;
+        [SerializeField] private int       _rendererIndex = 1;
+        [SerializeField] private float     _areaSize      = 10f;
+        [SerializeField] private float     _orthoHeight   = 5f;
+        [SerializeField] private float     _orthoNear     = -10f;
+        [SerializeField] private float     _orthoFar      = 10f;
 
         [Header("RT 设置")]
         [SerializeField] private int _resolution = 256;
 
         // ── Shader Property IDs ─────────────────────────────────
 
-        static readonly int s_InteractionTexID       = Shader.PropertyToID("_InteractionTex");
-        static readonly int s_InteractionResultTexID = Shader.PropertyToID("_InteractionResultTex");
+        static readonly int s_InteractionOriginTexID = Shader.PropertyToID("_InteractionOriginTex");
         static readonly int s_InteractionOrthoVID    = Shader.PropertyToID("_InteractionOrthoV");
         static readonly int s_InteractionOrthoPID    = Shader.PropertyToID("_InteractionOrthoP");
         static readonly int s_InteractionAreaPosID   = Shader.PropertyToID("_InteractionAreaPos");
@@ -49,10 +40,10 @@ namespace Mine.Interaction
 
         // ── 运行时 ──────────────────────────────────────────────
 
-        private RenderTexture              _interactionRT;
-        private RenderTexture              _resultRT;
+        private RenderTexture                _originRT;
         private IUniversalInteractionProcessor _processor;
-        private Matrix4x4                  _orthoV, _orthoP;
+        private Matrix4x4                    _orthoV, _orthoP;
+        private Vector3                      _lastAreaPos;
 
         [ReadOnly]
         [SerializeField]
@@ -63,6 +54,7 @@ namespace Mine.Interaction
         public static UniversalInteractionManager Instance { get; private set; }
 
         public int Resolution => _resolution;
+        public float AreaSize => _areaSize;
 
         public Matrix4x4 OrthoViewMatrix       => _orthoV;
         public Matrix4x4 OrthoProjectionMatrix => _orthoP;
@@ -74,10 +66,10 @@ namespace Mine.Interaction
         void OnEnable()
         {
             Instance = this;
+            _lastAreaPos = AreaCenter;
             FindProcessor();
             SyncMatrices();
             EnsureInteractionRT();
-            EnsureResultRT();
             InitializeProcessor();
             SyncGlobalProperties();
             _initialized = true;
@@ -103,8 +95,12 @@ namespace Mine.Interaction
             SyncMatrices();
             SyncGlobalProperties();
 
-            if (Application.isPlaying && _processor != null)
-                _processor.Process(Time.deltaTime);
+            var pos        = AreaCenter;
+            var worldDelta = new Vector2(pos.x - _lastAreaPos.x, pos.z - _lastAreaPos.z);
+            _processor?.Process(Time.deltaTime, worldDelta);
+            _lastAreaPos = pos;
+
+            if (_originRT != null) ClearRT(_originRT);
         }
 
         void OnValidate()
@@ -113,7 +109,7 @@ namespace Mine.Interaction
         }
 
         // ════════════════════════════════════════════════════════
-        //  Processor 发现与初始化 — GetComponent 模式，无需硬编码切换
+        //  Processor 发现与初始化
         // ════════════════════════════════════════════════════════
 
         private void FindProcessor()
@@ -124,8 +120,8 @@ namespace Mine.Interaction
 
         private void InitializeProcessor()
         {
-            if (_processor == null || _resultRT == null || _interactionRT == null) return;
-            _processor.Initialize(_resolution, _interactionRT, _resultRT);
+            if (_processor == null || _originRT == null) return;
+            _processor.Initialize(_resolution, _originRT);
         }
 
         private void ReleaseProcessor()
@@ -138,69 +134,63 @@ namespace Mine.Interaction
         //  正交矩阵
         // ════════════════════════════════════════════════════════
 
+        private Vector3 AreaCenter => _followTarget != null ? _followTarget.position : transform.position;
+
         private void SyncMatrices()
         {
-            var center = transform.position;
-            var camPos = center + Vector3.up * (_orthoFar * 0.5f);
+            var center = AreaCenter;
+            var camPos = center + Vector3.up * _orthoHeight;
             _orthoV = Matrix4x4.LookAt(camPos, center, Vector3.forward);
             float hs = _areaSize * 0.5f;
             _orthoP = Matrix4x4.Ortho(-hs, hs, -hs, hs, _orthoNear, _orthoFar);
-            _orthoP = GL.GetGPUProjectionMatrix(_orthoP, false);
+
+            // 同步到正交相机，确保渲染和采样用的矩阵完全一致
+            if (_orthoCamera != null)
+            {
+                _orthoCamera.transform.SetPositionAndRotation(camPos, Quaternion.LookRotation(center - camPos, Vector3.forward));
+                _orthoCamera.orthographicSize     = hs;
+                _orthoCamera.nearClipPlane        = _orthoNear;
+                _orthoCamera.farClipPlane         = _orthoFar;
+                // 相机实际使用的 GPU 矩阵
+                _orthoV = _orthoCamera.worldToCameraMatrix;
+                _orthoP = _orthoCamera.projectionMatrix;
+            }
+            else
+            {
+                _orthoP = GL.GetGPUProjectionMatrix(_orthoP, false);
+            }
         }
 
         // ════════════════════════════════════════════════════════
-        //  RT 管理
+        //  RT 管理 — Manager 只管理共享的 originRT
         // ════════════════════════════════════════════════════════
 
         private void EnsureInteractionRT()
         {
-            if (_interactionRT != null) return;
-            _interactionRT = new RenderTexture(_resolution, _resolution, 0, RenderTextureFormat.R8)
+            if (_originRT != null) return;
+            _originRT = new RenderTexture(_resolution, _resolution, 0, RenderTextureFormat.RFloat)
             {
-                name              = "_InteractionTex",
+                name              = "_InteractionOriginTex",
                 filterMode        = FilterMode.Bilinear,
                 wrapMode          = TextureWrapMode.Clamp,
                 useMipMap         = false,
                 autoGenerateMips  = false,
             };
-            _interactionRT.Create();
-            ClearRT(_interactionRT);
-            if (_orthoCamera != null) _orthoCamera.targetTexture = _interactionRT;
-        }
-
-        private void EnsureResultRT()
-        {
-            if (_resultRT != null) return;
-            _resultRT = new RenderTexture(_resolution, _resolution, 0, RenderTextureFormat.RFloat)
-            {
-                name              = "_InteractionResultTex",
-                filterMode        = FilterMode.Bilinear,
-                wrapMode          = TextureWrapMode.Clamp,
-                useMipMap         = false,
-                autoGenerateMips  = false,
-                enableRandomWrite = true,
-            };
-            _resultRT.Create();
-            ClearRT(_resultRT);
+            _originRT.Create();
+            ClearRT(_originRT);
+            if (_orthoCamera != null) _orthoCamera.targetTexture = _originRT;
         }
 
         private void ReleaseRT()
         {
             if (_orthoCamera != null) _orthoCamera.targetTexture = null;
 
-            if (_interactionRT != null)
+            if (_originRT != null)
             {
-                _interactionRT.Release();
-                if (Application.isPlaying) Destroy(_interactionRT);
-                else                       DestroyImmediate(_interactionRT);
-                _interactionRT = null;
-            }
-            if (_resultRT != null)
-            {
-                _resultRT.Release();
-                if (Application.isPlaying) Destroy(_resultRT);
-                else                       DestroyImmediate(_resultRT);
-                _resultRT = null;
+                _originRT.Release();
+                if (Application.isPlaying) Destroy(_originRT);
+                else                       DestroyImmediate(_originRT);
+                _originRT = null;
             }
         }
 
@@ -213,20 +203,20 @@ namespace Mine.Interaction
         }
 
         // ════════════════════════════════════════════════════════
-        //  全局 Shader 属性 — 向后兼容所有现有 Shader
+        //  全局 Shader 属性
         // ════════════════════════════════════════════════════════
 
         private void SyncGlobalProperties()
         {
-            if (_interactionRT != null)
-                Shader.SetGlobalTexture(s_InteractionTexID, _interactionRT);
+            if (_originRT != null)
+                Shader.SetGlobalTexture(s_InteractionOriginTexID, _originRT);
 
-            if (_resultRT != null)
-                Shader.SetGlobalTexture(s_InteractionResultTexID, _resultRT);
+            // 委托 processor 绑定自己的输出纹理
+            _processor?.BindGlobalTextures();
 
             Shader.SetGlobalMatrix(s_InteractionOrthoVID,  _orthoV);
             Shader.SetGlobalMatrix(s_InteractionOrthoPID,  _orthoP);
-            Shader.SetGlobalVector(s_InteractionAreaPosID,  transform.position);
+            Shader.SetGlobalVector(s_InteractionAreaPosID,  AreaCenter);
             Shader.SetGlobalFloat(s_InteractionAreaSizeID, _areaSize);
             Shader.SetGlobalInt(s_InteractionResID,        _resolution);
         }
@@ -250,16 +240,6 @@ namespace Mine.Interaction
                     EditorGUILayout.HelpBox("已初始化", MessageType.Info);
                 else
                     EditorGUILayout.HelpBox("未初始化", MessageType.Warning);
-
-                // 通过反射读取私有字段用于调试显示
-                var rtField = typeof(UniversalInteractionManager).GetField("_resultRT",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                if (rtField != null)
-                {
-                    var resultRT = rtField.GetValue(t) as RenderTexture;
-                    if (resultRT != null)
-                        EditorGUILayout.ObjectField("RT_Result", resultRT, typeof(RenderTexture), false);
-                }
             }
         }
 #endif

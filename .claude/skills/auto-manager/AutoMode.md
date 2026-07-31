@@ -11,55 +11,16 @@
 
 ---
 
-## Editor 可用性策略
+## 宪法 + 模式 + 平台
 
-Editor 是否在运行**只影响流水线步骤，不影响 skill 是否激活**。
+全部提取到 agent 层，AutoMode 不再重复维护：
 
-| Editor 状态 | 流水线行为 |
-|------------|----------|
-| ✅ 在运行 | 完整流水线：知识 → 代码 → 编译 → 运行 → 清理 |
-| ❌ 未运行 | 精简流水线：知识 → 代码。跳过编译/运行/清理。报告末尾注明"Editor 未运行，未执行编译验证"。 |
-
-检查命令：`unityctl status`
-详细平台配置：[../../platforms/unity-editor.md](../../platforms/unity-editor.md)
-
----
-
-## 模式对比
-
-| 维度 | 🔬 Research | 🏭 Production |
-|------|------------|-------------|
-| **场景** | Shader 调试、参数调优、效果验证、假设验证 | 功能开发、Bug 修复、重构、发版准备 |
-| **关键词** | 调试、看看、试试、验证、排查、效果 | 实现、开发、添加、修复、重构 |
-| **备份** | ❌ | ✅ 重大改动时 |
-| **知识预加载** | 按需 | 全量 |
-| **方案设计** | ❌ | ✅ 输出修改计划 |
-| **编译** | 快速，报错即停 | 完整，自动修复循环 |
-| **场景配置** | 手动/按需 | 自动 Roslyn |
-| **观测** | 🔴 每步暂停 | 🟢 仅异常暂停 |
-| **循环** | ✅ 无限循环 | ❌ 一次性 |
-| **清理** | ❌ | ✅ 轻清理提示 |
-
----
-
-## 选择逻辑
-
-```
-用户指令
-  │
-  ├── [Research 信号] 任一满足 → Research Mode
-  │     ├── Shader / 渲染 / 视觉效果
-  │     ├── GPU / Compute Shader
-  │     ├── 参数调优（无确定目标值）
-  │     └── 关键词：调试、看看、试试、验证假设、排查
-  │
-  └── [Production 信号] 任一满足 → Production Mode
-        ├── 明确的输入→输出需求
-        ├── 功能增删改 / Bug 修复 / 重构
-        └── 关键词：实现、开发、添加、修复、重构
-```
-
-**边界：** 同时涉及两类 → 询问确认。先调试后发版 → 先 Research 再切换。用户要求全自动 → 强制 Production。
+| 内容 | 唯一来源 |
+|------|---------|
+| C1-C7 宪法 | [../../agents/unity-developer.md](../../agents/unity-developer.md) |
+| 模式选择逻辑 + 对比表 | [../../agents/unity-developer.md](../../agents/unity-developer.md) |
+| Editor 可用性策略 | [../../agents/unity-developer.md](../../agents/unity-developer.md) |
+| 退出条件 + 完整性门禁 | [../../agents/unity-developer.md](../../agents/unity-developer.md) |
 
 ---
 
@@ -86,12 +47,12 @@ Editor 是否在运行**只影响流水线步骤，不影响 skill 是否激活*
   │
   ├── 它是"对不对/停不停"的判断标准？
   │     └── agents/ (宪法、退出条件、完整性门禁)
-  │     └── learnings/ (安全红线、错误模式 — 跨会话经验)
+  │     └── rules/ (路径限定的开发规范 + 错误诊断)
   │
   └── 它是"查一下"的参考资料？
-        ├── CLI 命令速查 → ../../cli/unityctl.md
-        ├── Roslyn 脚本模板 → ../../cli/roslyn.md
-        ├── Roslyn 可执行脚本 → ../../scripts/roslyn/
+        ├── CLI 命令速查 → ../../agents/unity-developer/cli/unityctl.md
+        ├── Roslyn 脚本模板 → ../../agents/unity-developer/cli/roslyn.md
+        ├── Roslyn 可执行脚本 → ../../tmp/.reusable/
         └── 项目知识库 → Assets/MarkDowns/
 ```
 
@@ -102,13 +63,13 @@ Editor 是否在运行**只影响流水线步骤，不影响 skill 是否激活*
 | **capabilities/** | 单一工具，<150行，被至少一个 mode 引用 | 多步骤流程、纯参考文档 |
 | **modes/** | 编排多个 capability，有明确流程和退出条件 | 单一工具、纯规则 |
 | **agents/** | 宪法、决策规则、质量门禁 | 操作步骤、代码模板 |
-| **learnings/** | 跨会话累积经验（错误模式、安全红线） | 任务特定规则 |
+| **rules/**    | 路径限定开发规范 + 错误诊断 | 操作步骤 |
 | **cli/** | 命令参考文档 | 可执行代码 |
 | **scripts/** | 可执行代码（Roslyn C#、Shell） | 文档 |
 
 ### 冲突裁决
 
-1. 同时满足多个条件 → 按优先级：**modes > capabilities > agents > learnings > cli > scripts**
+1. 同时满足多个条件 → 按优先级：**modes > capabilities > agents > rules > cli > scripts**
 2. 超过 150 行 → 考虑拆分
 3. 无法明确分类 → 先放入 `capabilities/`，标记 `// TODO: classify`
 4. 改动涉及 Constitution → 必须先更新 `../../agents/unity-developer.md`
@@ -141,9 +102,9 @@ Editor 是否在运行**只影响流水线步骤，不影响 skill 是否激活*
 | 层 | 路径 | 职责 |
 |----|------|------|
 | **Agent** | [../../agents/unity-developer.md](../../agents/unity-developer.md) | C1-C7 宪法 + 模式选择 + 退出条件 + 完整性门禁 |
-| **Platform** | [../../platforms/unity-editor.md](../../platforms/unity-editor.md) | Editor Bridge + 可用性策略 |
-| **CLI** | [../../cli/unityctl.md](../../cli/unityctl.md) | unityctl 完整命令参考 |
-| **CLI** | [../../cli/roslyn.md](../../cli/roslyn.md) | Roslyn 脚本食谱 + 命令速查 |
-| **Scripts** | [../../scripts/roslyn/](../../scripts/roslyn/) | 可复用 Roslyn C# 脚本 |
-| **Learnings** | [../../learnings/error-patterns.md](../../learnings/error-patterns.md) | 编译/运行时错误诊断表 |
-| **Learnings** | [../../learnings/safety.md](../../learnings/safety.md) | 安全红线 + 经验教训 |
+| **Platform** | [../../agents/unity-developer.md](../../agents/unity-developer.md) | Editor Bridge + 可用性策略 |
+| **CLI** | [../../agents/unity-developer/cli/unityctl.md](../../agents/unity-developer/cli/unityctl.md) | unityctl 完整命令参考 |
+| **CLI** | [../../agents/unity-developer/cli/roslyn.md](../../agents/unity-developer/cli/roslyn.md) | Roslyn 脚本食谱 + 命令速查 |
+| **Scripts** | [../../tmp/.reusable/](../../tmp/.reusable/) | 可复用 Roslyn C# 脚本 |
+| **Learnings** | [../../rules/shader-development.md](../../rules/shader-development.md) | 编译/运行时错误诊断表 |
+| **Learnings** | [../../agents/unity-developer/memory/2025-06-15-safety-lessons.md](../../agents/unity-developer/memory/2025-06-15-safety-lessons.md) | 安全红线 + 经验教训 |

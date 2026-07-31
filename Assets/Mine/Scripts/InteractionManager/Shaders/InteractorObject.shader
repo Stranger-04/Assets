@@ -12,15 +12,13 @@ Shader "Mine/Interaction/InteractorObject"
 
     Properties
     {
-        _Intensity ("Interaction Intensity", Range(0, 1)) = 1.0
-        _Power     ("Depth Power", Range(0, 1)) = 0.5
+        _Intensity ("Interaction Intensity", Range(0, 10)) = 1.0
     }
 
     HLSLINCLUDE
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
     float _Intensity;
-    float _Power;
 
     struct Attributes
     {
@@ -46,52 +44,49 @@ Shader "Mine/Interaction/InteractorObject"
         LOD 100
 
         // ════════════════════════════════════════════════════════════
-        //  Pass 0 — 交互渲染 Pass (LightMode=UniversalForward)
-        //  DrawObjectsPass 渲染此 Pass 到 _CameraColorTexture。
+        //  Pass 0 — 深度预写入 (DepthOnly)
         // ════════════════════════════════════════════════════════════
 
         Pass
         {
-            Name "InteractionPass"
-            Tags { "LightMode" = "UniversalForward" }
+            Name "DepthOnly"
+            Tags { "LightMode" = "DepthOnly" }
 
-            Cull Off
-            ZWrite Off
-            ZTest Always
-            Blend One Zero
+            ZWrite On
+            ColorMask 0
 
             HLSLPROGRAM
-            #pragma vertex InteractionVert
-            #pragma fragment InteractionFrag
+            #pragma vertex DepthVert
+            #pragma fragment DepthFrag
 
-            struct InteractionVaryings
+            struct DepthVaryings
             {
                 float4 positionHCS : SV_POSITION;
             };
 
-            InteractionVaryings InteractionVert(Attributes i)
+            DepthVaryings DepthVert(Attributes i)
             {
-                InteractionVaryings o;
+                DepthVaryings o;
                 o.positionHCS = TransformObjectToHClip(i.positionOS);
                 return o;
             }
 
-            half InteractionFrag(InteractionVaryings i) : SV_Target
+            half4 DepthFrag(DepthVaryings i) : SV_Target
             {
-                return _Intensity;
+                return 0;
             }
             ENDHLSL
         }
 
         // ════════════════════════════════════════════════════════════
-        //  Pass 1 — 深度比较 Pass（保留）
-        //  比较物体深度与场景深度，输出按压深度值。
+        //  Pass 1 — 深度比较 (UniversalForward)
+        //  Cull Front 渲染背面对比场景深度，输出按压深度。
         // ════════════════════════════════════════════════════════════
 
         Pass
         {
             Name "DepthDifferencePass"
-            Tags { "LightMode" = "DepthDifference" }
+            Tags { "LightMode" = "UniversalForward" }
 
             Cull Front
             ZWrite Off
@@ -107,7 +102,8 @@ Shader "Mine/Interaction/InteractorObject"
             }
 
             HLSLPROGRAM
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            TEXTURE2D(_CustomDepthTexture);
+            SAMPLER(sampler_CustomDepthTexture);
 
             #pragma vertex DepthVert
             #pragma fragment DepthFrag
@@ -131,10 +127,14 @@ Shader "Mine/Interaction/InteractorObject"
             half DepthFrag(DepthVaryings i) : SV_Target
             {
                 float2 screenUV = i.positionHS.xy / i.positionHS.w;
-                float sceneRawDepth = SAMPLE_TEXTURE2D(_CameraDepthTexture, sampler_CameraDepthTexture, screenUV).r;
-                float sceneEyeDepth = LinearEyeDepth(sceneRawDepth, _ZBufferParams);
-                float viewEyeDepth  = LinearEyeDepth(i.viewDepth, _ZBufferParams);
-                float depthDiff = pow(saturate(viewEyeDepth - sceneEyeDepth), _Power);
+
+                // 采样场景深度（CustomRenderer DepthOnly Pass 写入的原始 depth buffer 值）
+                float sceneDepth = SAMPLE_TEXTURE2D(_CustomDepthTexture, sampler_CustomDepthTexture, screenUV).r;
+
+                // 正交相机 depth 线性编码: 差值 * (far-near) 得到世界单位米
+                // 物体在场景下方时 viewDepth > sceneDepth
+                float depthScale = 20.0; // far - near = 10 - (-10)
+                float depthDiff  = saturate(-(i.viewDepth - sceneDepth) * depthScale) * _Intensity;
                 return depthDiff;
             }
             ENDHLSL

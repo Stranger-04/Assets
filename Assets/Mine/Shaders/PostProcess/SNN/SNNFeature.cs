@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.Rendering.RenderGraphModule;
 
 public class SNNFeature : ScriptableRendererFeature
 {
@@ -10,49 +11,60 @@ public class SNNFeature : ScriptableRendererFeature
         public Shader snnShader;
         [Range(1, 10)] public int Radius = 3;
     }
+
     class SNNPass : ScriptableRenderPass
     {
         private Material snnMaterial;
         private Settings settings;
-        private RTHandle tempRT;
 
-        public void ReleaseRT()
+        class PassData
         {
-            tempRT?.Release();
-            tempRT = null;
+            public Material material;
+            public TextureHandle source;
+            public TextureHandle tempRT;
         }
 
         public SNNPass(Shader shader, Settings s)
         {
             settings = s;
-            snnMaterial = CoreUtils.CreateEngineMaterial(shader);
+            if (shader != null)
+                snnMaterial = CoreUtils.CreateEngineMaterial(shader);
             renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
             ConfigureInput(ScriptableRenderPassInput.Depth | ScriptableRenderPassInput.Normal);
         }
 
-        [System.Obsolete]
-        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
-            if (snnMaterial == null) return;
-            var cmd = CommandBufferPool.Get("SNN");
-            var cameraData = renderingData.cameraData;
-            
+            UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
+            UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
+
+            TextureHandle source = resourceData.activeColorTexture;
+            if (!source.IsValid() || snnMaterial == null) return;
+
             snnMaterial.SetInt("_Radius", settings.Radius);
 
-            Render(cmd, ref renderingData);
-            context.ExecuteCommandBuffer(cmd);
-            CommandBufferPool.Release(cmd);
-        }
+            RenderTextureDescriptor desc = cameraData.cameraTargetDescriptor;
+            desc.depthBufferBits = 0;
+            TextureHandle tempRT = UniversalRenderer.CreateRenderGraphTexture(
+                renderGraph, desc, "_SNNTempRT", false);
 
-        void Render(CommandBuffer cmd, ref RenderingData renderingData)
-        {
-            var cameraData = renderingData.cameraData;
-            var source = cameraData.renderer.cameraColorTargetHandle.nameID;
-            var desc = cameraData.cameraTargetDescriptor;
+            using (var builder = renderGraph.AddUnsafePass<PassData>("SNN", out var passData))
+            {
+                passData.material = snnMaterial;
+                passData.source = source;
+                passData.tempRT = tempRT;
 
-            RenderingUtils.ReAllocateHandleIfNeeded(ref tempRT, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_SNNTempRT");
-            cmd.Blit(source, tempRT.nameID, snnMaterial);
-            cmd.Blit(tempRT.nameID, source);
+                builder.UseTexture(source, AccessFlags.ReadWrite);
+                builder.UseTexture(tempRT, AccessFlags.ReadWrite);
+                builder.AllowPassCulling(false);
+
+                builder.SetRenderFunc((PassData data, UnsafeGraphContext context) =>
+                {
+                    CommandBuffer cmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
+                    Blitter.BlitCameraTexture(cmd, data.source, data.tempRT, data.material, 0);
+                    Blitter.BlitCameraTexture(cmd, data.tempRT, data.source);
+                });
+            }
         }
     }
 
@@ -61,19 +73,14 @@ public class SNNFeature : ScriptableRendererFeature
 
     public override void Create()
     {
-        if (snnPass != null)
-        {
-            snnPass.ReleaseRT();
-            snnPass = null;
-        }
-
-        if (settings.snnShader == null) return;
-        snnPass = new SNNPass(settings.snnShader, settings);
+        snnPass = null;
+        if (settings.snnShader != null)
+            snnPass = new SNNPass(settings.snnShader, settings);
     }
 
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
     {
-        if (snnPass == null) return;
-        renderer.EnqueuePass(snnPass);
+        if (snnPass != null)
+            renderer.EnqueuePass(snnPass);
     }
 }

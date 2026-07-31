@@ -35,13 +35,13 @@ MonoBehaviour:
     m_Bits: 4294967295
   m_DepthLayerMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 64
   m_ColorLayerMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 128
   m_NormalLayerMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 0
   m_CopyDepth: 1
   m_CopyColor: 1
   m_CopyNormal: 0

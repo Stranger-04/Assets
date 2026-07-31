@@ -1,0 +1,73 @@
+// ════════════════════════════════════════════════════════════
+//  InitialSpectrum — Phillips 频谱初始化
+//
+//  从高斯噪声生成初始波谱 H0(k)，使用 Phillips 频谱模型。
+//  输出 RGBA 纹理: RG = H0(k) 实部/虚部, BA = H0*(-k) 实部/虚部
+// ════════════════════════════════════════════════════════════
+
+#pragma kernel CSMain
+
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+
+// ── 输入 ──
+Texture2D<float4> _Noise;           // 高斯噪声 (RG = ε_r, ε_i)
+SamplerState sampler_Noise;
+
+// ── 输出 ──
+RWTexture2D<float4> _H0;            // RG=H0(k), BA=H0*(-k)
+
+// ── 参数 ──
+float _Amplitude;                    // Phillips A 参数
+float _WindSpeed;                    // 风速
+float2 _WindDirection;               // 风向（归一化）
+float _LengthScale;                  // cascade 长度缩放
+float _Gravity;                      // 重力加速度 (默认 9.81)
+uint _Resolution;                    // 纹理分辨率 (256)
+
+// ════════════════════════════════════════════════════════════
+//  CSMain — 为每个 k 向量计算 Phillips 频谱
+// ════════════════════════════════════════════════════════════
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= _Resolution || id.y >= _Resolution)
+        return;
+
+    float2 uv = id.xy / (float)_Resolution;
+    float4 noise = _Noise.SampleLevel(sampler_Noise, uv, 0);
+
+    // 频率域坐标 k ∈ [-π·N/L, π·N/L]
+    float2 k = (id.xy - _Resolution * 0.5) * (2.0 * PI / _LengthScale);
+    float kLen = length(k);
+
+    // 跳过 DC 和极小波长
+    if (kLen < 1e-6)
+    {
+        _H0[id.xy] = float4(0, 0, 0, 0);
+        return;
+    }
+
+    float kLen2 = kLen * kLen;
+    float kLen4 = kLen2 * kLen2;
+
+    // ── Phillips 频谱 ──
+    // P_h(k) = A · exp(-1/(kL)²) / k⁴ · |k̂·ŵ|²
+    float L = _WindSpeed * _WindSpeed / _Gravity;  // 最大波长
+    float kDotW = dot(normalize(k), _WindDirection);
+    float phillips = _Amplitude * exp(-1.0 / (kLen2 * L * L)) / kLen4 * kDotW * kDotW;
+
+    // 抑制逆风方向
+    phillips *= max(0.0, kDotW);
+
+    // ── 高斯随机复数 ε = ε_r + iε_i ──
+    float2 epsilon = noise.rg * 2.0 - 1.0;
+
+    // h₀(k) = 1/√2 · √P_h · (ε_r + iε_i)
+    float sqrtPh = sqrt(phillips * 0.5);
+    float2 h0k = float2(epsilon.x * sqrtPh, epsilon.y * sqrtPh);
+
+    // h₀(-k) = h₀(k)* (共轭对称)
+    // 存储 RG=H0(k), BA=h₀(-k) 的共轭 = H0*(-k)
+    // 实际上 H0*(-k) = h₀(k)* (共轭)，在时间演化时需要
+    _H0[id.xy] = float4(h0k.x, h0k.y, h0k.x, -h0k.y);
+}

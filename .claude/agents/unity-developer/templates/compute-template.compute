@@ -1,0 +1,45 @@
+// ═══════════════════════════════════════════════════════════════
+//  Unity 6 Compute Shader 模板 (Metal 兼容)
+//
+//  使用方式：
+//    1. 复制此文件，改名为 YourCompute.compute
+//    2. 替换所有 ⚠️ 标记处
+//    3. Metal 推荐 [numthreads(8,8,1)]，不要用 (16,16,1)
+//    4. 必须检查 dispatch id 边界
+// ═══════════════════════════════════════════════════════════════
+
+#pragma kernel CSMain
+
+// ═══ 纹理 / 缓冲区 (C# 端设置) ═══
+RWTexture2D<float4> _Result;              // ⚠️ 替换为你的输出
+Texture2D<float>    _CameraDepthTexture;   // Unity 自动绑定
+SamplerState        PointClampSampler;     // ⚠️ Depth 纹理必须用点采样
+
+// ═══ 自定义参数 ═══
+float2 _ScreenSize;
+float  _Intensity;                        // ⚠️ 替换为你的参数
+
+// ═══ Metal 推荐 thread group 大小 ═══
+// ⚠️ 不要用 (16,16,1) — Metal 限制 a*b*c ≤ 1024
+#define NUMTHREAD_X 8
+#define NUMTHREAD_Y 8
+
+[numthreads(NUMTHREAD_X, NUMTHREAD_Y, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    // ⚠️ 必须检查边界 — Metal 不会自动裁剪超范围线程
+    if (id.x >= (uint)_ScreenSize.x || id.y >= (uint)_ScreenSize.y) return;
+
+    float2 uv = (id.xy + 0.5) / _ScreenSize;
+    float depth = _CameraDepthTexture.SampleLevel(PointClampSampler, uv, 0);
+
+    // ⚠️ 替换为你的计算逻辑
+    float3 result = float3(1, 1, 1) * _Intensity;
+
+    _Result[id.xy] = float4(result, 1.0);
+}
+
+// ═══ 多 kernel 示例 ═══
+// #pragma kernel CSBlurH
+// #pragma kernel CSBlurV
+// 每个 kernel 独立的 [numthreads] 和函数体

@@ -11,7 +11,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: 55c2ed696ce114e8880fbe9b0f210e86, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _DEBUGMODE_OFF
   m_InvalidKeywords:
   - _DIFFUSE_ON
   - _REFLECTION_ON
@@ -92,12 +93,14 @@ Material:
     - _Caustics: 0.3
     - _Cull: 2
     - _DIFFUSE: 1
+    - _DebugMode: 0
     - _Depth_Fade_Distance: 1
     - _DiffuseConstrate: 0.54
     - _DiffuseStrength: 1.57
     - _Diffuse_Contrastion: 0.4
     - _Diffuse_On: 1
     - _Diffuse_Strength: 1
+    - _DisplacementScale: 0.1
     - _Distoration_Adjustment: 0.8
     - _Distoration_Strength: 0.01
     - _Distortion: 0.5
@@ -154,6 +157,7 @@ Material:
     - _SrcBlend: 1
     - _Strength: 0
     - _Surface: 0
+    - _TessellationFactor: 8
     - _UnderWater_Layer_On: 0
     - _Underwater_Factor: 1
     - _Use_UnderWater_Layer: 0

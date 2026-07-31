@@ -51,5 +51,5 @@ unityctl asset refresh
 
 ## 引用
 
-- 错误诊断详情：[../../learnings/error-patterns.md](../../learnings/error-patterns.md)
+- 错误诊断详情：[../../rules/shader-development.md](../../rules/shader-development.md)
 - 兜底退出规则：[../../agents/unity-developer.md](../../agents/unity-developer.md)

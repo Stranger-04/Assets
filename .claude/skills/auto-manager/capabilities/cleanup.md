@@ -191,7 +191,7 @@ git stash push -m "cleanup-deep-$(date +%Y%m%d-%H%M%S)" -- tmp/ Screenshots/ Ass
 
 ## 引用
 
-- 安全红线详见 [../../learnings/safety.md](../../learnings/safety.md)
+- 安全红线详见 [../../agents/unity-developer/memory/2025-06-15-safety-lessons.md](../../agents/unity-developer/memory/2025-06-15-safety-lessons.md)
 - 场景整理 Roslyn 脚本见下方附录
 
 ---

@@ -7,23 +7,14 @@ Shader "Hidden/CelToon/SSR"
 
     HLSLINCLUDE
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+    #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareNormalsTexture.hlsl"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
     #include "Assets/Mine/Special/HLSL/BlurFunction.hlsl"
 
-    struct Attributes
-    {
-        float4 positionOS : POSITION;
-        float2 uv : TEXCOORD0;
-    };
-
-    struct Varyings
-    {
-        float4 positionCS : SV_POSITION;
-        float2 uv : TEXCOORD0;
-    };
+    // Blit.hlsl provides: Attributes, Varyings (with texcoord), Vert(), TEXTURE2D_X(_BlitTexture)
 
     float _StepSize;
     float _MaxDistance;
@@ -39,19 +30,34 @@ Shader "Hidden/CelToon/SSR"
     int _FromMipLevel;
     int _MaxMipLevel;
     float4 _TexelSize;
-    
+
     float4x4 _CameraViewMatrix;
     float4x4 _CameraProjectionMatrix;
 
-    TEXTURE2D_X(_MainTex);
-    TEXTURE2D_X(_HiZTex);
+    // HiZ depth pyramid — per-mip textures set by C# (RenderGraph compatible)
+    TEXTURE2D_X(_HiZTex0);
+    TEXTURE2D_X(_HiZTex1);
+    TEXTURE2D_X(_HiZTex2);
+    TEXTURE2D_X(_HiZTex3);
+    TEXTURE2D_X(_HiZTex4);
+    TEXTURE2D_X(_HiZTex5);
+    TEXTURE2D_X(_HiZTex6);
+    TEXTURE2D_X(_HiZTex7);
 
-    Varyings Vert(Attributes input)
+    float SampleHiZDepthAtMip(float2 uv, int mipLevel)
     {
-        Varyings output;
-        output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
-        output.uv = input.uv;
-        return output;
+        [flatten]
+        switch (mipLevel)
+        {
+            case 0: return SAMPLE_TEXTURE2D_X(_HiZTex0, sampler_LinearClamp, uv).r;
+            case 1: return SAMPLE_TEXTURE2D_X(_HiZTex1, sampler_LinearClamp, uv).r;
+            case 2: return SAMPLE_TEXTURE2D_X(_HiZTex2, sampler_LinearClamp, uv).r;
+            case 3: return SAMPLE_TEXTURE2D_X(_HiZTex3, sampler_LinearClamp, uv).r;
+            case 4: return SAMPLE_TEXTURE2D_X(_HiZTex4, sampler_LinearClamp, uv).r;
+            case 5: return SAMPLE_TEXTURE2D_X(_HiZTex5, sampler_LinearClamp, uv).r;
+            case 6: return SAMPLE_TEXTURE2D_X(_HiZTex6, sampler_LinearClamp, uv).r;
+            default: return SAMPLE_TEXTURE2D_X(_HiZTex7, sampler_LinearClamp, uv).r;
+        }
     }
 
     float4 HitProcess(float4 color, float3 reflectDir, float2 currentUV)
@@ -134,17 +140,17 @@ Shader "Hidden/CelToon/SSR"
     half4 SampleDepth(float2 uv, float2 offset, int mipLevel)
     {
         offset *= _TexelSize.xy;
-        return SAMPLE_TEXTURE2D_X_LOD(_MainTex, sampler_LinearClamp, uv + offset, mipLevel);;
+        return SAMPLE_TEXTURE2D_X_LOD(_BlitTexture, sampler_LinearClamp, uv + offset, mipLevel);;
     }
 
     half4 SampleHiZDepth(float2 uv, int mipLevel)
     {
-        return SAMPLE_TEXTURE2D_X_LOD(_HiZTex, sampler_LinearClamp, uv, mipLevel);;
+        return SampleHiZDepthAtMip(uv, mipLevel);
     }
 
     half4 Frag_HiZDepthMip(Varyings input) : SV_Target
     {
-        float2 uv   = input.uv;
+        float2 uv   = input.texcoord;
         half4 depth = half4(
             SampleDepth(uv, float2(-1, -1), _FromMipLevel).r,
             SampleDepth(uv, float2( 1, -1), _FromMipLevel).r,
@@ -208,9 +214,9 @@ Shader "Hidden/CelToon/SSR"
     {
         // Initial setup
         float4 color = half4(0,0,0,0);
-        float2 uv = input.uv;
+        float2 uv = input.texcoord;
         float rawDepth = SampleSceneDepth(uv);
-        
+
         float3 positionWS = ComputeWorldSpacePosition(uv, rawDepth, UNITY_MATRIX_I_VP);
         float3 viewDir   = normalize(positionWS - GetCameraPositionWS());
         float3 normalWS  = SampleSceneNormals(uv);
@@ -258,7 +264,7 @@ Shader "Hidden/CelToon/SSR"
     {
         // Initial setup
         float4 color = half4(0,0,0,0);
-        float2 uv = input.uv;
+        float2 uv = input.texcoord;
         float rawDepth = SampleSceneDepth(uv);
 
         float3 positionWS = ComputeWorldSpacePosition(uv, rawDepth, UNITY_MATRIX_I_VP);
@@ -310,18 +316,18 @@ Shader "Hidden/CelToon/SSR"
 
     half4 Frag_BlurHorizontal(Varyings input) : SV_Target
     {
-        float2 uv = input.uv;
+        float2 uv = input.texcoord;
         float2 texelSize = float2(1.0 / _ScreenParams.x, 1.0 / _ScreenParams.y);
-        half4 result = BlurHorizontal(uv, texelSize, _BlurScale, _MainTex, sampler_LinearClamp);
+        half4 result = BlurHorizontal(uv, texelSize, _BlurScale, _BlitTexture, sampler_LinearClamp);
 
         return result;
     }
 
     half4 Frag_BlurVertical(Varyings input) : SV_Target
     {
-        float2 uv = input.uv;
+        float2 uv = input.texcoord;
         float2 texelSize = float2(1.0 / _ScreenParams.x, 1.0 / _ScreenParams.y);
-        half4 result = BlurVertical(uv, texelSize, _BlurScale, _MainTex, sampler_LinearClamp);
+        half4 result = BlurVertical(uv, texelSize, _BlurScale, _BlitTexture, sampler_LinearClamp);
 
         return result;
     }
@@ -354,6 +360,7 @@ Shader "Hidden/CelToon/SSR"
             Name "SSR_Raymarch"
 
             HLSLPROGRAM
+            #pragma target 2.0
             #pragma multi_compile _ SSR_DDA2D SSR_RAY3D SSR_HIZ2D
             #pragma vertex Vert
             #pragma fragment Frag
@@ -365,6 +372,7 @@ Shader "Hidden/CelToon/SSR"
             Name "SSR_BlurHorizontal"
 
             HLSLPROGRAM
+            #pragma target 2.0
             #pragma vertex Vert
             #pragma fragment Frag_BlurHorizontal
             ENDHLSL
@@ -375,6 +383,7 @@ Shader "Hidden/CelToon/SSR"
             Name "SSR_BlurVertical"
 
             HLSLPROGRAM
+            #pragma target 2.0
             #pragma vertex Vert
             #pragma fragment Frag_BlurVertical
             ENDHLSL
@@ -385,6 +394,7 @@ Shader "Hidden/CelToon/SSR"
             Name "SSR_HiZDepthMip"
 
             HLSLPROGRAM
+            #pragma target 2.0
             #pragma vertex Vert
             #pragma fragment Frag_HiZDepthMip
             ENDHLSL

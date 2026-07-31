@@ -23,34 +23,36 @@ Unity 6 URP 17+ 渲染技术实验室。研究方向：PCSS 软阴影、Boids �
 ```
 ┌──────────────────────────────────────────────────────────┐
 │  [1] Memory ←─────────────────────────────────────┐      │
-│  │   .claude/memory/MEMORY.md                      │      │
-│  │   .claude/learnings/                            │      │
-│  │   会话启动加载 → 会话结束更新                     │      │
+│  │   .claude/agents/unity-developer/memory/        │      │
+│  │   .claude/rules/                                │      │
+│  │   会话启动加载 → 会话结束更新 (E1-E4)             │      │
 │  ↓                                                  │      │
 │  [2] Agent ───────────────────────────────────┐    │      │
 │  │   .claude/agents/unity-developer.md         │    │      │
 │  │   宪法 C1-C7 + 模式选择 + 退出条件           │    │      │
+│  │   .claude/agents/meta-developer.md          │    │      │
+│  │   体系维护 + 精简去重 (P1-P3)                │    │      │
 │  ↓                                             │    │      │
 │  [3] Platform ───────────────────────────┐    │    │      │
-│  │   .claude/platforms/unity-editor.md    │    │    │      │
-│  │   Editor 可用性 → 流水线深度            │    │    │      │
+│  │   agent.md 内 Editor 可用性策略         │    │    │      │
+│  │   Editor 状态 → 流水线深度              │    │    │      │
 │  ↓                                        │    │    │      │
 │  [4] Skill ────────────────────────┐     │    │    │      │
 │  │   .claude/skills/auto-manager/   │     │    │    │      │
 │  │   过程性知识 + 工作流编排          │     │    │    │      │
 │  ↓                                   │     │    │    │      │
 │  [5] CLI ────────────────────┐      │     │    │    │      │
-│  │   .claude/cli/unityctl.md  │      │     │    │    │      │
-│  │   .claude/cli/roslyn.md    │      │     │    │    │      │
+│  │   unity-developer/cli/unityctl.md  │     │    │    │      │
+│  │   unity-developer/cli/roslyn.md    │     │    │    │      │
 │  ↓                             │      │     │    │    │      │
 │  [6] Script ───────────┐      │      │     │    │    │      │
-│  │   .claude/scripts/   │      │      │     │    │    │      │
-│  │   roslyn/*.cs        │      │      │     │    │    │      │
+│  │   tmp/.reusable/     │      │      │     │    │    │      │
+│  │   query_scene.cs     │      │      │     │    │    │      │
+│  │   organize_scene.cs  │      │      │     │    │    │      │
 │  ↓                       │      │      │     │    │    │      │
 │  [7] → Memory ───────────┘      │      │     │    │    │      │
-│   learnings/ 更新                │      │     │    │    │      │
-│   MEMORY.md 追加                 │      │     │    │    │      │
-│   sessions/ FTS5 索引            │      │     │    │    │      │
+│   memory/ 创建 dated 文件 + 更新索引         │    │    │      │
+│   rules/ 追加新错误模式 (grep 去重)           │    │    │      │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -58,19 +60,7 @@ Unity 6 URP 17+ 渲染技术实验室。研究方向：PCSS 软阴影、Boids �
 
 ## 宪法 (C1-C7)
 
-以下原则优先级最高。任何 skill、rule、mode 与宪法冲突时，**宪法优先**。
-
-| # | 原则 | 说明 |
-|---|------|------|
-| **C1** | 安全优先于速度 | `git stash --all` 永久禁止。任何删除操作必须先列清单、人工确认、再执行。 |
-| **C2** | 不碰用户代码 | 清理/自动修复只作用于 `tmp/`、`Screenshots/`、场景测试物体。绝不动 `Assets/Mine/` 下的功能代码。 |
-| **C3** | 渐进式自动化 | 先轻后重。轻操作可自动，重操作必须人工确认。 |
-| **C4** | 证据驱动 | 不凭"看起来对"下结论。编译通过看日志，运行效果看日志和返回值，错误诊断看堆栈。 |
-| **C5** | 可回退 | 重大改动前必须备份。任何不可逆操作前必须留回退路径。 |
-| **C6** | 模式优先 | 先判断 Research vs Production，再按模式规则执行。不在 Research 模式做 Production 的事。 |
-| **C7** | 知识优先 | 任何写代码的任务必须先加载知识库，确保代码风格、命名、文件结构符合项目规范。 |
-
-详细宪法 + 模式选择逻辑 + 退出条件 + 完整性门禁 → [agents/unity-developer.md](.claude/agents/unity-developer.md)
+宪法是项目的最高原则。唯一权威来源：[agents/unity-developer.md](.claude/agents/unity-developer.md) — C1-C7 + 模式选择 + 退出条件 + 完整性门禁。
 
 ---
 
@@ -80,5 +70,14 @@ Unity 6 URP 17+ 渲染技术实验室。研究方向：PCSS 软阴影、Boids �
 - **关键代码目录**：`Assets/Mine/Shaders/`、`Assets/Mine/Scripts/`
 - **知识库**：`Assets/MarkDowns/`（项目开发规范）
 - **Editor 检查**：`unityctl status`
-- **Memory**：[.claude/memory/MEMORY.md](.claude/memory/MEMORY.md)
-- **经验教训**：[.claude/learnings/](.claude/learnings/)
+- **Memory**：[.claude/agents/unity-developer/memory/MEMORY.md](.claude/agents/unity-developer/memory/MEMORY.md)
+- **开发规范**：[.claude/rules/](.claude/rules/)
+
+## Agent 路由
+
+| 任务类型 | Agent | 触发关键词 |
+|---------|-------|-----------|
+| Unity 开发（Shader、C#、渲染） | [unity-developer](.claude/agents/unity-developer.md) | Shader, HLSL, Compute, RenderGraph, URP, Material |
+| .claude 体系维护 | [meta-developer](.claude/agents/meta-developer.md) | agent, skill, reference, .claude, 体系, 结构, 维护 |
+
+全局路由表在 `~/.claude/agents/default.md`。

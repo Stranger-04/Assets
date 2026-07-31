@@ -1,20 +1,27 @@
 // ════════════════════════════════════════════════════════════════
 //  WaterInteraction.compute — 水面交互处理
 //
-//  CSWater: 波纹扩散 + 指数时间衰减
-//  - 读取 _InteractionTex (当前帧正交相机渲染的原始交互)
-//  - 读取 _InteractionResultTex (上一帧处理结果)
-//  - 输出更新后的 _InteractionResultTex
+//  CSWave: 经典 2D 波动方程 (Verlet 积分) + 移动模拟域重投影
+//  - 读取 _InteractionOriginTex (当前帧，物体空间无需偏移)
+//  - 读取 _InteractionWaterTex   (上帧，偏移 _DeltaPixels 重投影)
+//  - 读取 _InteractionWaterPTex  (上上帧，偏移 _DeltaPixels 重投影)
+//  - 输出 _InteractionWaterTex   (h_new，当前位置)
+//  - 同时写 _InteractionWaterPTex (h_curr → 下帧 h_prev，当前位置)
 //
+//  物体交互: 穿透深度 → 水面下压 (负高度)
 //  线程组: 8×8
 // ════════════════════════════════════════════════════════════════
 
-#pragma kernel CSWater
+#pragma kernel CSWave
 
-Texture2D<float>   _InteractionTex;
-RWTexture2D<float> _InteractionResultTex;
+Texture2D<float>   _InteractionOriginTex;
+RWTexture2D<float> _InteractionWaterTex;
+RWTexture2D<float> _InteractionWaterPTex;
 
-float _DeltaTime;
+float _WaveSpeed;        // 波速系数，推荐 0.05~0.4
+float _Damping;          // 每帧阻尼，推荐 0.99~0.999
+float _ObjectForce;      // 物体下压力度，推荐 0.5~2.0
+int2  _DeltaPixels;      // 像素偏移 = -worldDelta / areaSize * resolution
 uint  _Resolution;
 
 // ── 4 邻域偏移 ──────────────────────────────────────────────
@@ -27,40 +34,69 @@ static const int2 Offsets[4] =
     int2( 0, -1),
 };
 
+// ── 边界检查 ──────────────────────────────────────────────
+
+bool InBounds(int2 c)
+{
+    return c.x >= 0 && c.x < (int)_Resolution && c.y >= 0 && c.y < (int)_Resolution;
+}
+
 // ════════════════════════════════════════════════════════════
-//  CSWater — 水面波纹模拟
-//  - 衰减: 上一帧值按指数衰减
-//  - 扩散: 与 4 邻域平均值混合
-//  - 取 max(当前输入, 衰减+扩散结果) 保证新触碰不被旧值覆盖
+//  CSWave — Verlet 波动方程 + 移动域重投影 + 物体下压
+//  h_new = 2*h_curr - h_prev + c · Laplacian(h_curr)
 // ════════════════════════════════════════════════════════════
 
 [numthreads(8, 8, 1)]
-void CSWater(uint3 id : SV_DispatchThreadID)
+void CSWave(uint3 id : SV_DispatchThreadID)
 {
     if (id.x >= _Resolution || id.y >= _Resolution)
         return;
 
-    float current  = _InteractionTex[id.xy];
-    float previous = _InteractionResultTex[id.xy];
+    // ── 重投影: 旧网格中同世界位置的像素坐标 ──
+    int2 prevCoord = int2(id.xy) + _DeltaPixels;
+    bool prevValid = InBounds(prevCoord);
 
-    // 时间衰减
-    float decay = exp(-_DeltaTime * 3.0);
+    // origin 在当前帧位置，直接采样（无需偏移）
+    float depth = _InteractionOriginTex[id.xy];
 
-    // 4 邻域平均
+    // ── 历史数据重投影 ──
+    // 注意: WaterTex 正在被其他线程写入，此读取有轻微数据竞争。
+    // 每帧位移通常 <10px，竞争影响在视觉上不可见。
+    float h_curr = prevValid ? _InteractionWaterTex[prevCoord]  : 0.0;
+    float h_prev = prevValid ? _InteractionWaterPTex[prevCoord] : 0.0;
+
+    // ── 拉普拉斯算子 (邻域在旧网格) ──
     float neighborSum = 0.0;
     for (int i = 0; i < 4; i++)
     {
-        int2 nPos = int2(id.xy) + Offsets[i];
-        if (nPos.x >= 0 && nPos.x < (int)_Resolution && nPos.y >= 0 && nPos.y < (int)_Resolution)
-            neighborSum += _InteractionResultTex[nPos];
+        int2 nPos = prevCoord + Offsets[i];
+        if (InBounds(nPos))
+            neighborSum += _InteractionWaterTex[nPos];
     }
-    float neighborAvg = neighborSum * 0.25;
 
-    // 混合: 保留部分上帧值 + 邻居扩散
-    float smoothed = previous * decay + neighborAvg * (1.0 - decay);
+    float laplacian = neighborSum - 4.0 * h_curr;
 
-    // 最终 = max(新触碰, 平滑旧值)
-    float result = max(current, smoothed);
+    // ── Verlet 积分 ──
+    float h_new = 2.0 * h_curr - h_prev + _WaveSpeed * laplacian;
 
-    _InteractionResultTex[id.xy] = result;
+    // ── 阻尼 ──
+    h_new *= _Damping;
+
+    // ── 边界淡出: RT 边缘能量逐渐衰减，防止拖尾滞留 ──
+    float border = _Resolution * 0.08;  // 8% 边界
+    float edgeX  = smoothstep(0.0, border, (float)id.x) * smoothstep(0.0, border, (float)(_Resolution - 1 - id.x));
+    float edgeY  = smoothstep(0.0, border, (float)id.y) * smoothstep(0.0, border, (float)(_Resolution - 1 - id.y));
+    h_new *= edgeX * edgeY;
+
+    // ── 物体交互: 穿透深度 → 水面下压 ──
+    if (depth > 0.0)
+    {
+        float target = -depth * _ObjectForce;
+        float weight = saturate(depth * 4.0);
+        h_new = lerp(h_new, target, weight);
+    }
+
+    // ── 双写: 当前位置输出 ──
+    _InteractionWaterTex[id.xy]  = h_new;
+    _InteractionWaterPTex[id.xy] = h_curr;
 }

@@ -34,6 +34,32 @@ MonoBehaviour:
   m_MaskShader: {fileID: 0}
   m_CompositeShader: {fileID: 0}
   m_DebugShowMask: 0
+--- !u!114 &-2705411243357528159
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59babb7daa8e46c42843fb05f3114ff5, type: 3}
+  m_Name: SSRFeature
+  m_EditorClassIdentifier: Assembly-CSharp::SSRFeature
+  m_Active: 0
+  settings:
+    ssrShader: {fileID: 4800000, guid: 7252a6ae0aadcc04ab92ed7c3b9ec861, type: 3}
+    stepSize: 0.5
+    maxDistance: 10
+    stepCount: 64
+    binaryCount: 8
+    mipCount: 4
+    thickness: 0.05
+    smoothness: 1
+    jitterScale: 0.5
+    blurScale: 0.5
+    SSRFeature: 1
+    ssrType: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -60,7 +86,8 @@ MonoBehaviour:
     probeVolumeBlendStatesCS: {fileID: 7200000, guid: b9a23f869c4fd45f19c5ada54dd82176, type: 3}
   m_RendererFeatures:
   - {fileID: 7833122117494664109}
-  m_RendererFeatureMap: ad6b866f10d7b46c
+  - {fileID: -2705411243357528159}
+  m_RendererFeatureMap: ad6b866f10d7b46ca19f53dcce7274da
   m_UseNativeRenderPass: 1
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}

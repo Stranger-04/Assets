@@ -1,7 +1,7 @@
-
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.Rendering.RenderGraphModule;
 
 public class DDOFFeature : ScriptableRendererFeature
 {
@@ -12,71 +12,94 @@ public class DDOFFeature : ScriptableRendererFeature
         [Range(0f, 50f)] public float focusRange = 2.0f;
         [Range(0f, 5f)] public float blurScale = 2.5f;
     }
+
     class DDOFPass : ScriptableRenderPass
     {
         private Material ddofMaterial;
         private Settings settings;
-        private RTHandle maskRT;
-        private RTHandle tempRT;
-        private RTHandle blur1RT;
-        private RTHandle blur2RT;
 
-        public void ReleaseRT()
+        class PassData
         {
-            maskRT?.Release();
-            tempRT?.Release();
-            blur1RT?.Release();
-            blur2RT?.Release();
-
-            maskRT = null;
-            tempRT = null;
-            blur1RT = null;
-            blur2RT = null;
+            public Material material;
+            public TextureHandle source;
+            public TextureHandle maskRT;
+            public TextureHandle tempRT;
+            public TextureHandle blur1RT;
+            public TextureHandle blur2RT;
         }
 
         public DDOFPass(Shader shader, Settings s)
         {
             settings = s;
-            ddofMaterial = CoreUtils.CreateEngineMaterial(shader);
+            if (shader != null)
+                ddofMaterial = CoreUtils.CreateEngineMaterial(shader);
             renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
             ConfigureInput(ScriptableRenderPassInput.Depth);
         }
 
-        [System.Obsolete]
-        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
-            if (ddofMaterial == null) return;
-            var cmd = CommandBufferPool.Get("DynamicDepthOfField");
-            var cameraData = renderingData.cameraData;
-            
+            UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
+            UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
+
+            TextureHandle source = resourceData.activeColorTexture;
+            if (!source.IsValid() || ddofMaterial == null) return;
+
             ddofMaterial.SetFloat("_FocusRange", settings.focusRange);
             ddofMaterial.SetFloat("_BlurScale", settings.blurScale);
 
-            Render(cmd, ref renderingData);
-            context.ExecuteCommandBuffer(cmd);
-            CommandBufferPool.Release(cmd);
-        }
-
-        void Render(CommandBuffer cmd, ref RenderingData renderingData)
-        {
-            var cameraData = renderingData.cameraData;
-            var source = cameraData.renderer.cameraColorTargetHandle.nameID;
-            var desc = cameraData.cameraTargetDescriptor;
+            RenderTextureDescriptor desc = cameraData.cameraTargetDescriptor;
             desc.depthBufferBits = 0;
 
-            RenderingUtils.ReAllocateHandleIfNeeded(ref maskRT, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_DDOFMaskRT");
-            RenderingUtils.ReAllocateHandleIfNeeded(ref tempRT, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_DDOFTempMainRT");
-            RenderingUtils.ReAllocateHandleIfNeeded(ref blur1RT, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_DDOFBlur1RT");
-            RenderingUtils.ReAllocateHandleIfNeeded(ref blur2RT, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_DDOFBlur2RT");
+            TextureHandle maskRT = UniversalRenderer.CreateRenderGraphTexture(
+                renderGraph, desc, "_DDOFMaskRT", false);
+            TextureHandle tempRT = UniversalRenderer.CreateRenderGraphTexture(
+                renderGraph, desc, "_DDOFTempMainRT", false);
+            TextureHandle blur1RT = UniversalRenderer.CreateRenderGraphTexture(
+                renderGraph, desc, "_DDOFBlur1RT", false);
+            TextureHandle blur2RT = UniversalRenderer.CreateRenderGraphTexture(
+                renderGraph, desc, "_DDOFBlur2RT", false);
 
-            cmd.Blit(source, tempRT.nameID);
-            cmd.SetGlobalTexture("_DDOFTempMainTex", tempRT.nameID);
-            cmd.Blit(null, maskRT.nameID, ddofMaterial, 0);
-            cmd.SetGlobalTexture("_DDOFCoCTex", maskRT.nameID);
+            using (var builder = renderGraph.AddUnsafePass<PassData>("DDOF", out var passData))
+            {
+                passData.material = ddofMaterial;
+                passData.source = source;
+                passData.maskRT = maskRT;
+                passData.tempRT = tempRT;
+                passData.blur1RT = blur1RT;
+                passData.blur2RT = blur2RT;
 
-            cmd.Blit(source, blur1RT.nameID, ddofMaterial, 1);
-            cmd.Blit(blur1RT.nameID, blur2RT.nameID, ddofMaterial, 2);
-            cmd.Blit(blur2RT.nameID, source, ddofMaterial, 3);
+                builder.UseTexture(source, AccessFlags.ReadWrite);
+                builder.UseTexture(maskRT, AccessFlags.ReadWrite);
+                builder.UseTexture(tempRT, AccessFlags.ReadWrite);
+                builder.UseTexture(blur1RT, AccessFlags.ReadWrite);
+                builder.UseTexture(blur2RT, AccessFlags.ReadWrite);
+                builder.AllowPassCulling(false);
+
+                builder.SetRenderFunc((PassData data, UnsafeGraphContext context) =>
+                {
+                    CommandBuffer cmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
+
+                    // Copy source to temp
+                    Blitter.BlitCameraTexture(cmd, data.source, data.tempRT);
+
+                    // Set globals for shader
+                    cmd.SetGlobalTexture("_DDOFTempMainTex", data.tempRT);
+
+                    // Pass 0: CoC mask
+                    Blitter.BlitCameraTexture(cmd, data.source, data.maskRT, data.material, 0);
+                    cmd.SetGlobalTexture("_DDOFCoCTex", data.maskRT);
+
+                    // Pass 1: Horizontal blur
+                    Blitter.BlitCameraTexture(cmd, data.source, data.blur1RT, data.material, 1);
+
+                    // Pass 2: Vertical blur
+                    Blitter.BlitCameraTexture(cmd, data.blur1RT, data.blur2RT, data.material, 2);
+
+                    // Pass 3: Composite to screen
+                    Blitter.BlitCameraTexture(cmd, data.blur2RT, data.source, data.material, 3);
+                });
+            }
         }
     }
 
@@ -85,18 +108,14 @@ public class DDOFFeature : ScriptableRendererFeature
 
     public override void Create()
     {
-        if (ddofpass != null)
-        {
-            ddofpass.ReleaseRT();
-            ddofpass = null;
-        }
-
-        if (settings.ddofShader == null) return;
-        ddofpass = new DDOFPass(settings.ddofShader, settings);
+        ddofpass = null;
+        if (settings.ddofShader != null)
+            ddofpass = new DDOFPass(settings.ddofShader, settings);
     }
+
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
     {
-        if (ddofpass == null) return;
-        renderer.EnqueuePass(ddofpass);
+        if (ddofpass != null)
+            renderer.EnqueuePass(ddofpass);
     }
 }

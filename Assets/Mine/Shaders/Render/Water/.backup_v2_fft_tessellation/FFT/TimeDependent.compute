@@ -1,0 +1,110 @@
+// ════════════════════════════════════════════════════════════
+//  TimeDependent — 波谱时间演化
+//
+//  对 H0 应用频散关系，得到当前时刻的波谱 H(k, t)。
+//  H(k,t) = H₀(k)·exp(iωt) + H₀*(-k)·exp(-iωt)
+//  输出 RG = H(k,t) 实部/虚部
+// ════════════════════════════════════════════════════════════
+
+#pragma kernel CSMain
+#pragma kernel PrepareChoppy
+
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+
+// ── 共享输入 ──
+Texture2D<float4> _H0;              // RG=H0(k), BA=H0*(-k)
+SamplerState sampler_H0;
+
+// ── CSMain 输出 ──
+RWTexture2D<float4> _Ht;            // RG=H(k,t) 实部/虚部, BA 保留
+
+// ── PrepareChoppy 输出 ──
+RWTexture2D<float4> _ChoppySpec;    // RG = choppy spectrum 实部/虚部
+
+// ── 共享参数 ──
+float _Time;                         // 当前时间 (秒)
+float _LengthScale;                  // cascade 长度缩放
+float _Gravity;                      // 重力加速度
+uint _Resolution;
+uint _ChoppyAxis;                    // 0 = X 轴 (k_x), 1 = Y 轴 (k_y)
+
+// ════════════════════════════════════════════════════════════
+//  CSMain — 为每个 k 计算 H(k, t)
+// ════════════════════════════════════════════════════════════
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= _Resolution || id.y >= _Resolution)
+        return;
+
+    float2 uv = id.xy / (float)_Resolution;
+    float4 h0 = _H0.SampleLevel(sampler_H0, uv, 0);
+
+    // 频率域坐标
+    float2 k = (id.xy - _Resolution * 0.5) * (2.0 * PI / _LengthScale);
+    float kLen = length(k);
+
+    if (kLen < 1e-6)
+    {
+        _Ht[id.xy] = float4(0, 0, 0, 0);
+        return;
+    }
+
+    // ── 频散关系 ω(k) = √(g·|k|) (深水) ──
+    float omega = sqrt(_Gravity * kLen);
+    float phase = omega * _Time;
+
+    // exp(iωt) = cos(ωt) + i·sin(ωt)
+    float cosP = cos(phase);
+    float sinP = sin(phase);
+
+    // H₀(k): h0.rg
+    // H₀*(-k): conj(H₀(-k)) = h0.ba  (已在 InitialSpectrum 中共轭)
+    float2 h0k  = h0.rg;
+    float2 h0nk = h0.ba;
+
+    // H(k,t) = H₀(k)·exp(iωt) + H₀*(-k)·exp(-iωt)
+    // = h0k * (cosP + i·sinP) + h0nk * (cosP - i·sinP)
+    float2 htk;
+    htk.x = h0k.x * cosP - h0k.y * sinP + h0nk.x * cosP + h0nk.y * sinP;
+    htk.y = h0k.x * sinP + h0k.y * cosP - h0nk.x * sinP + h0nk.y * cosP;
+
+    _Ht[id.xy] = float4(htk.x, htk.y, 0, 0);
+}
+
+// ════════════════════════════════════════════════════════════
+//  PrepareChoppy — 计算 choppy 位移频谱
+//
+//  D̃_x(k) = -i·(k_x/|k|)·h̃(k,t)
+//  D̃_y(k) = -i·(k_y/|k|)·h̃(k,t)
+//  其中 -i·(a+bi) = b - a·i = (h_i, -h_r)
+// ════════════════════════════════════════════════════════════
+[numthreads(8, 8, 1)]
+void PrepareChoppy(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= _Resolution || id.y >= _Resolution)
+        return;
+
+    float2 uv = id.xy / (float)_Resolution;
+    float4 ht = _Ht[id.xy];   // 直接读取 RWTexture（CSMain 刚写入）
+
+    float2 k = (id.xy - _Resolution * 0.5) * (2.0 * PI / _LengthScale);
+    float kLen = length(k);
+
+    if (kLen < 1e-6)
+    {
+        _ChoppySpec[id.xy] = float4(0, 0, 0, 0);
+        return;
+    }
+
+    float kComponent = (_ChoppyAxis == 0) ? k.x : k.y;
+    float factor = kComponent / kLen;
+
+    // -i·h̃ = (h_i, -h_r)
+    // factor · (h_i, -h_r) = (factor·h_i, -factor·h_r)
+    float2 choppy;
+    choppy.x =  factor * ht.g;   // factor * h_i
+    choppy.y = -factor * ht.r;   // -factor * h_r
+
+    _ChoppySpec[id.xy] = float4(choppy.x, choppy.y, 0, 0);
+}

@@ -85,8 +85,8 @@ public class CustomRenderer : ScriptableRenderer
             RenderingUtils.ReAllocateIfNeeded(
                 ref DepthTexture, desc,
                 FilterMode.Point, TextureWrapMode.Clamp,
-                name: "_CameraDepthTexture");
-            Shader.SetGlobalTexture("_CameraDepthTexture", DepthTexture);
+                name: "_CustomDepthTexture");
+            Shader.SetGlobalTexture("_CustomDepthTexture", DepthTexture);
             DepthPrepass.Setup(desc, DepthTexture);
             EnqueuePass(DepthPrepass);
         }

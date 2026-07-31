@@ -30,20 +30,14 @@
   │
   ├── [R3] 编译验证 ─── @capabilities/compile.md （快速模式：报错即停）
   │     ├── 编译失败 → 报告错误 → ⏸️ 暂停（不自动修复）
-  │     └── 编译通过 → 继续
-  │
-  ├── [R4] 进入 Play Mode ─── @capabilities/runtime.md
-  │
-  ├── [R5] 观测 ─── ⏸️ 暂停，等待人工看图/看日志
-  │     ├── 效果符合预期 → 继续 [R6]
-  │     └── 效果不符合 → 回到 [R2] 重新修改
-  │
-  └── [R6] 退出 Play Mode ─── 报告结果
+  │     └── 编译通过 → 报告"编译通过，请手动进入 Play Mode 验证效果"
   │
   ═══════════════ Editor Required ═══════════════
 ```
 
 **Editor 不可用时：** 执行 [R1]-[R2] 后直接报告"代码已修改，Editor 未运行，无法验证效果"。
+
+**Play Mode：** Research Mode 不自动进入 Play Mode。渲染效果需要人工观测，Agent 无法闭环验证，自动进入只会浪费效率。用户自行决定何时进入/退出 Play Mode。
 
 ## Key Behaviors
 
@@ -53,8 +47,7 @@
 | 知识预加载 | 按需（Shader→读 ShaderStructure，C#→读 ScriptStructure） |
 | 方案设计 | ❌ 跳过（假设驱动） |
 | 编译失败 | 报告 → ⏸️ 暂停，不自动修复 |
-| 运行时错误 | 报告诊断建议 → ⏸️ 暂停 |
-| 每步运行后 | ⏸️ 强制暂停，等待人工确认 |
+| Play Mode | ❌ 不自动进入（人工观测，Agent 无法闭环） |
 | 循环 | ✅ 支持无限循环 |
 | 清理 | ❌ 不触发 |
 
@@ -78,9 +71,7 @@
 | 阶段 | 验证方式 | 通过标准 |
 |------|---------|---------|
 | 编译 | `unityctl asset refresh` 输出 | `compilation succeeded` |
-| 运行 | `unityctl logs -n 20` | 无 `Exception`、无 `Error` |
 | 效果 | 人工看图确认 | 用户明确回复"符合预期"或"可以了" |
-| 截图 | `Screenshots/` 文件存在 | 文件时间戳在本次会话内 |
 
 ## Exit
 

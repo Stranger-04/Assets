@@ -1,7 +1,7 @@
-
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.Rendering.RenderGraphModule;
 
 public class RimToonScreenFeature : ScriptableRendererFeature
 {
@@ -12,127 +12,164 @@ public class RimToonScreenFeature : ScriptableRendererFeature
         [Range(1f, 10f)] public float rimPower = 5.0f;
         [Range(0f, 5f)] public float blurScale = 0.5f;
         [Range(0f, 1f)] public float blurIntensity = 0.5f;
-        [Range(0, 4)]   public int blurLevels = 1;
-        [Range(0, 4)]   public int blurIterations = 1;
-
+        [Range(0, 4)] public int blurLevels = 1;
+        [Range(0, 4)] public int blurIterations = 1;
     }
+
     class RimToonScreenPass : ScriptableRenderPass
     {
         private Material rtsMaterial;
         private Settings settings;
-        private RTHandle tempRT;
-        private RTHandle maskRT;
-        private RTHandle colorRT;
-        private RTHandle blur1RT;
-        private RTHandle blur2RT;
 
-        public void ReleaseRT()
+        class PassData
         {
-            tempRT?.Release();
-            maskRT?.Release();
-            colorRT?.Release();
-            blur1RT?.Release();
-            blur2RT?.Release();
-
-            tempRT = null;
-            maskRT = null;
-            colorRT = null;
-            blur1RT = null;
-            blur2RT = null;
+            public Material material;
+            public TextureHandle source;
+            public TextureHandle tempMainRT;
+            public TextureHandle maskRT;
+            public TextureHandle maskPongRT;
+            public TextureHandle colorRT;
+            public TextureHandle[] blurPing;
+            public TextureHandle[] blurPong;
+            public int blurLevels;
+            public int blurIterations;
         }
 
         public RimToonScreenPass(Shader shader, Settings s)
         {
             settings = s;
-            rtsMaterial = CoreUtils.CreateEngineMaterial(shader);
+            if (shader != null)
+                rtsMaterial = CoreUtils.CreateEngineMaterial(shader);
             renderPassEvent = RenderPassEvent.AfterRenderingOpaques;
             ConfigureInput(ScriptableRenderPassInput.Depth | ScriptableRenderPassInput.Normal);
         }
 
-        [System.Obsolete]
-        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
-            if (rtsMaterial == null) return;
-            var cmd = CommandBufferPool.Get("RimToonScreen");
-            var cameraData = renderingData.cameraData;
-            
+            UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
+            UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
+
+            TextureHandle source = resourceData.activeColorTexture;
+            if (!source.IsValid() || rtsMaterial == null) return;
+
+            // ── 材质参数 ──
             rtsMaterial.SetFloat("_RimPower", settings.rimPower);
             rtsMaterial.SetFloat("_BlurScale", settings.blurScale);
             rtsMaterial.SetFloat("_BlurIntensity", settings.blurIntensity);
 
-            Render(cmd, ref renderingData);
-            context.ExecuteCommandBuffer(cmd);
-            CommandBufferPool.Release(cmd);
-        }
+            // ── RT ──
+            RenderTextureDescriptor baseDesc = cameraData.cameraTargetDescriptor;
+            baseDesc.depthBufferBits = 0;
+            baseDesc.msaaSamples = baseDesc.msaaSamples;
 
-        void Render(CommandBuffer cmd, ref RenderingData renderingData)
-        {
-            var renderer = renderingData.cameraData.renderer;
-            var source = renderer.cameraColorTargetHandle.nameID;
-            var baseDesc = renderingData.cameraData.cameraTargetDescriptor;
+            TextureHandle tempMainRT = UniversalRenderer.CreateRenderGraphTexture(
+                renderGraph, baseDesc, "_RTTempMainRT", false);
 
             var maskDesc = baseDesc;
-            maskDesc.depthBufferBits = 0;
-            maskDesc.msaaSamples = baseDesc.msaaSamples;
             maskDesc.colorFormat = RenderTextureFormat.R8;
-            RenderingUtils.ReAllocateHandleIfNeeded(ref maskRT, maskDesc, FilterMode.Point, TextureWrapMode.Clamp, name: "_RimToonMaskRT");
+            TextureHandle maskRT = UniversalRenderer.CreateRenderGraphTexture(
+                renderGraph, maskDesc, "_RimToonMaskRT", false);
+            TextureHandle maskPongRT = UniversalRenderer.CreateRenderGraphTexture(
+                renderGraph, maskDesc, "_RimToonMaskPongRT", false);
 
             var colorDesc = baseDesc;
-            colorDesc.depthBufferBits = 0;
-            colorDesc.msaaSamples = baseDesc.msaaSamples;
             colorDesc.colorFormat = RenderTextureFormat.ARGB32;
-            RenderingUtils.ReAllocateHandleIfNeeded(ref colorRT, colorDesc, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_RimToonColorRT");
+            TextureHandle colorRT = UniversalRenderer.CreateRenderGraphTexture(
+                renderGraph, colorDesc, "_RimToonColorRT", false);
 
-            RenderingUtils.ReAllocateHandleIfNeeded(ref tempRT, baseDesc, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_RTTempMainRT");
-            cmd.Blit(source, tempRT.nameID);
-            cmd.SetGlobalTexture("_RTTempMainTex", tempRT.nameID);
-
-            RenderingUtils.ReAllocateHandleIfNeeded(ref blur1RT, baseDesc, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_RimToonBlurRT1");
-            RenderingUtils.ReAllocateHandleIfNeeded(ref blur2RT, baseDesc, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_RimToonBlurRT2");
-
-            var depthTarget = renderer.cameraDepthTargetHandle;
-            cmd.SetRenderTarget(maskRT.nameID, depthTarget);
-            CoreUtils.DrawFullScreen(cmd, rtsMaterial, null, 0);
-            CoreUtils.DrawFullScreen(cmd, rtsMaterial, null, 1);
-
-            cmd.SetRenderTarget(colorRT.nameID);
-            cmd.SetGlobalTexture("_RimToonMaskRT", maskRT.nameID);
-            CoreUtils.DrawFullScreen(cmd, rtsMaterial, null, 2);
-
-            cmd.Blit(colorRT.nameID, blur1RT.nameID);
-            // downsampling blur
-            for (int i = 0; i < settings.blurLevels; i++)
+            // ── 多级模糊纹理（每级一对）──
+            int maxLevel = settings.blurLevels;
+            var blurPing = new TextureHandle[maxLevel];
+            var blurPong = new TextureHandle[maxLevel];
+            for (int i = 0; i < maxLevel; i++)
             {
-                int downsampledWidth = Mathf.Max(1, colorDesc.width >> i);
-                int downsampledHeight = Mathf.Max(1, colorDesc.height >> i);
-                for (int j = 0; j < settings.blurIterations; j++)
-                {
-                    RenderingUtils.ReAllocateHandleIfNeeded(ref blur2RT, new RenderTextureDescriptor(downsampledWidth, downsampledHeight, RenderTextureFormat.Default, 0), FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_RimToonBlurRT2");
-                    cmd.Blit(blur1RT.nameID, blur2RT.nameID, rtsMaterial, 3);
-                    RenderingUtils.ReAllocateHandleIfNeeded(ref blur1RT, new RenderTextureDescriptor(downsampledWidth, downsampledHeight, RenderTextureFormat.Default, 0), FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_RimToonBlurRT1");
-                    cmd.Blit(blur2RT.nameID, blur1RT.nameID, rtsMaterial, 4);
-                }
+                int w = Mathf.Max(1, colorDesc.width >> i);
+                int h = Mathf.Max(1, colorDesc.height >> i);
+                var lvlDesc = new RenderTextureDescriptor(w, h, RenderTextureFormat.Default, 0);
+                blurPing[i] = UniversalRenderer.CreateRenderGraphTexture(
+                    renderGraph, lvlDesc, $"_RimToon_Ping_L{i}", false);
+                blurPong[i] = UniversalRenderer.CreateRenderGraphTexture(
+                    renderGraph, lvlDesc, $"_RimToon_Pong_L{i}", false);
             }
 
-            // upsampling blur
-            for (int i = settings.blurLevels - 1; i >= 0; i--)
+            using (var builder = renderGraph.AddUnsafePass<PassData>("RimToon", out var passData))
             {
-                int upsampledWidth = Mathf.Max(1, colorDesc.width >> i);
-                int upsampledHeight = Mathf.Max(1, colorDesc.height >> i);
-                for (int j = 0; j < settings.blurIterations; j++)
+                passData.material = rtsMaterial;
+                passData.source = source;
+                passData.tempMainRT = tempMainRT;
+                passData.maskRT = maskRT;
+                passData.maskPongRT = maskPongRT;
+                passData.colorRT = colorRT;
+                passData.blurPing = blurPing;
+                passData.blurPong = blurPong;
+                passData.blurLevels = settings.blurLevels;
+                passData.blurIterations = settings.blurIterations;
+
+                builder.UseTexture(source, AccessFlags.ReadWrite);
+                builder.UseTexture(tempMainRT, AccessFlags.ReadWrite);
+                builder.UseTexture(maskRT, AccessFlags.ReadWrite);
+                builder.UseTexture(maskPongRT, AccessFlags.ReadWrite);
+                builder.UseTexture(colorRT, AccessFlags.ReadWrite);
+                for (int i = 0; i < maxLevel; i++)
                 {
-                    RenderingUtils.ReAllocateHandleIfNeeded(ref blur2RT, new RenderTextureDescriptor(upsampledWidth, upsampledHeight, RenderTextureFormat.Default, 0), FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_RimToonBlurRT2");
-                    cmd.Blit(blur1RT.nameID, blur2RT.nameID, rtsMaterial, 3);
-                    RenderingUtils.ReAllocateHandleIfNeeded(ref blur1RT, new RenderTextureDescriptor(upsampledWidth, upsampledHeight, RenderTextureFormat.Default, 0), FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_RimToonBlurRT1");
-                    cmd.Blit(blur2RT.nameID, blur1RT.nameID, rtsMaterial, 4);
+                    builder.UseTexture(blurPing[i], AccessFlags.ReadWrite);
+                    builder.UseTexture(blurPong[i], AccessFlags.ReadWrite);
                 }
+                builder.AllowPassCulling(false);
+
+                builder.SetRenderFunc((PassData data, UnsafeGraphContext context) =>
+                {
+                    CommandBuffer cmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
+
+                    // Copy source → tempMain
+                    Blitter.BlitCameraTexture(cmd, data.source, data.tempMainRT);
+                    cmd.SetGlobalTexture("_RTTempMainTex", data.tempMainRT);
+
+                    // Pass 0: Mask generation → maskRT
+                    Blitter.BlitCameraTexture(cmd, data.source, data.maskRT, data.material, 0);
+
+                    // Pass 1: Mask post-process → maskPongRT
+                    Blitter.BlitCameraTexture(cmd, data.maskRT, data.maskPongRT, data.material, 1);
+                    cmd.SetGlobalTexture("_RimToonMaskRT", data.maskPongRT);
+
+                    // Pass 2: Color generation → colorRT
+                    Blitter.BlitCameraTexture(cmd, data.source, data.colorRT, data.material, 2);
+
+                    // ── 多级模糊 ──
+                    // Copy colorRT → blurPing[0]
+                    Blitter.BlitCameraTexture(cmd, data.colorRT, data.blurPing[0]);
+
+                    if (data.blurLevels > 0)
+                    {
+                        // Downsampling blur (level 0 = full res, level 1 = half, ...)
+                        for (int i = 0; i < data.blurLevels; i++)
+                        {
+                            for (int j = 0; j < data.blurIterations; j++)
+                            {
+                                Blitter.BlitCameraTexture(cmd, data.blurPing[i], data.blurPong[i], data.material, 3);
+                                Blitter.BlitCameraTexture(cmd, data.blurPong[i], data.blurPing[i], data.material, 4);
+                            }
+                        }
+
+                        // Upsampling blur
+                        for (int i = data.blurLevels - 2; i >= 0; i--)
+                        {
+                            for (int j = 0; j < data.blurIterations; j++)
+                            {
+                                Blitter.BlitCameraTexture(cmd, data.blurPing[i + 1], data.blurPong[i], data.material, 3);
+                                Blitter.BlitCameraTexture(cmd, data.blurPong[i], data.blurPing[i], data.material, 4);
+                            }
+                        }
+                    }
+
+                    // Set globals for final composite
+                    cmd.SetGlobalTexture("_RimToonBlurRT", data.blurPing[0]);
+                    cmd.SetGlobalTexture("_RimToonColorRT", data.colorRT);
+
+                    // Pass 5: Final composite → screen
+                    Blitter.BlitCameraTexture(cmd, data.source, data.source, data.material, 5);
+                });
             }
-
-            cmd.SetGlobalTexture("_RimToonBlurRT", blur1RT.nameID);
-
-            cmd.SetRenderTarget(source);
-            cmd.SetGlobalTexture("_RimToonColorRT", colorRT.nameID);
-            CoreUtils.DrawFullScreen(cmd, rtsMaterial, null, 5);
         }
     }
 
@@ -141,23 +178,14 @@ public class RimToonScreenFeature : ScriptableRendererFeature
 
     public override void Create()
     {
-        if (srtpass != null)
-        {
-            srtpass.ReleaseRT();
-            srtpass = null;
-        }
-
+        srtpass = null;
         if (settings.rimToonScreenShader != null)
-        {
             srtpass = new RimToonScreenPass(settings.rimToonScreenShader, settings);
-        }
     }
 
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
     {
         if (srtpass != null)
-        {
             renderer.EnqueuePass(srtpass);
-        }
     }
 }

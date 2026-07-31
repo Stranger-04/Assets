@@ -36,5 +36,5 @@ unityctl logs --stack           # 带堆栈跟踪
 
 ## 引用
 
-- 错误诊断详情：[../../learnings/error-patterns.md](../../learnings/error-patterns.md)
+- 错误诊断详情：[../../rules/shader-development.md](../../rules/shader-development.md)
 - 退出条件：[../../agents/unity-developer.md](../../agents/unity-developer.md)
