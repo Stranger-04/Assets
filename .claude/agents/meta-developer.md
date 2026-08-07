@@ -36,7 +36,7 @@ meta-developer 的一切操作必须遵循以下原则。违反任何一条都�
 ```
 skill/capabilities/compile.md:
   ❌ 包含 100 行 Roslyn C# 代码
-  ✅ "执行 Roslyn 脚本：unityctl script execute tmp/.reusable/check_pipeline.cs"
+  ✅ "执行 Roslyn 脚本：unityctl script execute agents/unity-developer/scripts/roslyn/pipeline-check.cs"
 ```
 
 **规则**：

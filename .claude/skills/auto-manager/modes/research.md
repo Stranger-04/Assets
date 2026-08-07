@@ -21,9 +21,15 @@
 ```
 用户假设/指令
   │
-  ├── [R1] 知识预加载 ─── @capabilities/knowledge.md （按需加载）⚠️ 必须执行
+  ├── ═══════════ [G0] 框架入口 ═══════════
+  │     OUTPUT: ## G0: Framework Check — Agent: unity-developer
   │
-  ├── [R2] 快速编辑 ─── 直接修改代码，遵循 knowledge.md 加载的规范
+  ├── ═══════════ [G1] 模式确认 ═══════════
+  │     OUTPUT: ## G1: Mode Selection — Mode: Research | Reason: <why>
+  │
+  ├── [R1] 知识预加载 ─── @capabilities/knowledge.md （按需加载）
+  │
+  ├── [R2] 快速编辑 ─── 直接修改代码
   │
   ├── ═══════════════ Editor Required ═══════════════
   │     ↓ 以下步骤仅在 unityctl status = connected 时执行 ↓

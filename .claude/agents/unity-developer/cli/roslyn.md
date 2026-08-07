@@ -53,7 +53,7 @@ go.GetComponent<SomeComponent>().SomePublicMethod();
 
 ## 脚本模板
 
-可复用的 Roslyn 脚本位于 `tmp/.reusable/`：
+可复用的 Roslyn 脚本位于 `scripts/roslyn/`：
 
 | 脚本 | 用途 |
 |------|------|
@@ -69,4 +69,4 @@ go.GetComponent<SomeComponent>().SomePublicMethod();
 - 完整 unityctl 命令参考：[unityctl.md](unityctl.md)
 - 场景配置脚本模板：../skills/auto-manager/capabilities/scene-setup.md
 - 清理 Roslyn 脚本：../skills/auto-manager/capabilities/cleanup.md
-- 可复用脚本策略 (`tmp/.reusable/`)：../skills/auto-manager/capabilities/cleanup.md
+- 可复用脚本策略 (`scripts/roslyn/`)：../skills/auto-manager/capabilities/cleanup.md

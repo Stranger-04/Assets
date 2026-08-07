@@ -8,7 +8,10 @@
 
 | 文件 | 日期 | 摘要 |
 |------|------|------|
-| [2026-07-28-references-bootstrap.md](2026-07-28-references-bootstrap.md) | 2026-07-28 | Harness 参考库补全（17 文件） |
+| [2026-08-07-mcp-server.md](2026-08-07-mcp-server.md) | 2026-08-07 | Unity Gate MCP Server — 配方驱动门禁系统 |
+| [2026-08-07-ecs-decoupling.md](2026-08-07-ecs-decoupling.md) | 2026-08-07 | .claude ECS 式三层解耦 |
+| [2026-08-03-experiment-mode.md](2026-08-03-experiment-mode.md) | 2026-08-03 | Experiment Mode 加入 unity-developer |
+| [2026-07-28-references-bootstrap.md](2026-07-28-references-bootstrap.md) | 2026-07-28 | Harness 参考库补全 |
 | [2026-07-28-architecture-init.md](2026-07-28-architecture-init.md) | 2026-07-28 | .claude 7 层架构初始化 |
 
 ---

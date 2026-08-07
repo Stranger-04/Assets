@@ -48,6 +48,51 @@
 
 ---
 
+## 门禁分支树 — Capability Branching Tree
+
+> mode 定义门禁序列（WHEN），capability 定义分支逻辑（HOW）。
+> mode 文件不嵌入决策细节，只引用 capability。
+
+### 结构
+
+```
+mode/production.md           → 定义 [G0]→[G1]→[G2]→[G3]→P3→...
+  │
+  ├── [G2] → capabilities/script-decision.md   (脚本决策分支树)
+  └── [G3] → capabilities/file-placement.md    (文件放置分支树)
+```
+
+### 创建规则
+
+1. **mode 只做索引** — 每个 [Gx] 一行 `→ @capabilities/<name>.md`
+2. **capability 做分支** — 包含完整的 ASK→DECIDE→OUTPUT 决策树
+3. **分支树格式** — 每层 `ASK:` + `├──` / `└──` 决策路径
+4. **OUTPUT 格式** — 每个 capability 末尾定义结构化输出契约
+
+### 反例
+
+```
+❌ mode 中嵌入 30 行决策逻辑
+✅ mode 中写 "[G2] → @capabilities/script-decision.md"
+```
+
+---
+
+## ECS 三层解耦
+
+> 从 2026-08-07 架构审计提取。Mode/Capability/Routing 严格分层。
+
+| 层 | 职责 | 可引用 | 禁止引用 |
+|----|------|--------|---------|
+| **Mode** (编排) | 门禁序列 + @capabilities 引用 | @capabilities, agents/ | 不嵌入 capability 逻辑 |
+| **Capability** (能力) | 决策分支树 + OUTPUT 格式 | rules/, 领域路径 | agents/, 具体脚本文件名 |
+| **Routing** (路由) | mode 名, agent 名 | SKILL.md, CLAUDE.md | 不嵌入 domain 逻辑 |
+
+> 反例：compile.md 引用 `../../../agents/unity-developer.md 兜底退出` ← capability 跨层引用 agent
+> 正例：compile.md 写 "暂停，报告 mode 层处理退出" ← capability 不知道 agent 存在
+
+---
+
 ## 反模式
 
 | 反模式 | 正确做法 |

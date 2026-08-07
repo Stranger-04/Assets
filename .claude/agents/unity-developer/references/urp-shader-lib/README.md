@@ -13,4 +13,4 @@
 - Metal 平台差异：[platform/metal-notes.md](../platform/metal-notes.md)
 - 全屏后处理模板：`templates/fullscreen-postprocess.shader`
 - Compute 模板：`templates/compute-template.compute`
-- Shader 开发规则：[rules/shader-development.md](../../../rules/shader-development.md)
+- Shader 开发规则：[rules/shader-development.md](../../../../rules/shader-development.md)

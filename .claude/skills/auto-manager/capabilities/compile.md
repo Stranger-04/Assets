@@ -37,7 +37,7 @@ unityctl asset refresh
         ├── 自动修复（最多 3 次）
         └── 重新编译
               ├── 成功 → 继续
-              └── 3 次后仍失败 → @../../agents/unity-developer.md 兜底退出
+              └── 3 次后仍失败 → 暂停，报告 mode 层处理退出
 ```
 
 ## 自动修复策略
@@ -51,5 +51,4 @@ unityctl asset refresh
 
 ## 引用
 
-- 错误诊断详情：[../../rules/shader-development.md](../../rules/shader-development.md)
-- 兜底退出规则：[../../agents/unity-developer.md](../../agents/unity-developer.md)
+- 错误诊断详情：[../../../rules/shader-development.md](../../../rules/shader-development.md)

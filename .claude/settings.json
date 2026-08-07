@@ -1,24 +1,49 @@
 {
   "permissions": {
+    "deny": [
+      "Bash(git stash --all *)",
+      "Bash(git stash --all)",
+      "Bash(rm -rf /Users/xiaokangji/Unity/Lab/Assets/Mine/**)",
+      "Bash(rm -rf ~/*)",
+      "Bash(sudo *)",
+      "Bash(curl * | sh)"
+    ],
     "allow": [
-      "Bash(rm -rf /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v3_rotation_independent /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v4_no_slope_bias)",
-      "Bash(mkdir -p /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v3_stable_pcss)",
-      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSS.shader /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v3_stable_pcss/)",
-      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSSFeature.cs /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v3_stable_pcss/)",
-      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/CustomShadowCaster.shader /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v3_stable_pcss/)",
-      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v2_pre_pcss/PCSS.shader /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSS.shader)",
-      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v2_pre_pcss/PCSSFeature.cs /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSSFeature.cs)",
-      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v3_stable_pcss/PCSS.shader /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSS.shader)",
-      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_v3_stable_pcss/PCSSFeature.cs /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSSFeature.cs)",
-      "Bash(python3 -c ' *)",
-      "Bash(rm -rf /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup_*)",
-      "Bash(mkdir -p /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup)",
-      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSS.shader /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup/)",
-      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/PCSSFeature.cs /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup/)",
-      "Bash(cp /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/CustomShadowCaster.shader /Users/xiaokangji/Unity/Lab/Assets/Mine/Shaders/PCSS/.backup/)",
-      "Bash(unityctl compile *)",
-      "Bash(unityctl log *)",
-      "Bash(unityctl execute-csharp *)"
+      "Bash(unityctl *)",
+      "Bash(git *)",
+      "Bash(ls *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(wc *)",
+      "Bash(mkdir *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Bash(rm *)",
+      "Bash(cd *)",
+      "Bash(echo *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(sed *)",
+      "Bash(python3 *)",
+      "Bash(jq *)",
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "WebFetch",
+      "WebSearch"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [{
+          "type": "command",
+          "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/guard-bash.sh"
+        }]
+      }
     ]
   }
 }

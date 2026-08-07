@@ -1,19 +1,7 @@
-# Production Mode — 生产流水线
+# Production Mode
 
-> 适用于功能开发、Bug 修复、重构、发版准备等确定性任务。
-> 核心特征：**全自动流水线，仅在异常时暂停**。
-
----
-
-## When to Use
-
-以下任一信号触发：
-
-- 明确的输入→输出需求
-- 功能增删改 / Bug 修复 / 重构 / 文件整理 / 代码格式化
-- 关键词：实现、开发、添加、修复、重构、整理、格式化、发布
-- 涉及多文件协调修改
-- 用户明确要求"自动模式" / "全自动"
+> 门禁驱动的静态工作流。每个 [Gx] 节点是强制决策点：必须输出结构化决策后才能进入下一步。
+> 业界对标：Tool Denial by Construction + Structured Output as Transition Contract。
 
 ---
 
@@ -22,85 +10,58 @@
 ```
 用户需求
   │
-  ├── [P0] 备份 ─── @capabilities/backup.md （重大改动时触发）
+  ├── ═══════════ [G0] 框架入口 ═══════════
+  │     → 确认 agent 上下文
   │
-  ├── [P1] 知识预加载 ─── @capabilities/knowledge.md （全量加载）⚠️ 必须执行
+  ├── ═══════════ [G1] 模式确认 ═══════════
+  │     → 确认 mode + reason
   │
-  ├── [P2] 方案设计 ─── 三步走
-  │     ├── [P2a] 读取目标文件 → 提取现有结构（函数列表、include、注释分布）
-  │     ├── [P2b] 对照 knowledge.md 加载的规范 → 逐条标记 ✅符合 / ❌不符合 / —不适用
-  │     │     └── 不符合的条目自动进入修改计划（@../../agents/unity-developer.md 完整性门禁）
-  │     └── [P2c] 输出修改计划（涉及文件 + 接口 + 资源引用）
-  │           └── 调试期接口指向已有资源（标记 DEBUG_REF）
+  ├── [P1] 知识预加载 → @capabilities/knowledge.md（全量）
   │
-  ├── [P3] 代码生成 ─── Write/Edit 生成全部文件，遵循 knowledge.md 加载的规范
+  ├── [P2] 方案设计
+  │     ├── P2a: 读取目标文件
+  │     ├── P2b: 规范符合度检查 → 输出检查清单表
+  │     └── P2c: 修改计划
   │
-  ├── ═══════════════ Editor Required ═══════════════
-  │     ↓ 以下步骤仅在 unityctl status = connected 时执行 ↓
+  ├── ═══════════ [G2] 脚本决策 ═══════════
+  │     → @capabilities/script-decision.md
   │
-  ├── [P4] 编译验证 ─── @capabilities/compile.md （完整模式：自动修复循环）
-  │     ├── 编译失败 → 自动修复 → 重编（最多 3 次）
-  │     │     └── 3 次后仍失败 → @../../agents/unity-developer.md 兜底退出
-  │     └── 编译通过 → 提示轻清理 → 继续
+  ├── ═══════════ [G3] 文件放置 ═══════════
+  │     → @capabilities/file-placement.md
   │
-  ├── [P5] 场景配置 ─── @capabilities/scene-setup.md
+  ├── [P3] 代码生成
+  │     ⚠️ 读取 [G2] Decision + [G3] TargetDir
+  │     ⚠️ 写入前确认门禁通过
   │
-  ├── [P6] 运行时验证 ─── @capabilities/runtime.md
-  │     ├── 运行时错误 → 自动诊断修复（最多 3 次）
-  │     └── 零错误 → 继续
+  ├── ═══════════ Editor Required ═══════════
   │
-  ├── [P7] 退出 Play Mode + 报告
+  ├── [P4] 编译验证 → @capabilities/compile.md
   │
-  └── [P8] 清理 ─── @capabilities/cleanup.md （轻清理，自动提示）
+  ├── [P5] 场景操作 → @capabilities/scene-setup.md（使用 [G2] 决定的脚本）
   │
-  ═══════════════ Editor Required ═══════════════
+  ├── [P6] 运行时验证 → @capabilities/runtime.md
+  │
+  └── [P7] 退出 + 报告
 ```
 
-**Editor 不可用时：** 执行 [P0]-[P3] 后直接报告结果，注明"Editor 未运行，未执行编译验证"。
+---
 
-## Key Behaviors
+## 门禁契约
 
-| 维度 | 行为 |
-|------|------|
-| 备份 | ✅ 架构级改动 / >50 行修改时自动备份 |
-| 知识预加载 | 全量扫描 `Assets/MarkDowns/*.md` |
-| 方案设计 | ✅ 输出修改计划 |
-| 编译失败 | 自动修复 → 重编（最多 3 次） |
-| 运行时错误 | 自动诊断修复（最多 3 次） |
-| 运行后 | 🟢 仅异常暂停 |
-| 循环 | ❌ 一次性流水线 |
-| 清理 | ✅ 编译/运行通过时提示轻清理 |
+| 门禁 | 输出格式 | 失败阻断 |
+|------|---------|---------|
+| **[G0]** | `Agent: <name>` | 不在框架内 → 加载 agent 后重试 |
+| **[G1]** | `Mode: <mode> \| Reason: <why>` | 模式未确认 → 不执行后续 |
+| **[G2]** | `Decision: USE \| CREATE reusable \| CREATE tmp` | 未输出 Decision → 不进入 P3 |
+| **[G3]** | `FileType: <ext> \| Category: <cat> \| TargetDir: <path>` | 未确定路径 → 不写文件 |
 
-## Rationalizations（Agent 不得跳过）
+> 每个 [Gx] 的输出是下一步的输入。跳过门禁 = 下一步无法执行。
 
-| Agent 可能的借口 | 为什么不能跳过 |
-|-----------------|--------------|
-| "这个改动很小，不用备份" | 触发条件不看改动大小，看改动性质。架构级改动哪怕 1 行也必须备份。 |
-| "编译通过了，场景配置应该没问题" | 场景配置依赖运行时状态，编译通过不代表 Roslyn 脚本能正常执行。 |
-| "规范大致看了，不需要逐条对照" | 不逐条对照一定会遗漏。P2 必须输出规范符合度检查清单（@../../agents/unity-developer.md 完整性门禁）。 |
-| "已经修了 2 次了，再试一次" | 3 次自动修复失败后必须暂停。盲目重试浪费 token。 |
-| "参考实现没读，规范描述就够了" | 规范是抽象规则，参考实现是具体范例。MarkDowns 引用的参考文件必须读取（@capabilities/knowledge.md）。 |
-| "清理可以最后一起做" | 每次编译/运行通过后提示轻清理，积压到最后会混入大量临时文件。 |
+---
 
 ## Red Flags
 
-- 同一错误连续出现 2 次 → 第 3 次前暂停，不要再自动修
-- `git stash --all` 出现在命令中 → 立即拦截，这是安全红线
-- 编译通过但 Roslyn 脚本执行失败 → 不跳过，这正是需要人工的地方
-- Agent 跳过 P2b 规范对照直接进入 P3 代码生成 → 必须回头输出检查清单
-
-## Verification
-
-| 阶段 | 验证方式 | 通过标准 |
-|------|---------|---------|
-| 备份 | `git log --oneline -1` | 最新 commit 包含"备份基准" |
-| 编译 | `unityctl asset refresh` | `compilation succeeded` |
-| 场景 | `unityctl script execute` 返回值 | 包含 `OK:` 前缀 |
-| 运行 | `unityctl logs -n 20` | 无 `Exception`、无 `Error` |
-
-## Exit
-
-- 流水线全部完成（编译→运行→报告）
-- 3 次自动修复失败 → 兜底退出
-- bridge 断开 / 超时 → 兜底退出
-- 触发破坏性操作 → 暂停等待确认
+- Agent 未输出 [Gx] 格式就进入下一步 → 退回门禁
+- [G2] Decision=USE 但 agent 写了新脚本 → 废弃新脚本，使用已有
+- 同一错误连续 2 次 → 第 3 次前暂停
+- `git stash --all` → 立即拦截

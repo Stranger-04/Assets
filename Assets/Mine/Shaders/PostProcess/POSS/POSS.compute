@@ -1,0 +1,166 @@
+// ════════════════════════════════════════════════════════════
+//  POSS Resolve Compute Shader
+//  屏幕空间逐物体软阴影解算：重建世界坐标 → 投影到各物体光空间
+//  → 采样 Shadow Atlas Tile → PCF 软边缘 → 输出 R8 阴影纹理
+// ════════════════════════════════════════════════════════════
+
+#pragma kernel POSS_Resolve
+
+#pragma target 4.5
+
+// ── I/O ──
+Texture2D<float>   _CameraDepthTexture;
+Texture2D<float>   _POSS_ShadowAtlas;
+RWTexture2D<float> _POSS_ShadowOut;
+
+// ── 屏幕 & 相机 ──
+uint   _ShowOnly;
+float2 _ScreenSize;
+float4 _FrustumRay0, _FrustumRay1, _FrustumRay2, _FrustumRay3;
+float4 _ZBufferParams;
+float3 _WorldSpaceCameraPos;
+float3 _LightDirection;
+
+// ── 每物体数据 ──
+float4x4 _ObjectVPs[16];
+float4   _AtlasOffsets[16];
+int      _ObjectCount;
+
+// ── 阴影参数 ──
+float _DepthBias;
+float _ShadowStrength;
+
+// ── PCF ──
+float _PCFRadius;
+int   _PCFTaps;
+int   _AtlasRes;
+
+#define NUMTHREAD_X 8
+#define NUMTHREAD_Y 8
+
+// 8-tap Poisson disk（PCF 软边缘）
+static const float2 PoissonDisk[8] = {
+    float2( 0.5278, -0.0859), float2(-0.0401,  0.5361),
+    float2(-0.6704, -0.1799), float2(-0.4194, -0.6160),
+    float2( 0.4405, -0.6394), float2(-0.7571,  0.3493),
+    float2( 0.5746,  0.6859), float2(-0.0657, -0.5542)
+};
+
+// ════════════════════════════════════════════════════════════
+//  工具函数
+// ════════════════════════════════════════════════════════════
+
+bool IsSkybox(float rawDepth)
+{
+#if UNITY_REVERSED_Z
+    return rawDepth <= 0.0001;
+#else
+    return rawDepth >= 0.9999;
+#endif
+}
+
+float3 ReconstructWorldPosition(float2 screenUV, float rawDepth)
+{
+    float linear01 = 1.0 / (_ZBufferParams.x * rawDepth + _ZBufferParams.y);
+#if UNITY_UV_STARTS_AT_TOP
+    float vpY = 1.0 - screenUV.y;
+#else
+    float vpY = screenUV.y;
+#endif
+    float3 rayBL = _FrustumRay0.xyz, rayBR = _FrustumRay1.xyz;
+    float3 rayTL = _FrustumRay2.xyz, rayTR = _FrustumRay3.xyz;
+    float3 ray = lerp(lerp(rayBL, rayBR, screenUV.x), lerp(rayTL, rayTR, screenUV.x), vpY);
+    return _WorldSpaceCameraPos + ray * linear01;
+}
+
+// 手动双线性采样 Shadow Atlas（tile 边界 clamp）
+float SampleAtlasTile(float2 atlasUV, float2 tileMin, float2 tileMax)
+{
+    float texelSize = 1.0 / (float)_AtlasRes;
+    float halfTexel = 0.5 * texelSize;
+    float2 uv = clamp(atlasUV, tileMin + halfTexel, tileMax - halfTexel);
+    float2 coord = uv / texelSize - 0.5;
+    float2 f = frac(coord);
+    int2 base = int2(coord);
+    float s00 = _POSS_ShadowAtlas.Load(int3(base.x,     base.y,     0));
+    float s10 = _POSS_ShadowAtlas.Load(int3(base.x + 1, base.y,     0));
+    float s01 = _POSS_ShadowAtlas.Load(int3(base.x,     base.y + 1, 0));
+    float s11 = _POSS_ShadowAtlas.Load(int3(base.x + 1, base.y + 1, 0));
+    return lerp(lerp(s00, s10, f.x), lerp(s01, s11, f.x), f.y);
+}
+
+bool DepthCmpLit(float occluderDepth, float receiverDepth, float bias)
+{
+#if UNITY_REVERSED_Z
+    return occluderDepth > receiverDepth - bias;
+#else
+    return occluderDepth < receiverDepth + bias;
+#endif
+}
+
+// PCF 软边缘 — Poisson disk 多次采样平均
+float SoftShadowPCF(float2 atlasUV, float2 tileMin, float2 tileMax,
+    float receiverDepth, float bias)
+{
+    if (_PCFRadius <= 0.0 || _PCFTaps <= 1)
+        return DepthCmpLit(SampleAtlasTile(atlasUV, tileMin, tileMax), receiverDepth, bias) ? 1.0 : 0.0;
+
+    float radiusUV = _PCFRadius / (float)_AtlasRes;
+    int taps = min(_PCFTaps, 8);
+    float shadow = 0.0;
+    for (int j = 0; j < taps; j++)
+    {
+        float2 offset = PoissonDisk[j] * radiusUV;
+        float sd = SampleAtlasTile(atlasUV + offset, tileMin, tileMax);
+        shadow += DepthCmpLit(sd, receiverDepth, bias) ? 1.0 : 0.0;
+    }
+    return shadow / (float)taps;
+}
+
+// ════════════════════════════════════════════════════════════
+//  Main Kernel
+// ════════════════════════════════════════════════════════════
+[numthreads(NUMTHREAD_X, NUMTHREAD_Y, 1)]
+void POSS_Resolve(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= (uint)_ScreenSize.x || id.y >= (uint)_ScreenSize.y)
+        return;
+
+    float2 screenUV = (id.xy + 0.5) / _ScreenSize.xy;
+    float rawDepth = _CameraDepthTexture.Load(int3(id.xy, 0));
+
+    if (IsSkybox(rawDepth))
+    {
+        _POSS_ShadowOut[id.xy] = 1.0;
+        return;
+    }
+
+    float3 worldPos = ReconstructWorldPosition(screenUV, rawDepth);
+    float shadow = 1.0;
+
+    for (int i = 0; i < _ObjectCount; i++)
+    {
+        float4 shadowCoord = mul(_ObjectVPs[i], float4(worldPos, 1.0));
+        float2 suv = shadowCoord.xy / shadowCoord.w;
+        float  rd  = shadowCoord.z / shadowCoord.w;
+
+        if (suv.x < 0.0 || suv.x > 1.0 || suv.y < 0.0 || suv.y > 1.0)
+            continue;
+
+        float4 offset = _AtlasOffsets[i];
+        float2 atlasUV = suv * offset.z + offset.xy;
+        float2 tileMin = offset.xy;
+        float2 tileMax = offset.xy + offset.zz;
+
+#if UNITY_REVERSED_Z
+        float biasedReceiver = rd - _DepthBias;
+#else
+        float biasedReceiver = rd + _DepthBias;
+#endif
+        float lit = SoftShadowPCF(atlasUV, tileMin, tileMax, biasedReceiver, 0.0);
+        shadow = min(shadow, lit);
+    }
+
+    shadow = lerp(1.0, shadow, _ShadowStrength);
+    _POSS_ShadowOut[id.xy] = shadow;
+}

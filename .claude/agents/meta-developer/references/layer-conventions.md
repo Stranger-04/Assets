@@ -93,7 +93,7 @@
 | 目录下只有 1-2 个文件 | 内化或合并 |
 | MD 超过 80 行 | 提取代码到文件，MD 只留索引 |
 | references/ 放完整代码 | 代码 → templates/ |
-| capabilities/ 中嵌入 C# 代码 | 代码 → tmp/.reusable/ |
+| capabilities/ 中嵌入 C# 代码 | 代码 → scripts/roslyn/ |
 | 同一概念在 3 处出现 | 合并为 1 处权威来源 |
 | 新建 `learnings/` 目录 | 经验 → memory/，规范 → rules/ |
 | 新建 `platforms/` 目录 | 内容 → agent.md 内 Editor 段 |

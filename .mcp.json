@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "unity-gate": {
+      "command": "uv",
+      "args": ["run", "--directory", "/Users/xiaokangji/Unity/Lab/.mcp", "python", "server.py"]
+    }
+  }
+}

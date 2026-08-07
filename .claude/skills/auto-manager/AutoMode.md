@@ -26,8 +26,9 @@
 
 ## 模式入口
 
-- **Research Mode**：[modes/research.md](modes/research.md) — 组合 capabilities/，共用规则
-- **Production Mode**：[modes/production.md](modes/production.md) — 组合 capabilities/，共用规则
+- **Research Mode**：[modes/research.md](modes/research.md) — Shader 调试、参数调优、人工逐步观测
+- **Production Mode**：[modes/production.md](modes/production.md) — 功能开发、Bug 修复、有模板一条龙
+- **Experiment Mode**：[modes/experiment.md](modes/experiment.md) — 无模板、WebSearch 方案、自主迭代直到目标
 
 ---
 
@@ -52,7 +53,7 @@
   └── 它是"查一下"的参考资料？
         ├── CLI 命令速查 → ../../agents/unity-developer/cli/unityctl.md
         ├── Roslyn 脚本模板 → ../../agents/unity-developer/cli/roslyn.md
-        ├── Roslyn 可执行脚本 → ../../tmp/.reusable/
+        ├── Roslyn 可执行脚本 → ../../agents/unity-developer/scripts/roslyn/
         └── 项目知识库 → Assets/MarkDowns/
 ```
 
@@ -82,13 +83,16 @@
 
 | 文件 | 职责 | 被哪些 mode 使用 |
 |------|------|-----------------|
-| [compile.md](capabilities/compile.md) | 编译验证 + 自动修复 | Research, Production |
-| [runtime.md](capabilities/runtime.md) | Play Mode 进入/退出/日志 | Research, Production |
+| [compile.md](capabilities/compile.md) | 编译验证 + 自动修复 | Research, Production, Experiment |
+| [runtime.md](capabilities/runtime.md) | Play Mode 进入/退出/日志 | Production, Experiment |
 | [screenshot.md](capabilities/screenshot.md) | 截图留档（按需手动触发） | — |
 | [scene-setup.md](capabilities/scene-setup.md) | Roslyn 场景配置 | Production |
-| [backup.md](capabilities/backup.md) | 重大改动前备份 | Production |
-| [knowledge.md](capabilities/knowledge.md) | MarkDowns 知识预加载 | Research, Production |
-| [cleanup.md](capabilities/cleanup.md) | 轻/重清理系统 | Production |
+| [backup.md](capabilities/backup.md) | 重大改动前备份 | Production, Experiment |
+| [knowledge.md](capabilities/knowledge.md) | MarkDowns 知识预加载 | Research, Production, Experiment |
+| [cleanup.md](capabilities/cleanup.md) | 轻/重清理系统 | Production, Experiment |
+| [web-search.md](capabilities/web-search.md) | WebSearch + Plan 方案设计 | Experiment |
+| [script-decision.md](capabilities/script-decision.md) | 脚本决策分支（[G2]） | Production |
+| [file-placement.md](capabilities/file-placement.md) | 文件放置分支（[G3]） | Production |
 
 ### modes/ — 工作模式
 
@@ -96,6 +100,7 @@
 |------|------|
 | [research.md](modes/research.md) | 研发流水线（快速试错 + 频繁暂停） |
 | [production.md](modes/production.md) | 生产流水线（全自动 + 自动修复） |
+| [experiment.md](modes/experiment.md) | 实验流水线（WebSearch + Plan + 自主迭代） |
 
 ### 跨层资源
 
@@ -105,6 +110,6 @@
 | **Platform** | [../../agents/unity-developer.md](../../agents/unity-developer.md) | Editor Bridge + 可用性策略 |
 | **CLI** | [../../agents/unity-developer/cli/unityctl.md](../../agents/unity-developer/cli/unityctl.md) | unityctl 完整命令参考 |
 | **CLI** | [../../agents/unity-developer/cli/roslyn.md](../../agents/unity-developer/cli/roslyn.md) | Roslyn 脚本食谱 + 命令速查 |
-| **Scripts** | [../../tmp/.reusable/](../../tmp/.reusable/) | 可复用 Roslyn C# 脚本 |
+| **Scripts** | [../../agents/unity-developer/scripts/roslyn/](../../agents/unity-developer/scripts/roslyn/) | 可复用 Roslyn C# 脚本 |
 | **Learnings** | [../../rules/shader-development.md](../../rules/shader-development.md) | 编译/运行时错误诊断表 |
 | **Learnings** | [../../agents/unity-developer/memory/2025-06-15-safety-lessons.md](../../agents/unity-developer/memory/2025-06-15-safety-lessons.md) | 安全红线 + 经验教训 |

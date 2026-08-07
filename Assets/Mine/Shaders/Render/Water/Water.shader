@@ -2,6 +2,7 @@ Shader "Custom/Water"
 {
     Properties
     {
+        [Header(Opaque)]
         _baseColorA("Base Color A", Color) = (1, 1, 1, 1)
         _baseColorB("Base Color B", Color) = (1, 1, 1, 1)
 
@@ -9,19 +10,15 @@ Shader "Custom/Water"
         _DisplacementScale("Displacement Scale", Float) = 1.0
         _NormalIntensity("Normal Intensity", Range(0, 2)) = 1.0
         _TessellationFactor("Tessellation Factor", Range(1, 32)) = 8
+        _FoamIntensity("Foam Intensity", Range(0, 1)) = 0.5
 
-        [Header(Foam)]
-        _FoamTex("Foam Texture", 2D) = "white" {}
-        [Range(0, 1)]_FoamScale("Foam Scale", Float) = 1.0
-        [Range(0, 1)]_FoamSpeed("Foam Speed", Float) = 1.0
-        [Range(0, 1)]_FoamIntensity("Foam Intensity", Float) = 0.5
+        [Header(Caustics)]
+        _CausticsScale("Caustics Scale", Range(0, 2)) = 1.0
+        _CausticsIntensity("Caustics Intensity", Range(0, 2)) = 1.0
 
-        [Header(Debug)]
-        [KeywordEnum(Off, Displacement, Normal, Height, Cascade0, Cascade1, Cascade2)] _DebugMode("Debug Mode", Float) = 0
-
-        [Range(0, 1)]_Distortion("Distortion", Range(0, 1)) = 0.1
-        [Range(0, 1)]_Caustics("Caustics", Range(0, 1)) = 1.0
-        [Range(0, 1)]_Alpha("Alpha", Range(0, 1)) = 1.0
+        [Header(Transparency)]
+        _Distortion("Distortion", Range(0, 1)) = 0.1
+        _Alpha("Alpha", Range(0, 1)) = 1.0
     }
 
     HLSLINCLUDE
@@ -46,11 +43,6 @@ Shader "Custom/Water"
     TEXTURE2D(_WaveNormal2);       SAMPLER(sampler_WaveNormal2);
     float _WavePatchSize0, _WavePatchSize1, _WavePatchSize2;
 
-
-
-    TEXTURE2D_X(_FoamTex);
-    SAMPLER(sampler_FoamTex);
-
     CBUFFER_START(UnityPerMaterial)
         float4 _baseColorA;
         float4 _baseColorB;
@@ -58,13 +50,12 @@ Shader "Custom/Water"
         float _DisplacementScale;
         float _NormalIntensity;
         float _TessellationFactor;
-
-        float _FoamScale;
-        float _FoamSpeed;
         float _FoamIntensity;
 
+        float _CausticsScale;
+        float _CausticsIntensity;
+
         float _Distortion;
-        float _Caustics;
         float _Alpha;
     CBUFFER_END
 
@@ -91,8 +82,8 @@ Shader "Custom/Water"
     struct WaterVaryings
     {
         float4 positionCS   : SV_POSITION;
-        float3 positionWS   : TEXCOORD0;
-        float4 positionSS   : TEXCOORD1;
+        float3 positionWS   : TEXCOORD0;  // 位移后
+        float3 flatPosWS    : TEXCOORD1;  // 位移前 (caustics 用)
         float3 normalWS     : TEXCOORD2;
         float3 tangentWS    : TEXCOORD3;
         float3 bitanentWS   : TEXCOORD4;
@@ -100,9 +91,9 @@ Shader "Custom/Water"
     };
 
     // ════════════════════════════════════════════════════════════
-    //  ComputeFFTDisplacement — 3 级 cascade 位移混合
+    //  ComputeFFTWave — 3 级 cascade 波浪混合
     // ════════════════════════════════════════════════════════════
-    float3 ComputeFFTDisplacement(float3 positionWS)
+    float3 ComputeFFTWave(float3 positionWS)
     {
         float3 disp = 0;
 
@@ -147,6 +138,20 @@ Shader "Custom/Water"
         return normalize(blended);
     }
 
+    float3 ComputeFFTFoam(float3 positionWS)
+    {
+        float2 uv0 = positionWS.xz / _WavePatchSize0;
+        float2 uv1 = positionWS.xz / _WavePatchSize1;
+        float2 uv2 = positionWS.xz / _WavePatchSize2;
+
+        float foam = 0;
+        float foam0 = SAMPLE_TEXTURE2D(_WaveDisplacement0, sampler_WaveDisplacement0, uv0).a;
+        float foam1 = SAMPLE_TEXTURE2D(_WaveDisplacement1, sampler_WaveDisplacement1, uv1).a;
+        float foam2 = SAMPLE_TEXTURE2D(_WaveDisplacement2, sampler_WaveDisplacement2, uv2).a;
+        foam = foam0 * 0.5 + foam1 * 0.3 + foam2 * 0.2;
+        return foam;
+    }
+
     // ════════════════════════════════════════════════════════════
     //  ComputeOpaque — PBR 光照
     // ════════════════════════════════════════════════════════════
@@ -165,7 +170,7 @@ Shader "Custom/Water"
         float  ndotl = dot(normalWS, lightDirWS) * 0.25 + 0.75;
         float  ndoth = dot(normalWS, halfVec) * 0.5 + 0.5;
         float  ndotv = dot(normalWS, viewDirWS) * 0.5 + 0.5;
-        ndoth = smoothstep(0.8, 1.0, ndoth);
+        ndoth = smoothstep(0.9, 1.0, ndoth);
 
         float  shadowArea = mainLitShadowAtten * 0.5 + 0.5;
         float3 radiance = mainLitColor * mainLitDistanceAtten * shadowArea;
@@ -184,10 +189,10 @@ Shader "Custom/Water"
     float ComputeEdgeFoam(float edge, float3 positionWS, float normalDiff)
     {
         edge = saturate(exp(- edge * _FoamIntensity * 10));
-        float offset = normalDiff * 0.8;
-        float2 coord = float2(positionWS.y, edge + offset) * _FoamScale * 10 + _Time.y * _FoamSpeed * 0.1;
-        float  foam  = _FoamTex.Sample(sampler_FoamTex, coord).r;
-        float  edgeFoam = lerp(edge, foam, 0.8) * edge;
+        float offset = normalDiff;
+        float3 coord = float3(positionWS.y - offset, 1, (edge + offset) * 2);
+        float  foam  = ComputeFFTFoam(coord).x;
+        float  edgeFoam = lerp(edge, foam, 0.75) * edge;
         edgeFoam = smoothstep(0.15, 0.16, edgeFoam);
         return edgeFoam;
     }
@@ -197,75 +202,78 @@ Shader "Custom/Water"
     // ════════════════════════════════════════════════════════════
     float ComputeWaveFoam(float3 positionWS)
     {
-        float foam = 0;
-
-        float2 uv0 = positionWS.xz / _WavePatchSize0;
-        foam += SAMPLE_TEXTURE2D(_WaveDisplacement0, sampler_WaveDisplacement0, uv0).a * 0.5;
-
-        float2 uv1 = positionWS.xz / _WavePatchSize1;
-        foam += SAMPLE_TEXTURE2D(_WaveDisplacement1, sampler_WaveDisplacement1, uv1).a * 0.3;
-
-        float2 uv2 = positionWS.xz / _WavePatchSize2;
-        foam += SAMPLE_TEXTURE2D(_WaveDisplacement2, sampler_WaveDisplacement2, uv2).a * 0.2;
-
+        float foam = ComputeFFTFoam(positionWS).y;
         foam = smoothstep(_FoamIntensity, 1.0, foam);
         return foam;
     }
 
     // ════════════════════════════════════════════════════════════
-    //  ComputeCaustics — Snell 折射 Jacobian (世界空间差分)
-    //
-    //  ddx/ddy 替换为显式世界空间近邻采样。
-    //  corrDet = |∂(hit)/∂x × ∂(hit)/∂z| → 小 = 光线会聚 → 亮
+    //  DDX_CorrectHit, DDY_CorrectHit — 替代 ddx(correctHit) / ddy(correctHit)
+    // ════════════════════════════════════════════════════════════
+    float3 DDX_CorrectHit(float3 surfaceHit, float3 positionWS, float3 mainLitDir,
+                          float3 scenePosWS, float eta, float eps)
+    {
+        float scDist = positionWS.y - scenePosWS.y;
+        float3 V = -normalize(mainLitDir);
+
+        float3 pNor = ComputeFFTNormal(surfaceHit + float3(eps, 0, 0), float3(0, 1, 0));
+        float3 pDir = refract(V, pNor, eta); if (all(pDir == 0)) pDir = float3(0, -1, 0);
+        float3 hitP = scenePosWS + pDir * (scDist / max(-pDir.y, 0.01));
+
+        float3 nNor = ComputeFFTNormal(surfaceHit - float3(eps, 0, 0), float3(0, 1, 0));
+        float3 nDir = refract(V, nNor, eta); if (all(nDir == 0)) nDir = float3(0, -1, 0);
+        float3 hitN = scenePosWS + nDir * (scDist / max(-nDir.y, 0.01));
+
+        return (hitP - hitN) / (2.0 * eps);
+    }
+
+    float3 DDY_CorrectHit(float3 surfaceHit, float3 positionWS, float3 mainLitDir,
+                          float3 scenePosWS, float eta, float eps)
+    {
+        float scDist = positionWS.y - scenePosWS.y;
+        float3 V = -normalize(mainLitDir);
+
+        float3 pNor = ComputeFFTNormal(surfaceHit + float3(0, 0, eps), float3(0, 1, 0));
+        float3 pDir = refract(V, pNor, eta); if (all(pDir == 0)) pDir = float3(0, -1, 0);
+        float3 hitP = scenePosWS + pDir * (scDist / max(-pDir.y, 0.01));
+
+        float3 nNor = ComputeFFTNormal(surfaceHit - float3(0, 0, eps), float3(0, 1, 0));
+        float3 nDir = refract(V, nNor, eta); if (all(nDir == 0)) nDir = float3(0, -1, 0);
+        float3 hitN = scenePosWS + nDir * (scDist / max(-nDir.y, 0.01));
+
+        return (hitP - hitN) / (2.0 * eps);
+    }
+
+    // ════════════════════════════════════════════════════════════
+    //  ComputeCaustics — Snell 折射 Jacobian
     // ════════════════════════════════════════════════════════════
     float3 ComputeCaustics(float3 positionWS, float3 mainLitDir, float3 scenePosWS, float sceneDepDf, float3 sceneNorWS)
     {
         float eta = 1.0 / 1.33;
-        float eps = 0.1;
 
-        float3 V = -normalize(mainLitDir);
-        float3 N = ComputeFFTNormal(positionWS, float3(0, 1, 0));
-        float3 correctDir = refract(V, N, eta);
-        if (all(correctDir == 0)) return 0;
+        float3 refractDir = refract(-mainLitDir, float3(0, 1, 0), eta);
+        float3 surfaceRay = refractDir * (positionWS.y - scenePosWS.y) / refractDir.y;
+        float3 surfaceHit = scenePosWS + surfaceRay;
+        float3 surfaceNor = ComputeFFTNormal(surfaceHit, float3(0, 1, 0));
+        float3 correctDir = refract(-mainLitDir, surfaceNor, eta);
+        float3 correctRay = correctDir * (positionWS.y - scenePosWS.y) / correctDir.y;
+        float3 correctHit = scenePosWS + correctRay;
+        float3 correctNor = ComputeFFTNormal(correctHit, float3(0, 1, 0));
 
-        float3 correctHit = positionWS + correctDir * (sceneDepDf / max(-correctDir.y, 0.01));
+        float eps = _CausticsScale * (1 + sceneDepDf * 0.1);
+        float3 corrDDX = DDX_CorrectHit(surfaceHit, positionWS, mainLitDir, scenePosWS, eta, eps);
+        float3 corrDDY = DDY_CorrectHit(surfaceHit, positionWS, mainLitDir, scenePosWS, eta, eps);
+        float  corrDet = max(length(cross(corrDDX, corrDDY)), 1e-4);
 
-        // 邻居: 世界空间 ±Δx, ±Δz → FFTNormal → refract → hit
-        #define CAUSTIC_NEIGHBOR(OUT, OFFSET) { \
-            float3 p = positionWS + OFFSET; \
-            float3 n = ComputeFFTNormal(p, float3(0, 1, 0)); \
-            float3 r = refract(V, n, eta); \
-            if (all(r == 0)) r = correctDir; \
-            float d = max(p.y - scenePosWS.y, 0.01); \
-            OUT = p + r * (d / max(-r.y, 0.01)); \
-        }
-
-        float3 hitR, hitL, hitU, hitD;
-        CAUSTIC_NEIGHBOR(hitR, float3( eps, 0, 0));
-        CAUSTIC_NEIGHBOR(hitL, float3(-eps, 0, 0));
-        CAUSTIC_NEIGHBOR(hitU, float3( 0, 0, eps));
-        CAUSTIC_NEIGHBOR(hitD, float3( 0, 0,-eps));
-        #undef CAUSTIC_NEIGHBOR
-
-        float3 dhdx = (hitR - hitL) / (2.0 * eps);
-        float3 dhdz = (hitU - hitD) / (2.0 * eps);
-        float corrDet = max(length(cross(dhdx, dhdz)), 1e-4);
-        float sceneDet = 1.0 / max(abs(dot(sceneNorWS, float3(0, 1, 0))), 0.1);
-        float intensity = sceneDet / corrDet;
-
-        float confidence = dot(float3(0, 1, 0), N) * 0.5 + 0.5;
+        float intensity = 0.0001 * _CausticsIntensity / corrDet;
+        float confidence = dot(surfaceNor, correctNor) * 0.5 + 0.5;
         intensity *= confidence;
 
-        // RGB 色散
-        float dR = length(refract(V, N, 1.0/1.330) - correctDir) * sceneDepDf;
-        float dB = length(refract(V, N, 1.0/1.340) - correctDir) * sceneDepDf;
+        float  sceneNorDf = dot(mainLitDir, sceneNorWS) * 0.5 + 0.5;
+        float  mask = sceneNorDf * sceneDepDf;
+        intensity *= mask;
 
-        float3 caustics = float3(
-            saturate(intensity * (1.0 + dR * 5.0)),
-            saturate(intensity),
-            saturate(intensity * (1.0 + dB * 5.0))
-        );
-        return caustics * _Caustics;
+        return intensity;
     }
 
     float4 ComputePositionSS(float3 positionWS, float3 normalWS, float distortion)
@@ -351,11 +359,11 @@ Shader "Custom/Water"
                           + patch[2].uv         * bary.z;
 
         float3 positionWS = TransformObjectToWorld(positionOS);
-        positionWS += ComputeFFTDisplacement(positionWS);
+        output.flatPosWS = positionWS;                        // 位移前
+        positionWS += ComputeFFTWave(positionWS);
 
         output.positionCS = TransformWorldToHClip(positionWS);
         output.positionWS = positionWS;
-        output.positionSS = 0;
         output.normalWS   = TransformObjectToWorldNormal(normalOS);
         output.tangentWS  = TransformObjectToWorldDir(tangentOS.xyz);
         output.bitanentWS = cross(output.normalWS, output.tangentWS) * tangentOS.w * unity_WorldTransformParams.w;
@@ -400,34 +408,8 @@ Shader "Custom/Water"
         float  wave        = ComputeWaveFoam(positionWS);
         float  foam        = saturate(edge + wave);
 
-        // ── Debug ────────────────────────────────────────────
-        #if defined(_DEBUGMODE_DISPLACEMENT)
-            float3 disp = ComputeFFTDisplacement(positionWS);
-            return half4(disp * 0.5 + 0.5, 1);
-        #elif defined(_DEBUGMODE_NORMAL)
-            float3 fftNormal = ComputeFFTNormal(positionWS, defaultNormalWS);
-            return half4(fftNormal * 0.5 + 0.5, 1);
-        #elif defined(_DEBUGMODE_HEIGHT)
-            float3 dispH = ComputeFFTDisplacement(positionWS);
-            float h = dispH.y * 0.5 + 0.5;
-            return half4(h, h, h, 1);
-        #elif defined(_DEBUGMODE_CASCADE0)
-            float2 uv0 = positionWS.xz / _WavePatchSize0;
-            float3 c0 = SAMPLE_TEXTURE2D(_WaveDisplacement0, sampler_WaveDisplacement0, uv0).rgb;
-            return half4(c0 * 0.5 + 0.5, 1);
-        #elif defined(_DEBUGMODE_CASCADE1)
-            float2 uv1 = positionWS.xz / _WavePatchSize1;
-            float3 c1 = SAMPLE_TEXTURE2D(_WaveDisplacement1, sampler_WaveDisplacement1, uv1).rgb;
-            return half4(c1 * 0.5 + 0.5, 1);
-        #elif defined(_DEBUGMODE_CASCADE2)
-            float2 uv2 = positionWS.xz / _WavePatchSize2;
-            float3 c2 = SAMPLE_TEXTURE2D(_WaveDisplacement2, sampler_WaveDisplacement2, uv2).rgb;
-            return half4(c2 * 0.5 + 0.5, 1);
-        #endif
-
         float3 color = lerp(transparent, opaque, _Alpha);
-        color += (foam) * mainLitColor;
-        return half4(caustics, 1);
+        color += (foam + caustics) * mainLitColor;
 
         return half4(color, 1);
     }
@@ -454,7 +436,6 @@ Shader "Custom/Water"
             #pragma hull Hull
             #pragma domain Domain
             #pragma fragment Frag
-            #pragma shader_feature_local _DEBUGMODE_OFF _DEBUGMODE_DISPLACEMENT _DEBUGMODE_NORMAL _DEBUGMODE_HEIGHT _DEBUGMODE_CASCADE0 _DEBUGMODE_CASCADE1 _DEBUGMODE_CASCADE2
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile _ _SHADOWS_SOFT

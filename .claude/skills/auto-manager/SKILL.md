@@ -17,16 +17,23 @@ model: opus
 
 > Unity 开发任务自适应路由器。覆盖所有开发任务，Editor 可用时自动扩展为完整流水线。
 
-## CRITICAL — 触发后立即执行
+## CRITICAL — 门禁驱动的执行流程
 
-**This skill body loads on trigger. You MUST immediately:**
+**This skill body loads on trigger. 每个 [Gx] 必须输出结构化决策才能继续。**
 
-1. `Read` [AutoMode.md](AutoMode.md) — 获取 Constitution、模式对比表、选择逻辑
-2. `Read` [capabilities/knowledge.md](capabilities/knowledge.md) — 加载项目知识库（代码风格、命名规范、文件结构）
-3. `bash: unityctl status` — 检查 Editor 是否在运行
-4. 根据 AutoMode.md 的选择逻辑判断 Research vs Production
-5. `Read` 对应的 mode 文件（[modes/research.md](modes/research.md) 或 [modes/production.md](modes/production.md)）
-6. 按 mode 文件的 Process 段逐步执行。Editor 不可用时自动跳过编译/运行步骤。
+```
+[G0] 框架入口
+  OUTPUT: ## G0: Framework Check — Agent: unity-developer | NOT LOADED
+  └── NOT LOADED → Read ../../agents/unity-developer.md → 重试
+
+[G1] 模式确认
+  OUTPUT: ## G1: Mode Selection — Mode: <mode> | Reason: <why>
+  └── Research | Production | Experiment
+
+Read 对应的 mode 文件 → 按 mode 文件中的 [Gx] 门禁逐步执行
+```
+
+**门禁不是建议。每个 [Gx] 必须显式输出决策，下一步读取上一步的输出来决定行为。**
 
 **报告格式：**
 - Editor 可用：`🏭 AutoAgent → Production Mode（全流水线：编译 + 运行）`
@@ -49,6 +56,7 @@ model: opus
 ```
 用户指令
   │
+  ├── 需搜索网络方案 / 无库内模板 / 自主迭代 → 🧪 Experiment Mode
   ├── Shader / 渲染 / 调参 / 效果验证 → 🔬 Research Mode
   ├── 功能开发 / Bug修复 / 重构 / 文件整理 → 🏭 Production Mode
   └── 纯咨询 / 闲聊                  → 不激活
